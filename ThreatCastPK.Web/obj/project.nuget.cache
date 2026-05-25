@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "NbQi8vkpfTA=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\hp\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.3\\microsoft.aspnetcore.app.internal.assets.10.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

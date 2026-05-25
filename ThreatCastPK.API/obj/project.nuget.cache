@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "WniBBL7ypdI=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.API\\ThreatCastPK.API.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\hp\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.3\\microsoft.aspnetcore.openapi.10.0.3.nupkg.sha512",
+    "C:\\Users\\hp\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}
