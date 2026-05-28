@@ -1,0 +1,15 @@
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\ThreatCastPK.Database.csproj.AssemblyReference.cache
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\ThreatCastPK.Database.GeneratedMSBuildEditorConfig.editorconfig
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\ThreatCastPK.Database.AssemblyInfoInputs.cache
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\ThreatCastPK.Database.AssemblyInfo.cs
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\ThreatCastPK.Database.csproj.CoreCompileInputs.cache
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\ThreatCastPK.Database.sourcelink.json
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\bin\Debug\net10.0\ThreatCastPK.Database.deps.json
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\bin\Debug\net10.0\ThreatCastPK.Database.runtimeconfig.json
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\bin\Debug\net10.0\ThreatCastPK.Database.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\bin\Debug\net10.0\ThreatCastPK.Database.pdb
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\ThreatCastPK.Database.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\refint\ThreatCastPK.Database.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\ThreatCastPK.Database.pdb
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\ThreatCastPK.Database.genruntimeconfig.cache
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Database\obj\Debug\net10.0\ref\ThreatCastPK.Database.dll

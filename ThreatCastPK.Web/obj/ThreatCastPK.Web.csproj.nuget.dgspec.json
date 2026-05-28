@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj": {}
+    "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj": {}
   },
   "projects": {
-    "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj": {
+    "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj",
+        "projectUniqueName": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj",
         "projectName": "ThreatCastPK.Web",
-        "projectPath": "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj",
-        "packagesPath": "C:\\Users\\hp\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.Web\\obj\\",
+        "projectPath": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj",
+        "packagesPath": "C:\\Users\\Lenovo\\.nuget\\packages\\",
+        "outputPath": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.Web\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\hp\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Lenovo\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -44,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "all"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "10.0.200"
       },
       "frameworks": {
         "net10.0": {
@@ -53,7 +53,7 @@
             "Microsoft.AspNetCore.App.Internal.Assets": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[10.0.3, )",
+              "version": "[10.0.7, )",
               "autoReferenced": true
             }
           },
@@ -76,7 +76,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json",
           "packagesToPrune": {
             "Microsoft.AspNetCore": "(,10.0.32767]",
             "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
