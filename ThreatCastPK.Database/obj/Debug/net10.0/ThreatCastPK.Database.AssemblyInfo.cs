@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ThreatCastPK.Database")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+533dfdcb212a4f2e60f84e9eb6fcbf009780deec")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0ee5d1df078bca4d46bdae078b7b1ec5963675ca")]
 [assembly: System.Reflection.AssemblyProductAttribute("ThreatCastPK.Database")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ThreatCastPK.Database")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

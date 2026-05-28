@@ -126,3 +126,12 @@ D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\obj\Debug\net10.0\refint\ThreatCast
 D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\obj\Debug\net10.0\ThreatCastPK.API.pdb
 D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\obj\Debug\net10.0\ThreatCastPK.API.genruntimeconfig.cache
 D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\obj\Debug\net10.0\ref\ThreatCastPK.API.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\bin\Debug\net10.0\BCrypt-Net-Next.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\bin\Debug\net10.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\bin\Debug\net10.0\Microsoft.IdentityModel.Abstractions.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\bin\Debug\net10.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\bin\Debug\net10.0\Microsoft.IdentityModel.Logging.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\bin\Debug\net10.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\bin\Debug\net10.0\Microsoft.IdentityModel.Tokens.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.API\bin\Debug\net10.0\System.IdentityModel.Tokens.Jwt.dll
