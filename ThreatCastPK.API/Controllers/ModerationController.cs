@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using ThreatCastPK.API.DTOs;
+using ThreatCastPK.API.Hubs;
 using ThreatCastPK.Database.Context;
 using ThreatCastPK.Database.Enums;
 using ThreatCastPK.Database.Models;
@@ -15,10 +17,12 @@ namespace ThreatCastPK.API.Controllers
     public class ModerationController : ControllerBase
     {
         private readonly ThreatCastDbContext _context;
+        private readonly IHubContext<ThreatCastHub> _hubContext;
 
-        public ModerationController(ThreatCastDbContext context)
+        public ModerationController(ThreatCastDbContext context, IHubContext<ThreatCastHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // CRUD 3 — Get Moderation Queue
@@ -118,7 +122,20 @@ namespace ThreatCastPK.API.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Report approved. Attack event created." });
+            // Broadcast new event to all connected clients via SignalR
+            await _hubContext.Clients.Group("all_viewers").SendAsync("NewAttackEvent", new
+            {
+                id = attackEvent.Id,
+                city = report.City,
+                attackType = report.AttackType.ToString(),
+                targetSector = report.TargetSector.ToString(),
+                severity = report.Severity,
+                occurredAt = attackEvent.OccurredAt,
+                confidenceTier = "CommunityReported",
+                source = "Community"
+            });
+
+            return Ok(new { message = "Report approved. Attack event created and broadcast to map." });
         }
 
         // CRUD 3 — Reject Report
@@ -166,7 +183,7 @@ namespace ThreatCastPK.API.Controllers
             return Ok(new { message = "Report rejected." });
         }
 
-        // CRUD 3 — Get All Users (for user management)
+        // CRUD 3 — Get All Users
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsers()
         {
