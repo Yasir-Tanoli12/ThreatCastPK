@@ -1,0 +1,12 @@
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\bin\Debug\net10.0\ThreatCastPK.ML.deps.json
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\bin\Debug\net10.0\ThreatCastPK.ML.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\bin\Debug\net10.0\ThreatCastPK.ML.pdb
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\obj\Debug\net10.0\ThreatCastPK.ML.GeneratedMSBuildEditorConfig.editorconfig
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\obj\Debug\net10.0\ThreatCastPK.ML.AssemblyInfoInputs.cache
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\obj\Debug\net10.0\ThreatCastPK.ML.AssemblyInfo.cs
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\obj\Debug\net10.0\ThreatCastPK.ML.csproj.CoreCompileInputs.cache
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\obj\Debug\net10.0\ThreatCastPK.ML.sourcelink.json
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\obj\Debug\net10.0\ThreatCastPK.ML.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\obj\Debug\net10.0\refint\ThreatCastPK.ML.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\obj\Debug\net10.0\ThreatCastPK.ML.pdb
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.ML\obj\Debug\net10.0\ref\ThreatCastPK.ML.dll
