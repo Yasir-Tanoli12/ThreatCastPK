@@ -1,0 +1,6 @@
+@ThreatCastPK.API_HostAddress = http://localhost:5262
+
+GET {{ThreatCastPK.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,1269 @@
+@* ThreatCastPK.Web/Components/Pages/Register.razor *@
+@page "/register"
+@rendermode InteractiveServer
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Register — ThreatCast PK</PageTitle>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<div class="reg-root">
+
+    @* Animated grid *@
+    <div class="bg-grid"></div>
+    <div class="scan-line"></div>
+
+    @* Corner decorations *@
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    @* Left panel — form *@
+    <div class="left-panel">
+
+        <div class="form-card @(_shake ? "shake" : "")">
+
+            <div class="form-header">
+                <a href="/" class="back-link">← back to map</a>
+                <div class="form-title-row">
+                    <span class="form-prompt">$</span>
+                    <h2 class="form-title">auth.register</h2>
+                    <span class="form-cursor">_</span>
+                </div>
+                <p class="form-subtitle">Create your operator account</p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="error-banner">
+                    <span class="error-icon">⚠</span>
+                    <span>@_errorMessage</span>
+                </div>
+            }
+
+            <div class="form-body">
+
+                @* Step indicator *@
+                <div class="step-bar">
+                    <div class="step @(_currentStep >= 1 ? "active" : "") @(_currentStep > 1 ? "done" : "")">
+                        <span class="step-num">@(_currentStep > 1 ? "✓" : "01")</span>
+                        <span class="step-label">IDENTITY</span>
+                    </div>
+                    <div class="step-line @(_currentStep > 1 ? "filled" : "")"></div>
+                    <div class="step @(_currentStep >= 2 ? "active" : "")">
+                        <span class="step-num">02</span>
+                        <span class="step-label">CREDENTIALS</span>
+                    </div>
+                </div>
+
+                @if (_currentStep == 1)
+                {
+                    @* Step 1 — Identity *@
+                    <div class="step-content" key="step1">
+
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="label-index">01</span>
+                                USERNAME
+                            </label>
+                            <div class="input-wrapper @(_usernameFocused ? "focused" : "") @(GetUsernameState())">
+                                <span class="input-prefix">◈</span>
+                                <input
+    type="text"
+    class="field-input"
+    @bind="_username"
+    @bind:event="oninput"
+    @onfocus="() => _usernameFocused = true"
+    @onblur="ValidateUsername"
+    disabled="@_loading" />
+                                @if (!string.IsNullOrEmpty(_username))
+                                {
+                                    <span class="input-status @(IsUsernameValid() ? "valid" : "invalid")">
+                                        @(IsUsernameValid() ? "✓" : "✗")
+                                    </span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(_usernameError))
+                            {
+                                <span class="field-error">@_usernameError</span>
+                            }
+                            else if (!string.IsNullOrEmpty(_username) && IsUsernameValid())
+                            {
+                                <span class="field-hint valid">Callsign available</span>
+                            }
+                            else
+                            {
+                                <span class="field-hint">3–30 characters, letters/numbers/underscores only</span>
+                            }
+                        </div>
+
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="label-index">02</span>
+                                EMAIL_ADDRESS
+                            </label>
+                            <div class="input-wrapper @(_emailFocused ? "focused" : "") @(GetEmailState())">
+                                <span class="input-prefix">@@</span>
+                                <input
+    type="email"
+    class="field-input"
+    @bind="_email"
+    @bind:event="oninput"
+    @onfocus="() => _emailFocused = true"
+    @onblur="ValidateEmail"
+    disabled="@_loading" />
+                                @if (!string.IsNullOrEmpty(_email))
+                                {
+                                    <span class="input-status @(IsEmailValid() ? "valid" : "invalid")">
+                                        @(IsEmailValid() ? "✓" : "✗")
+                                    </span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(_emailError))
+                            {
+                                <span class="field-error">@_emailError</span>
+                            }
+                        </div>
+
+                        <button class="@NextBtnClass()" @onclick="GoToStep2" disabled="@(!CanGoToStep2())">
+                            <span>CONTINUE</span>
+                            <span class="btn-arrow">→</span>
+                        </button>
+
+                    </div>
+                }
+                else
+                {
+                    @* Step 2 — Credentials *@
+                    <div class="step-content" key="step2">
+
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="label-index">03</span>
+                                PASSWORD
+                            </label>
+                            <div class="input-wrapper @(_passFocused ? "focused" : "")">
+                                <span class="input-prefix">🔒</span>
+                                <input
+                                    type="@(_showPassword ? "text" : "password")"
+                                    class="field-input"
+                                    placeholder="min. 8 characters"
+                                    @bind="_password"
+                                    @bind:event="oninput"
+                                    @onfocus="() => _passFocused = true"
+                                    @onblur="() => _passFocused = false"
+                                    disabled="@_loading" />
+                                <button type="button" class="toggle-pass"
+                                        @onclick="() => _showPassword = !_showPassword">
+                                    @(_showPassword ? "HIDE" : "SHOW")
+                                </button>
+                            </div>
+
+                            @* Password strength meter *@
+                            @if (!string.IsNullOrEmpty(_password))
+                            {
+                                var strength = GetPasswordStrength();
+                                <div class="strength-bar">
+                                    <div class="strength-track">
+                                        <div class="strength-fill s-@strength.Level"
+                                             style="width: @(strength.Percent)%"></div>
+                                    </div>
+                                    <span class="strength-label s-text-@strength.Level">
+                                        @strength.Label
+                                    </span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="label-index">04</span>
+                                CONFIRM_PASSWORD
+                            </label>
+                            <div class="input-wrapper @(_confirmFocused ? "focused" : "") @(GetConfirmState())">
+                                <span class="input-prefix">🔑</span>
+                                <input
+                                    type="@(_showConfirm ? "text" : "password")"
+                                    class="field-input"
+                                    placeholder="re-enter password"
+                                    @bind="_confirmPassword"
+                                    @bind:event="oninput"
+                                    @onfocus="() => _confirmFocused = true"
+                                    @onblur="() => _confirmFocused = false"
+                                    disabled="@_loading" />
+                                <button type="button" class="toggle-pass"
+                                        @onclick="() => _showConfirm = !_showConfirm">
+                                    @(_showConfirm ? "HIDE" : "SHOW")
+                                </button>
+                            </div>
+                            @if (!string.IsNullOrEmpty(_confirmPassword) && _password != _confirmPassword)
+                            {
+                                <span class="field-error">Passwords do not match</span>
+                            }
+                        </div>
+
+                        @* Terms acknowledgment *@
+                        <div class="terms-row">
+                            <label class="checkbox-label">
+                                <input type="checkbox" class="checkbox-input"
+                                       @bind="_termsAccepted" />
+                                <span class="checkbox-box @(_termsAccepted ? "checked" : "")">
+                                    @(_termsAccepted ? "✓" : "")
+                                </span>
+                                <span class="terms-text">
+                                    I understand this platform is for cyber threat reporting only
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="step2-btns">
+                            <button class="back-step-btn" @onclick="() => _currentStep = 1"
+                                    disabled="@_loading">
+                                ← BACK
+                            </button>
+
+                            <button class="submit-btn @(_loading ? "loading" : "")"
+                                    @onclick="HandleRegister"
+                                    disabled="@(!CanSubmit() || _loading)">
+                                @if (_loading)
+                                {
+                                    <span class="btn-spinner"></span>
+                                    <span>CREATING...</span>
+                                }
+                                else
+                                {
+                                    <span>CREATE ACCOUNT</span>
+                                    <span class="btn-arrow">→</span>
+                                }
+                            </button>
+                        </div>
+
+                    </div>
+                }
+                <div class="divider-row">
+    <div class="divider-line"></div>
+    <span class="divider-text">OR</span>
+    <div class="divider-line"></div>
+</div>
+
+<a href="https://localhost:7262/api/auth/google-login" class="google-btn">
+    <svg class="g-icon" viewBox="0 0 24 24" width="18" height="18">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    </svg>
+    <span>CONTINUE WITH GOOGLE</span>
+</a>
+                <div class="form-footer-links">
+                    <span class="footer-text">Already registered?</span>
+                    <a href="/login" class="footer-link">Sign in →</a>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="form-meta">
+            <span class="meta-item">
+                <span class="meta-dot green"></span>
+                REGISTRATION OPEN
+            </span>
+            <span class="meta-sep">//</span>
+            <span class="meta-item">BCrypt · PBKDF2</span>
+            <span class="meta-sep">//</span>
+            <span class="meta-item">DATA ENCRYPTED</span>
+        </div>
+
+    </div>
+
+    @* Right panel — info *@
+    <div class="right-panel">
+        <div class="right-content">
+
+            <div class="brand-block">
+                <div class="hex-icon">◈</div>
+                <div class="brand-name">ThreatCast<span class="brand-pk">PK</span></div>
+            </div>
+
+            <h2 class="right-heading">Join the<br />Intelligence<br />Network</h2>
+
+            <div class="roles-list">
+                <div class="role-card">
+                    <div class="role-icon public">👁</div>
+                    <div class="role-info">
+                        <div class="role-name">Public Viewer</div>
+                        <div class="role-desc">View live threat map, browse analytics, read forum</div>
+                    </div>
+                    <div class="role-badge default">DEFAULT</div>
+                </div>
+
+                <div class="role-connector"></div>
+
+                <div class="role-card">
+                    <div class="role-icon reporter">📡</div>
+                    <div class="role-info">
+                        <div class="role-name">Reporter</div>
+                        <div class="role-desc">Submit attack reports, earn reputation points, get auto-approved</div>
+                    </div>
+                    <div class="role-badge request">REQUEST</div>
+                </div>
+
+                <div class="role-connector"></div>
+
+                <div class="role-card">
+                    <div class="role-icon admin">⚡</div>
+                    <div class="role-info">
+                        <div class="role-name">Admin</div>
+                        <div class="role-desc">Moderate reports, manage users, inject verified events</div>
+                    </div>
+                    <div class="role-badge invite">INVITE ONLY</div>
+                </div>
+            </div>
+
+            <div class="right-footnote">
+                <span class="fn-dot"></span>
+                Reports are verified against AbuseIPDB — false reports reduce your reputation score.
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .reg-root {
+        min-height: 100vh;
+        display: flex;
+        background: #0d1117;
+        position: relative;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .bg-grid {
+        position: fixed;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(159,239,0,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(159,239,0,0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .scan-line {
+        position: fixed;
+        top: -2px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #9fef00, transparent);
+        animation: scan 6s linear infinite;
+        opacity: 0.4;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    @@keyframes scan {
+        0%   { top: -2px; }
+        100% { top: 100vh; }
+    }
+
+    .corner {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .corner-tl { top: 16px; left: 16px; border-top: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-tr { top: 16px; right: 16px; border-top: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+    .corner-bl { bottom: 16px; left: 16px; border-bottom: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-br { bottom: 16px; right: 16px; border-bottom: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+
+    /* ── Left panel (form side) ── */
+    .left-panel {
+        width: 520px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 40px;
+        position: relative;
+        z-index: 3;
+        border-right: 1px solid #21262d;
+    }
+
+    /* ── Form card ── */
+    .form-card {
+        width: 100%;
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        overflow: hidden;
+        animation: fadeInUp 0.6s ease both;
+    }
+
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .shake { animation: shake 0.4s ease !important; }
+
+    @@keyframes shake {
+        0%,100% { transform: translateX(0); }
+        20%     { transform: translateX(-8px); }
+        40%     { transform: translateX(8px); }
+        60%     { transform: translateX(-5px); }
+        80%     { transform: translateX(5px); }
+    }
+
+    /* ── Form header ── */
+    .form-header {
+        padding: 20px 28px 18px;
+        border-bottom: 1px solid #21262d;
+        background: #0d1117;
+    }
+
+    .back-link {
+        display: inline-block;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+        text-decoration: none;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        transition: color 0.15s;
+    }
+    .back-link:hover { color: #9fef00; }
+
+    .form-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+
+    .form-prompt {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 17px;
+        color: #9fef00;
+        font-weight: 600;
+    }
+
+    .form-title {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 17px;
+        font-weight: 600;
+        color: #c9d1d9;
+    }
+
+    .form-cursor {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 17px;
+        color: #9fef00;
+        animation: blink 1s step-end infinite;
+    }
+
+    @@keyframes blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0; }
+    }
+
+    .form-subtitle {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: #6e7681;
+    }
+
+    /* ── Error banner ── */
+    .error-banner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 28px;
+        background: rgba(255,62,62,0.08);
+        border-bottom: 1px solid rgba(255,62,62,0.2);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: #ff3e3e;
+    }
+    .error-icon { flex-shrink: 0; }
+
+    /* ── Form body ── */
+    .form-body {
+        padding: 24px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    /* ── Step bar ── */
+    .step-bar {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin-bottom: 4px;
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .step-num {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 1px solid #21262d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+        transition: all 0.3s;
+    }
+
+    .step.active .step-num {
+        border-color: #9fef00;
+        color: #9fef00;
+        background: rgba(159,239,0,0.08);
+    }
+
+    .step.done .step-num {
+        border-color: #9fef00;
+        background: #9fef00;
+        color: #0d1117;
+        font-weight: 700;
+    }
+
+    .step-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+        letter-spacing: 1px;
+        transition: color 0.3s;
+    }
+
+    .step.active .step-label { color: #9fef00; }
+    .step.done .step-label { color: #6e7681; }
+
+    .step-line {
+        flex: 1;
+        height: 1px;
+        background: #21262d;
+        margin: 0 12px;
+        transition: background 0.3s;
+    }
+
+    .step-line.filled { background: #9fef00; }
+
+    /* ── Step content ── */
+    .step-content {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        animation: stepIn 0.3s ease both;
+    }
+
+    @@keyframes stepIn {
+        from { opacity: 0; transform: translateX(12px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Field groups ── */
+    .field-group { display: flex; flex-direction: column; gap: 7px; }
+
+    .field-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        letter-spacing: 2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .label-index { color: #9fef00; opacity: 0.6; }
+
+    .input-wrapper {
+        display: flex;
+        align-items: center;
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        overflow: hidden;
+    }
+
+    .input-wrapper.focused {
+        border-color: #9fef00;
+        box-shadow: 0 0 0 3px rgba(159,239,0,0.08);
+    }
+
+    .input-wrapper.valid-state { border-color: rgba(159,239,0,0.4); }
+    .input-wrapper.invalid-state { border-color: rgba(255,62,62,0.4); }
+
+    .input-prefix {
+        padding: 0 12px;
+        font-size: 13px;
+        color: #4a5160;
+        border-right: 1px solid #21262d;
+        flex-shrink: 0;
+        user-select: none;
+        line-height: 44px;
+    }
+
+    .field-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        padding: 11px 14px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+        color: #c9d1d9;
+        caret-color: #9fef00;
+    }
+
+    .field-input::placeholder { color: #4a5160; }
+    .field-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .input-status {
+        padding: 0 12px;
+        font-size: 14px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .input-status.valid  { color: #9fef00; }
+    .input-status.invalid { color: #ff3e3e; }
+
+    .field-error {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #ff3e3e;
+    }
+
+    .field-hint {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #4a5160;
+    }
+
+    .field-hint.valid { color: #9fef00; }
+
+    .toggle-pass {
+        background: none;
+        border: none;
+        border-left: 1px solid #21262d;
+        padding: 0 12px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #4a5160;
+        cursor: pointer;
+        letter-spacing: 1px;
+        height: 100%;
+        transition: color 0.15s;
+    }
+    .toggle-pass:hover { color: #9fef00; }
+
+    /* ── Password strength ── */
+    .strength-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 2px;
+    }
+
+    .strength-track {
+        flex: 1;
+        height: 3px;
+        background: #21262d;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .strength-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.3s ease;
+    }
+
+    .strength-fill.s-weak   { background: #ff3e3e; }
+    .strength-fill.s-medium { background: #ffa500; }
+    .strength-fill.s-strong { background: #9fef00; }
+
+    .strength-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 1px;
+        flex-shrink: 0;
+    }
+
+    .s-text-weak   { color: #ff3e3e; }
+    .s-text-medium { color: #ffa500; }
+    .s-text-strong { color: #9fef00; }
+
+    /* ── Terms row ── */
+    .terms-row { padding: 4px 0; }
+
+    .checkbox-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        cursor: pointer;
+    }
+
+    .checkbox-input { display: none; }
+
+    .checkbox-box {
+        width: 16px;
+        height: 16px;
+        border: 1px solid #21262d;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        flex-shrink: 0;
+        margin-top: 1px;
+        transition: all 0.15s;
+        background: #0d1117;
+    }
+
+    .checkbox-box.checked {
+        background: #9fef00;
+        border-color: #9fef00;
+        color: #0d1117;
+    }
+
+    .terms-text {
+        font-size: 12px;
+        color: #6e7681;
+        line-height: 1.5;
+    }
+
+    /* ── Buttons ── */
+    .next-btn {
+        width: 100%;
+        padding: 13px 20px;
+        background: #9fef00;
+        border: none;
+        border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        font-weight: 600;
+        color: #0d1117;
+        letter-spacing: 2px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+
+    .next-btn:hover:not(:disabled) {
+        opacity: 0.92;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 20px rgba(159,239,0,0.3);
+    }
+
+    .next-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .step2-btns {
+        display: flex;
+        gap: 10px;
+    }
+
+    .back-step-btn {
+        padding: 13px 18px;
+        background: transparent;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #6e7681;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: border-color 0.15s, color 0.15s;
+        flex-shrink: 0;
+    }
+    .back-step-btn:hover { border-color: #6e7681; color: #c9d1d9; }
+
+    .submit-btn {
+        flex: 1;
+        padding: 13px 16px;
+        background: #9fef00;
+        border: none;
+        border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 600;
+        color: #0d1117;
+        letter-spacing: 1.5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+        opacity: 0.92;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 20px rgba(159,239,0,0.3);
+    }
+
+    .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .submit-btn.loading { background: #21262d; color: #6e7681; }
+
+    .btn-arrow { font-size: 14px; }
+
+    .btn-spinner {
+        width: 13px;
+        height: 13px;
+        border: 2px solid #4a5160;
+        border-top-color: #9fef00;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer links ── */
+    .form-footer-links {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding-top: 4px;
+        border-top: 1px solid #21262d;
+        margin-top: 4px;
+        padding-top: 16px;
+    }
+
+    .footer-text { font-size: 13px; color: #6e7681; }
+
+    .footer-link {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: #9fef00;
+        text-decoration: none;
+        transition: opacity 0.15s;
+    }
+    .footer-link:hover { opacity: 0.75; }
+
+    /* ── Form meta ── */
+    .form-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+        letter-spacing: 1px;
+        animation: fadeInUp 0.6s ease 0.2s both;
+    }
+
+    .meta-item { display: flex; align-items: center; gap: 5px; }
+
+    .meta-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    .meta-dot.green {
+        background: #9fef00;
+        box-shadow: 0 0 6px rgba(159,239,0,0.6);
+        animation: blink 2s ease-in-out infinite;
+    }
+
+    .meta-sep { color: #21262d; }
+
+    /* ── Right panel ── */
+    .right-panel {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 56px;
+        position: relative;
+        z-index: 3;
+    }
+
+    .right-content {
+        max-width: 400px;
+        width: 100%;
+        animation: fadeInRight 0.7s ease 0.15s both;
+    }
+
+    @@keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(24px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .brand-block {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 36px;
+    }
+
+    .hex-icon {
+        font-size: 28px;
+        color: #9fef00;
+        filter: drop-shadow(0 0 10px rgba(159,239,0,0.5));
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-glow {
+        0%, 100% { filter: drop-shadow(0 0 8px rgba(159,239,0,0.5)); }
+        50%       { filter: drop-shadow(0 0 18px rgba(159,239,0,0.9)); }
+    }
+
+    .brand-name {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 18px;
+        font-weight: 600;
+        color: #c9d1d9;
+        letter-spacing: 1px;
+    }
+    .brand-pk { color: #9fef00; }
+
+    .right-heading {
+        font-size: 38px;
+        font-weight: 700;
+        color: #e6edf3;
+        line-height: 1.15;
+        letter-spacing: -0.5px;
+        margin-bottom: 36px;
+    }
+
+    /* ── Roles list ── */
+    .roles-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin-bottom: 32px;
+    }
+
+    .role-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px;
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 6px;
+        transition: border-color 0.2s;
+    }
+    .role-card:hover { border-color: #9fef00; }
+
+    .role-connector {
+        width: 1px;
+        height: 16px;
+        background: #21262d;
+        margin-left: 27px;
+    }
+
+    .role-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .role-icon.public   { background: rgba(110,118,129,0.15); border: 1px solid rgba(110,118,129,0.2); }
+    .role-icon.reporter { background: rgba(159,239,0,0.1);   border: 1px solid rgba(159,239,0,0.2); }
+    .role-icon.admin    { background: rgba(255,165,0,0.1);   border: 1px solid rgba(255,165,0,0.2); }
+
+    .role-info { flex: 1; }
+
+    .role-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: #c9d1d9;
+        margin-bottom: 2px;
+    }
+
+    .role-desc {
+        font-size: 12px;
+        color: #6e7681;
+        line-height: 1.4;
+    }
+
+    .role-badge {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        padding: 3px 7px;
+        border-radius: 3px;
+        flex-shrink: 0;
+    }
+
+    .role-badge.default { background: rgba(110,118,129,0.15); color: #6e7681; border: 1px solid #21262d; }
+    .role-badge.request { background: rgba(159,239,0,0.1);   color: #9fef00; border: 1px solid rgba(159,239,0,0.3); }
+    .role-badge.invite  { background: rgba(255,165,0,0.1);   color: #ffa500; border: 1px solid rgba(255,165,0,0.3); }
+
+    /* ── Right footnote ── */
+    .right-footnote {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 12px;
+        color: #4a5160;
+        line-height: 1.6;
+    }
+
+    .fn-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #4a5160;
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+    .divider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.divider-line {
+    flex: 1;
+    height: 1px;
+    background: #21262d;
+}
+
+.divider-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: #4a5160;
+    letter-spacing: 2px;
+    flex-shrink: 0;
+}
+
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 20px;
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: #c9d1d9;
+    text-decoration: none;
+    letter-spacing: 1.5px;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.google-btn:hover {
+    border-color: #6e7681;
+    background: #161b22;
+}
+
+.g-icon { flex-shrink: 0; }
+    /* ── Responsive ── */
+    @@media (max-width: 960px) {
+        .right-panel { display: none; }
+        .left-panel { width: 100%; border-right: none; }
+    }
+.next-btn.btn-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.next-btn.btn-disabled:hover {
+    opacity: 0.35;
+    transform: none;
+    box-shadow: none;
+}
+</style>
+
+@code {
+    private string _username = string.Empty;
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string _confirmPassword = string.Empty;
+    private string _errorMessage = string.Empty;
+    private bool _loading = false;
+    private bool _shake = false;
+    private bool _showPassword = false;
+    private bool _showConfirm = false;
+    private bool _termsAccepted = false;
+    private bool _usernameFocused = false;
+    private bool _emailFocused = false;
+    private bool _passFocused = false;
+    private bool _confirmFocused = false;
+    private string _usernameError = string.Empty;
+    private string _emailError = string.Empty;
+    private int _currentStep = 1;
+
+    // ── Validation ──
+
+    private bool IsUsernameValid()
+    {
+        if (string.IsNullOrWhiteSpace(_username)) return false;
+        return _username.Length >= 3
+            && _username.Length <= 30
+            && System.Text.RegularExpressions.Regex.IsMatch(_username, @"^[a-zA-Z0-9_]+$");
+    }
+
+    private bool IsEmailValid()
+    {
+        if (string.IsNullOrWhiteSpace(_email)) return false;
+        return _email.Contains('@') && _email.Contains('.');
+    }
+
+    private void ValidateUsername()
+{
+    _usernameFocused = false;
+    if (string.IsNullOrWhiteSpace(_username)) { _usernameError = string.Empty; return; }
+    if (_username.Length < 3) { _usernameError = "Minimum 3 characters required"; return; }
+    if (_username.Length > 30) { _usernameError = "Maximum 30 characters allowed"; return; }
+    if (!System.Text.RegularExpressions.Regex.IsMatch(_username, @"^[a-zA-Z0-9_]+$"))
+    { _usernameError = "Letters, numbers, and underscores only"; return; }
+    _usernameError = string.Empty;
+    StateHasChanged();
+}
+
+    private void ValidateEmail()
+{
+    _emailFocused = false;
+    if (string.IsNullOrWhiteSpace(_email)) { _emailError = string.Empty; return; }
+    if (!IsEmailValid()) { _emailError = "Enter a valid email address"; return; }
+    _emailError = string.Empty;
+    StateHasChanged();
+}
+
+    private string GetUsernameState()
+    {
+        if (string.IsNullOrEmpty(_username)) return string.Empty;
+        return IsUsernameValid() ? "valid-state" : "invalid-state";
+    }
+
+    private string GetEmailState()
+    {
+        if (string.IsNullOrEmpty(_email)) return string.Empty;
+        return IsEmailValid() ? "valid-state" : "invalid-state";
+    }
+
+    private string GetConfirmState()
+    {
+        if (string.IsNullOrEmpty(_confirmPassword)) return string.Empty;
+        return _password == _confirmPassword ? "valid-state" : "invalid-state";
+    }
+
+    private bool CanGoToStep2()
+{
+    if (string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_email))
+        return false;
+    if (_username.Length < 3 || _username.Length > 30)
+        return false;
+    if (!System.Text.RegularExpressions.Regex.IsMatch(_username, @"^[a-zA-Z0-9_]+$"))
+        return false;
+    if (!_email.Contains('@') || !_email.Contains('.'))
+        return false;
+    return true;
+}
+
+    private bool CanSubmit()
+        => CanGoToStep2()
+           && _password.Length >= 8
+           && _password == _confirmPassword
+           && _termsAccepted;
+
+    private void GoToStep2()
+{
+    ValidateUsername();
+    ValidateEmail();
+    if (!CanGoToStep2()) return;
+    _currentStep = 2;
+}
+
+    // ── Password strength ──
+
+    private record StrengthResult(string Level, int Percent, string Label);
+
+    private StrengthResult GetPasswordStrength()
+    {
+        var p = _password;
+        int score = 0;
+        if (p.Length >= 8)  score++;
+        if (p.Length >= 12) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(p, @"[A-Z]")) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(p, @"[0-9]")) score++;
+        if (System.Text.RegularExpressions.Regex.IsMatch(p, @"[^a-zA-Z0-9]")) score++;
+
+        return score switch
+        {
+            <= 2 => new("weak",   33,  "WEAK"),
+            <= 3 => new("medium", 66,  "MEDIUM"),
+            _    => new("strong", 100, "STRONG")
+        };
+    }
+
+    // ── Submit ──
+
+    private async Task HandleRegister()
+    {
+        _errorMessage = string.Empty;
+        if (!CanSubmit()) return;
+
+        _loading = true;
+        StateHasChanged();
+
+        var error = await AuthService.RegisterAsync(_username, _email, _password);
+
+        if (error == null)
+        {
+            // Redirect to login with success message
+            Navigation.NavigateTo("/login?registered=1");
+        }
+        else
+        {
+            _loading = false;
+            await TriggerShake(error);
+        }
+    }
+    private string NextBtnClass() => 
+    CanGoToStep2() ? "next-btn" : "next-btn btn-disabled";
+
+    private async Task TriggerShake(string message)
+    {
+        _errorMessage = message;
+        _shake = true;
+        StateHasChanged();
+        await Task.Delay(450);
+        _shake = false;
+        StateHasChanged();
+    }
+}

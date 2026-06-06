@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ThreatCastPK.API/ThreatCastPK.API.csproj" />
+  <Project Path="ThreatCastPK.Database/ThreatCastPK.Database.csproj" />
+  <Project Path="ThreatCastPK.ML/ThreatCastPK.ML.csproj" />
+  <Project Path="ThreatCastPK.Web/ThreatCastPK.Web.csproj" />
+</Solution>
