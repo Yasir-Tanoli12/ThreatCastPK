@@ -84,3 +84,14 @@ D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\obj\Debug\net10.0\refint\ThreatCast
 D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\obj\Debug\net10.0\ThreatCastPK.Web.pdb
 D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\obj\Debug\net10.0\ThreatCastPK.Web.genruntimeconfig.cache
 D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\obj\Debug\net10.0\ref\ThreatCastPK.Web.dll
+<<<<<<< HEAD
+=======
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\bin\Debug\net10.0\Microsoft.AspNetCore.Http.Connections.Client.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\bin\Debug\net10.0\Microsoft.AspNetCore.SignalR.Client.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\bin\Debug\net10.0\Microsoft.AspNetCore.SignalR.Client.Core.dll
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\obj\Debug\net10.0\ThreatCastPK.Web.csproj.AssemblyReference.cache
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\obj\Debug\net10.0\ThreatCa.C93EC60E.Up2Date
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\obj\Debug\net10.0\compressed\qolve13sgz-{0}-cb5jvd2i5j-cb5jvd2i5j.gz
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\obj\Debug\net10.0\compressed\h9icz5xs4s-{0}-0zduhab9mx-0zduhab9mx.gz
+D:\CODING\Blazor\ThreatCast\ThreatCastPK.Web\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt
+>>>>>>> haadi-cyber

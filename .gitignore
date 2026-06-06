@@ -2,5 +2,10 @@
 **/obj/
 *.user
 .vs/
+<<<<<<< HEAD
 **/bin/
 **/obj/
+=======
+DataProtection-Keys/
+ThreatCastPK.Web/
+>>>>>>> haadi-cyber

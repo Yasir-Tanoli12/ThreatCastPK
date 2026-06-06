@@ -13,7 +13,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ThreatCastPK.ML")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
+<<<<<<< HEAD
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7dffad88ddbbdfb94e7f7b61d653a66447ca7471")]
+=======
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f40b3a5fadaba8e5c8477b401e3e3ce6d81b54e7")]
+>>>>>>> haadi-cyber
 [assembly: System.Reflection.AssemblyProductAttribute("ThreatCastPK.ML")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ThreatCastPK.ML")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

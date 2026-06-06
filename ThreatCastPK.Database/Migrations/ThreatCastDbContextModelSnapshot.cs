@@ -22,6 +22,81 @@ namespace ThreatCastPK.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+<<<<<<< HEAD
+=======
+            modelBuilder.Entity("SectorRiskScore", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("EventCount24h")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("LastCalculatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RiskLevel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SectorName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SectorName")
+                        .IsUnique();
+
+                    b.ToTable("SectorRiskScores");
+                });
+
+            modelBuilder.Entity("ThreatAdvisory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AffectedCities")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("AffectedSectors")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SeverityTag")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminId");
+
+                    b.ToTable("ThreatAdvisories");
+                });
+
+>>>>>>> haadi-cyber
             modelBuilder.Entity("ThreatCastPK.Database.Models.AlertSubscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -208,13 +283,27 @@ namespace ThreatCastPK.Database.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
+=======
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+>>>>>>> haadi-cyber
 
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
 
+<<<<<<< HEAD
+=======
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+>>>>>>> haadi-cyber
                     b.Property<DateTime?>("EditedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -224,16 +313,39 @@ namespace ThreatCastPK.Database.Migrations
                     b.Property<bool>("IsEdited")
                         .HasColumnType("boolean");
 
+<<<<<<< HEAD
                     b.Property<DateTime>("PostedAt")
                         .HasColumnType("timestamp with time zone");
+=======
+                    b.Property<Guid?>("ParentPostId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+>>>>>>> haadi-cyber
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+<<<<<<< HEAD
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
+=======
+                    b.Property<Guid?>("UserId1")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentPostId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId1");
+
+>>>>>>> haadi-cyber
                     b.ToTable("DiscussionPosts");
                 });
 
@@ -261,6 +373,107 @@ namespace ThreatCastPK.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Locations");
+<<<<<<< HEAD
+=======
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("3a3dce2d-0a91-4f9c-9c6d-4c0b0b3f2c01"),
+                            CityName = "Karachi",
+                            Latitude = 24.860700000000001,
+                            Longitude = 67.001099999999994,
+                            Province = "Sindh"
+                        },
+                        new
+                        {
+                            Id = new Guid("9a1d4570-4b62-4a6d-86bb-5c9d5c5a9c02"),
+                            CityName = "Lahore",
+                            Latitude = 31.520399999999999,
+                            Longitude = 74.358699999999999,
+                            Province = "Punjab"
+                        },
+                        new
+                        {
+                            Id = new Guid("b0c39e1f-ef6f-41b1-8d7b-3c5aa1f0e003"),
+                            CityName = "Islamabad",
+                            Latitude = 33.684399999999997,
+                            Longitude = 73.047899999999998,
+                            Province = "Islamabad Capital Territory"
+                        },
+                        new
+                        {
+                            Id = new Guid("d2a2c9a4-5a0a-4b82-a6e5-2f1b8c1c5004"),
+                            CityName = "Rawalpindi",
+                            Latitude = 33.565100000000001,
+                            Longitude = 73.016900000000007,
+                            Province = "Punjab"
+                        },
+                        new
+                        {
+                            Id = new Guid("e8b6c5f4-1c9a-4c12-9d6a-2b8f25d6e005"),
+                            CityName = "Faisalabad",
+                            Latitude = 31.450399999999998,
+                            Longitude = 73.135000000000005,
+                            Province = "Punjab"
+                        },
+                        new
+                        {
+                            Id = new Guid("7f78f3a4-58a6-4cf1-8f2b-9e0f2c3a6006"),
+                            CityName = "Multan",
+                            Latitude = 30.157499999999999,
+                            Longitude = 71.524900000000002,
+                            Province = "Punjab"
+                        },
+                        new
+                        {
+                            Id = new Guid("2c72a6e8-1a6e-4ec8-8c3f-1a8b5c7a7007"),
+                            CityName = "Peshawar",
+                            Latitude = 34.015099999999997,
+                            Longitude = 71.580500000000001,
+                            Province = "Khyber Pakhtunkhwa"
+                        },
+                        new
+                        {
+                            Id = new Guid("51c8a5d6-65d2-44d6-a1e9-5f3d2a8b8008"),
+                            CityName = "Quetta",
+                            Latitude = 30.1798,
+                            Longitude = 66.974999999999994,
+                            Province = "Balochistan"
+                        },
+                        new
+                        {
+                            Id = new Guid("f4a86b77-0d9f-4c76-9f2f-9b7e8b6c9009"),
+                            CityName = "Hyderabad",
+                            Latitude = 25.396000000000001,
+                            Longitude = 68.357799999999997,
+                            Province = "Sindh"
+                        },
+                        new
+                        {
+                            Id = new Guid("c9a7e2b1-6e3a-4e69-8b2f-6d6c7a7f0010"),
+                            CityName = "Gujranwala",
+                            Latitude = 32.1877,
+                            Longitude = 74.194500000000005,
+                            Province = "Punjab"
+                        },
+                        new
+                        {
+                            Id = new Guid("6d1c9f83-4c4c-4f8a-8ad9-1c2d3e4f1011"),
+                            CityName = "Sialkot",
+                            Latitude = 32.494500000000002,
+                            Longitude = 74.522900000000007,
+                            Province = "Punjab"
+                        },
+                        new
+                        {
+                            Id = new Guid("ab93c7b8-1f2c-4a66-9e2a-7c8d9e0f1212"),
+                            CityName = "Abbottabad",
+                            Latitude = 34.146299999999997,
+                            Longitude = 73.211699999999993,
+                            Province = "Khyber Pakhtunkhwa"
+                        });
+>>>>>>> haadi-cyber
                 });
 
             modelBuilder.Entity("ThreatCastPK.Database.Models.Notification", b =>
@@ -299,6 +512,7 @@ namespace ThreatCastPK.Database.Migrations
                     b.ToTable("Notifications");
                 });
 
+<<<<<<< HEAD
             modelBuilder.Entity("ThreatCastPK.Database.Models.SectorRiskScore", b =>
                 {
                     b.Property<Guid>("Id")
@@ -367,6 +581,8 @@ namespace ThreatCastPK.Database.Migrations
                     b.ToTable("ThreatAdvisories");
                 });
 
+=======
+>>>>>>> haadi-cyber
             modelBuilder.Entity("ThreatCastPK.Database.Models.ThreatCampaign", b =>
                 {
                     b.Property<Guid>("Id")
@@ -449,6 +665,20 @@ namespace ThreatCastPK.Database.Migrations
                     b.ToTable("Users");
                 });
 
+<<<<<<< HEAD
+=======
+            modelBuilder.Entity("ThreatAdvisory", b =>
+                {
+                    b.HasOne("ThreatCastPK.Database.Models.User", "Admin")
+                        .WithMany("ThreatAdvisories")
+                        .HasForeignKey("AdminId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Admin");
+                });
+
+>>>>>>> haadi-cyber
             modelBuilder.Entity("ThreatCastPK.Database.Models.AlertSubscription", b =>
                 {
                     b.HasOne("ThreatCastPK.Database.Models.User", "User")
@@ -517,12 +747,32 @@ namespace ThreatCastPK.Database.Migrations
 
             modelBuilder.Entity("ThreatCastPK.Database.Models.DiscussionPost", b =>
                 {
+<<<<<<< HEAD
                     b.HasOne("ThreatCastPK.Database.Models.User", "User")
                         .WithMany("DiscussionPosts")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+=======
+                    b.HasOne("ThreatCastPK.Database.Models.DiscussionPost", "ParentPost")
+                        .WithMany()
+                        .HasForeignKey("ParentPostId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ThreatCastPK.Database.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ThreatCastPK.Database.Models.User", null)
+                        .WithMany("DiscussionPosts")
+                        .HasForeignKey("UserId1");
+
+                    b.Navigation("ParentPost");
+
+>>>>>>> haadi-cyber
                     b.Navigation("User");
                 });
 
@@ -545,6 +795,7 @@ namespace ThreatCastPK.Database.Migrations
                     b.Navigation("User");
                 });
 
+<<<<<<< HEAD
             modelBuilder.Entity("ThreatCastPK.Database.Models.ThreatAdvisory", b =>
                 {
                     b.HasOne("ThreatCastPK.Database.Models.User", "Admin")
@@ -556,6 +807,8 @@ namespace ThreatCastPK.Database.Migrations
                     b.Navigation("Admin");
                 });
 
+=======
+>>>>>>> haadi-cyber
             modelBuilder.Entity("ThreatCastPK.Database.Models.AlertSubscription", b =>
                 {
                     b.Navigation("Notifications");

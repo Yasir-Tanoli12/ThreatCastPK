@@ -1,0 +1,884 @@
+@* ThreatCastPK.Web/Components/Pages/Login.razor *@
+@page "/login"
+@rendermode InteractiveServer
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+
+<PageTitle>Sign In — ThreatCast PK</PageTitle>
+
+@* Google Fonts *@
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<div class="login-root">
+
+    @* Animated grid background *@
+    <div class="bg-grid"></div>
+
+    @* Floating scan line *@
+    <div class="scan-line"></div>
+
+    @* Corner decorations *@
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    @* Left panel — branding *@
+    <div class="left-panel">
+        <div class="left-content">
+
+            <div class="brand-block">
+                <div class="hex-icon">◈</div>
+                <div class="brand-name">ThreatCast<span class="brand-pk">PK</span></div>
+            </div>
+
+            <div class="tagline-block">
+                <div class="tagline-label">// LIVE INTELLIGENCE PLATFORM</div>
+                <h1 class="tagline-heading">Pakistan's Cyber<br />Threat Command<br />Center</h1>
+                <p class="tagline-sub">
+                    Real-time crowdsourced attack intelligence.<br />
+                    Community-driven. AI-verified. Always live.
+                </p>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-value">24/7</span>
+                    <span class="stat-label">Monitoring</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-value">12</span>
+                    <span class="stat-label">Cities</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-value">7</span>
+                    <span class="stat-label">Sectors</span>
+                </div>
+            </div>
+
+            @* Animated threat ticker *@
+            <div class="ticker-box">
+                <div class="ticker-header">
+                    <span class="ticker-dot"></span>
+                    <span class="ticker-label">LIVE FEED</span>
+                </div>
+                <div class="ticker-items">
+                    <div class="ticker-item">
+                        <span class="ti-type ti-ddos">DDoS</span>
+                        <span class="ti-city">Karachi</span>
+                        <span class="ti-sector">Banking</span>
+                        <span class="ti-time">2m ago</span>
+                    </div>
+                    <div class="ticker-item">
+                        <span class="ti-type ti-phish">Phishing</span>
+                        <span class="ti-city">Lahore</span>
+                        <span class="ti-sector">Education</span>
+                        <span class="ti-time">11m ago</span>
+                    </div>
+                    <div class="ticker-item">
+                        <span class="ti-type ti-ransom">Ransomware</span>
+                        <span class="ti-city">Islamabad</span>
+                        <span class="ti-sector">Government</span>
+                        <span class="ti-time">34m ago</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    @* Right panel — login form *@
+    <div class="right-panel">
+        <div class="form-card @(_shake ? "shake" : "")">
+
+            <div class="form-header">
+                <div class="form-title-row">
+                    <span class="form-prompt">$</span>
+                    <h2 class="form-title">auth.login</h2>
+                    <span class="form-cursor">_</span>
+                </div>
+                <p class="form-subtitle">Access the intelligence dashboard</p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="error-banner">
+                    <span class="error-icon">⚠</span>
+                    <span>@_errorMessage</span>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_successMessage))
+            {
+                <div class="success-banner">
+                    <span class="success-icon">✓</span>
+                    <span>@_successMessage</span>
+                </div>
+            }
+
+            <div class="form-body">
+
+                <div class="field-group">
+                    <label class="field-label">
+                        <span class="label-index">01</span>
+                        EMAIL_ADDRESS
+                    </label>
+                    <div class="input-wrapper @(_emailFocused ? "focused" : "")">
+                        <span class="input-prefix">@@</span>
+                        <input
+                            type="email"
+                            class="field-input"
+                            placeholder="operator@domain.pk"
+                            @bind="_email"
+                            @bind:event="oninput"
+                            @onfocus="() => _emailFocused = true"
+                            @onblur="() => _emailFocused = false"
+                            disabled="@_loading"
+                            @onkeydown="HandleKeyDown" />
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">
+                        <span class="label-index">02</span>
+                        PASSWORD
+                    </label>
+                    <div class="input-wrapper @(_passFocused ? "focused" : "")">
+                        <span class="input-prefix">🔒</span>
+                        <input
+                            type="@(_showPassword ? "text" : "password")"
+                            class="field-input"
+                            placeholder="••••••••••••"
+                            @bind="_password"
+                            @bind:event="oninput"
+                            @onfocus="() => _passFocused = true"
+                            @onblur="() => _passFocused = false"
+                            disabled="@_loading"
+                            @onkeydown="HandleKeyDown" />
+                        <button type="button" class="toggle-pass"
+                                @onclick="() => _showPassword = !_showPassword">
+                            @(_showPassword ? "HIDE" : "SHOW")
+                        </button>
+                    </div>
+                </div>
+
+                <button class="submit-btn @(_loading ? "loading" : "")"
+                        @onclick="HandleLogin"
+                        disabled="@_loading">
+                    @if (_loading)
+                    {
+                        <span class="btn-spinner"></span>
+                        <span>AUTHENTICATING...</span>
+                    }
+                    else
+                    {
+                        <span class="btn-arrow">→</span>
+                        <span>AUTHENTICATE</span>
+                    }
+                </button>
+                <div class="divider-row">
+    <div class="divider-line"></div>
+    <span class="divider-text">OR</span>
+    <div class="divider-line"></div>
+</div>
+
+<a href="https://localhost:7262/api/auth/google-login" class="google-btn">
+    <svg class="g-icon" viewBox="0 0 24 24" width="18" height="18">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    </svg>
+    <span>CONTINUE WITH GOOGLE</span>
+</a>
+                <div class="form-footer-links">
+                    <span class="footer-text">No account?</span>
+                    <a href="/register" class="footer-link">Register as operator →</a>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="form-meta">
+            <span class="meta-item">
+                <span class="meta-dot green"></span>
+                API ONLINE
+            </span>
+            <span class="meta-sep">//</span>
+            <span class="meta-item">JWT · BCrypt</span>
+            <span class="meta-sep">//</span>
+            <span class="meta-item">TLS SECURED</span>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .login-root {
+        min-height: 100vh;
+        display: flex;
+        background: #0d1117;
+        position: relative;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* ── Animated grid background ── */
+    .bg-grid {
+        position: fixed;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(159,239,0,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(159,239,0,0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* ── Scan line ── */
+    .scan-line {
+        position: fixed;
+        top: -2px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #9fef00, transparent);
+        animation: scan 6s linear infinite;
+        opacity: 0.4;
+        z-index: 1;
+        pointer-events: none;
+    }
+    @@keyframes scan {
+        0%   { top: -2px; }
+        100% { top: 100vh; }
+    }
+
+    /* ── Corner decorations ── */
+    .corner {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .corner-tl { top: 16px; left: 16px; border-top: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-tr { top: 16px; right: 16px; border-top: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+    .corner-bl { bottom: 16px; left: 16px; border-bottom: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-br { bottom: 16px; right: 16px; border-bottom: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+
+    /* ── Left panel ── */
+    .left-panel {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 48px;
+        position: relative;
+        z-index: 3;
+        border-right: 1px solid #21262d;
+    }
+
+    .left-content {
+        max-width: 440px;
+        width: 100%;
+        animation: fadeInLeft 0.7s ease both;
+    }
+
+    @@keyframes fadeInLeft {
+        from { opacity: 0; transform: translateX(-24px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .brand-block {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 48px;
+    }
+
+    .hex-icon {
+        font-size: 32px;
+        color: #9fef00;
+        filter: drop-shadow(0 0 12px rgba(159,239,0,0.6));
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-glow {
+        0%, 100% { filter: drop-shadow(0 0 8px rgba(159,239,0,0.5)); }
+        50%       { filter: drop-shadow(0 0 20px rgba(159,239,0,0.9)); }
+    }
+
+    .brand-name {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 20px;
+        font-weight: 600;
+        color: #c9d1d9;
+        letter-spacing: 1px;
+    }
+    .brand-pk { color: #9fef00; }
+
+    .tagline-block { margin-bottom: 40px; }
+
+    .tagline-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #9fef00;
+        letter-spacing: 2px;
+        margin-bottom: 16px;
+        opacity: 0.8;
+    }
+
+    .tagline-heading {
+        font-size: 36px;
+        font-weight: 700;
+        color: #e6edf3;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+        margin-bottom: 16px;
+    }
+
+    .tagline-sub {
+        font-size: 14px;
+        color: #6e7681;
+        line-height: 1.7;
+    }
+
+    .stats-row {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 40px;
+        padding: 20px 0;
+        border-top: 1px solid #21262d;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .stat-value {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 22px;
+        font-weight: 600;
+        color: #9fef00;
+    }
+
+    .stat-label {
+        font-size: 11px;
+        color: #6e7681;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .stat-divider {
+        width: 1px;
+        height: 32px;
+        background: #21262d;
+    }
+
+    /* ── Ticker ── */
+    .ticker-box {
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .ticker-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-bottom: 1px solid #21262d;
+        background: #161b22;
+    }
+
+    .ticker-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #9fef00;
+        animation: blink 1.2s ease-in-out infinite;
+    }
+
+    @@keyframes blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.2; }
+    }
+
+    .ticker-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        letter-spacing: 2px;
+    }
+
+    .ticker-items { padding: 4px 0; }
+
+    .ticker-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 16px;
+        border-bottom: 1px solid #161b22;
+        animation: tickerSlide 0.4s ease both;
+    }
+
+    .ticker-item:last-child { border-bottom: none; }
+
+    @@keyframes tickerSlide {
+        from { opacity: 0; transform: translateX(-8px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .ti-type {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 3px;
+        min-width: 90px;
+        text-align: center;
+    }
+    .ti-ddos   { background: rgba(0,200,255,0.1); color: #00c8ff; border: 1px solid rgba(0,200,255,0.2); }
+    .ti-phish  { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
+    .ti-ransom { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid rgba(255,62,62,0.2); }
+
+    .ti-city {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: #c9d1d9;
+        flex: 1;
+    }
+
+    .ti-sector {
+        font-size: 11px;
+        color: #6e7681;
+    }
+
+    .ti-time {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+        flex-shrink: 0;
+    }
+
+    /* ── Right panel ── */
+    .right-panel {
+        width: 480px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 48px;
+        position: relative;
+        z-index: 3;
+    }
+
+    /* ── Form card ── */
+    .form-card {
+        width: 100%;
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        overflow: hidden;
+        animation: fadeInRight 0.7s ease 0.1s both;
+    }
+
+    @@keyframes fadeInRight {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .shake {
+        animation: shake 0.4s ease !important;
+    }
+
+    @@keyframes shake {
+        0%,100% { transform: translateX(0); }
+        20%     { transform: translateX(-8px); }
+        40%     { transform: translateX(8px); }
+        60%     { transform: translateX(-5px); }
+        80%     { transform: translateX(5px); }
+    }
+
+    /* ── Form header ── */
+    .form-header {
+        padding: 24px 28px 20px;
+        border-bottom: 1px solid #21262d;
+        background: #0d1117;
+    }
+
+    .form-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .form-prompt {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 18px;
+        color: #9fef00;
+        font-weight: 600;
+    }
+
+    .form-title {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 18px;
+        font-weight: 600;
+        color: #c9d1d9;
+    }
+
+    .form-cursor {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 18px;
+        color: #9fef00;
+        animation: blink 1s step-end infinite;
+    }
+
+    .form-subtitle {
+        font-size: 13px;
+        color: #6e7681;
+        font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* ── Banners ── */
+    .error-banner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        padding: 12px 28px;
+        background: rgba(255,62,62,0.08);
+        border-bottom: 1px solid rgba(255,62,62,0.2);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: #ff3e3e;
+    }
+
+    .error-icon { font-size: 14px; flex-shrink: 0; }
+
+    .success-banner {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        padding: 12px 28px;
+        background: rgba(159,239,0,0.08);
+        border-bottom: 1px solid rgba(159,239,0,0.2);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: #9fef00;
+    }
+
+    .success-icon { flex-shrink: 0; }
+
+    /* ── Form body ── */
+    .form-body {
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .field-group { display: flex; flex-direction: column; gap: 8px; }
+
+    .field-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        letter-spacing: 2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .label-index {
+        color: #9fef00;
+        opacity: 0.6;
+    }
+
+    .input-wrapper {
+        display: flex;
+        align-items: center;
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        overflow: hidden;
+    }
+
+    .input-wrapper.focused {
+        border-color: #9fef00;
+        box-shadow: 0 0 0 3px rgba(159,239,0,0.08);
+    }
+
+    .input-prefix {
+        padding: 0 12px;
+        font-size: 14px;
+        color: #4a5160;
+        border-right: 1px solid #21262d;
+        flex-shrink: 0;
+        user-select: none;
+        line-height: 44px;
+    }
+
+    .field-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        padding: 12px 14px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+        color: #c9d1d9;
+        caret-color: #9fef00;
+    }
+
+    .field-input::placeholder { color: #4a5160; }
+
+    .field-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .toggle-pass {
+        background: none;
+        border: none;
+        border-left: 1px solid #21262d;
+        padding: 0 12px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #4a5160;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: color 0.15s;
+        height: 100%;
+    }
+
+    .toggle-pass:hover { color: #9fef00; }
+
+    /* ── Submit button ── */
+    .submit-btn {
+        width: 100%;
+        padding: 14px 20px;
+        background: #9fef00;
+        border: none;
+        border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+        font-weight: 600;
+        color: #0d1117;
+        letter-spacing: 2px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+        margin-top: 4px;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+        opacity: 0.92;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 20px rgba(159,239,0,0.3);
+    }
+
+    .submit-btn:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .submit-btn.loading { background: #21262d; color: #6e7681; }
+
+    .btn-arrow { font-size: 16px; }
+
+    .btn-spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid #4a5160;
+        border-top-color: #9fef00;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ── Footer links ── */
+    .form-footer-links {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding-top: 4px;
+    }
+
+    .footer-text {
+        font-size: 13px;
+        color: #6e7681;
+    }
+
+    .footer-link {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: #9fef00;
+        text-decoration: none;
+        transition: opacity 0.15s;
+    }
+
+    .footer-link:hover { opacity: 0.75; }
+
+    /* ── Form meta bar ── */
+    .form-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 16px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+        letter-spacing: 1px;
+        animation: fadeInRight 0.7s ease 0.3s both;
+    }
+
+    .meta-item { display: flex; align-items: center; gap: 5px; }
+
+    .meta-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+
+    .meta-dot.green {
+        background: #9fef00;
+        box-shadow: 0 0 6px rgba(159,239,0,0.6);
+        animation: blink 2s ease-in-out infinite;
+    }
+
+    .meta-sep { color: #21262d; }
+
+    /* ── Responsive ── */
+    @@media (max-width: 900px) {
+        .left-panel { display: none; }
+        .right-panel { width: 100%; padding: 40px 24px; }
+    }
+    .divider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.divider-line {
+    flex: 1;
+    height: 1px;
+    background: #21262d;
+}
+
+.divider-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: #4a5160;
+    letter-spacing: 2px;
+    flex-shrink: 0;
+}
+
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 20px;
+    background: #0d1117;
+    border: 1px solid #21262d;
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: #c9d1d9;
+    text-decoration: none;
+    letter-spacing: 1.5px;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.google-btn:hover {
+    border-color: #6e7681;
+    background: #161b22;
+}
+
+.g-icon { flex-shrink: 0; }
+</style>
+
+@code {
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string _errorMessage = string.Empty;
+    private string _successMessage = string.Empty;
+    private bool _loading = false;
+    private bool _shake = false;
+    private bool _showPassword = false;
+    private bool _emailFocused = false;
+    private bool _passFocused = false;
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers
+            .ParseQuery(uri.Query);
+        if (query.TryGetValue("registered", out var val) && val == "1")
+            _successMessage = "Account created successfully. Please sign in.";
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await HandleLogin();
+    }
+
+    private async Task HandleLogin()
+    {
+        _errorMessage = string.Empty;
+        _successMessage = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
+        {
+            await TriggerShake("All fields are required.");
+            return;
+        }
+
+        _loading = true;
+        StateHasChanged();
+
+        var error = await AuthService.LoginAsync(_email, _password);
+
+        if (error == null)
+        {
+            // Redirect to home map on success
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            _loading = false;
+            await TriggerShake(error);
+        }
+    }
+
+    private async Task TriggerShake(string message)
+    {
+        _errorMessage = message;
+        _shake = true;
+        StateHasChanged();
+        await Task.Delay(450);
+        _shake = false;
+        StateHasChanged();
+    }
+}

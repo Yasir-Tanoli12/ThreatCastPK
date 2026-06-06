@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+<<<<<<< HEAD
+=======
+using ThreatCastPK.API.BackgroundServices;
+>>>>>>> haadi-cyber
 using ThreatCastPK.API.DTOs;
 using ThreatCastPK.API.Hubs;
 using ThreatCastPK.Database.Context;
@@ -18,9 +22,17 @@ namespace ThreatCastPK.API.Controllers
     {
         private readonly ThreatCastDbContext _context;
         private readonly IHubContext<ThreatCastHub> _hubContext;
+<<<<<<< HEAD
 
         public ModerationController(ThreatCastDbContext context, IHubContext<ThreatCastHub> hubContext)
         {
+=======
+        private readonly NotificationChannel _notificationChannel;
+
+        public ModerationController(ThreatCastDbContext context, IHubContext<ThreatCastHub> hubContext, NotificationChannel notificationChannel)
+        {
+            _notificationChannel = notificationChannel;
+>>>>>>> haadi-cyber
             _context = context;
             _hubContext = hubContext;
         }
@@ -70,6 +82,7 @@ namespace ThreatCastPK.API.Controllers
 
             // Find location or create one
             var location = await _context.Locations
+<<<<<<< HEAD
                 .FirstOrDefaultAsync(l => l.CityName == report.City);
 
             if (location == null)
@@ -84,6 +97,12 @@ namespace ThreatCastPK.API.Controllers
                 };
                 _context.Locations.Add(location);
             }
+=======
+                .FirstOrDefaultAsync(l => EF.Functions.ILike(l.CityName, report.City));
+
+            if (location == null)
+                return BadRequest(new { message = "City not recognized. Please seed locations before approving." });
+>>>>>>> haadi-cyber
 
             // Update report status
             report.Status = ReportStatus.Approved;
@@ -107,6 +126,18 @@ namespace ThreatCastPK.API.Controllers
             // Update reporter reputation
             report.Reporter.ReputationScore += 10;
 
+<<<<<<< HEAD
+=======
+            var notificationsToSend = await BuildNotificationsAsync(
+                attackEvent,
+                report.City,
+                report.AttackType,
+                report.TargetSector,
+                report.Severity);
+
+            _context.Notifications.AddRange(notificationsToSend.Select(n => n.Notification));
+
+>>>>>>> haadi-cyber
             // Write audit log
             var auditLog = new AuditLog
             {
@@ -121,6 +152,28 @@ namespace ThreatCastPK.API.Controllers
             _context.AuditLogs.Add(auditLog);
 
             await _context.SaveChangesAsync();
+<<<<<<< HEAD
+=======
+            await _notificationChannel.Writer.WriteAsync(new AttackEventNotificationPayload(
+    EventId: attackEvent.Id,
+    AttackType: attackEvent.AttackType.ToString(),
+    TargetSector: attackEvent.TargetSector.ToString(),
+    City: location.CityName,
+    Severity: attackEvent.Severity
+));
+
+            foreach (var notification in notificationsToSend)
+            {
+                await _hubContext.Clients.Group($"user_{notification.UserId}")
+                    .SendAsync("NewNotification", new
+                    {
+                        id = notification.Notification.Id,
+                        message = notification.Notification.Message,
+                        createdAt = notification.Notification.CreatedAt,
+                        notificationType = notification.Notification.NotificationType
+                    });
+            }
+>>>>>>> haadi-cyber
 
             // Broadcast new event to all connected clients via SignalR
             await _hubContext.Clients.Group("all_viewers").SendAsync("NewAttackEvent", new
@@ -138,6 +191,62 @@ namespace ThreatCastPK.API.Controllers
             return Ok(new { message = "Report approved. Attack event created and broadcast to map." });
         }
 
+<<<<<<< HEAD
+=======
+        private async Task<List<(Guid UserId, Notification Notification)>> BuildNotificationsAsync(
+            AttackEvent attackEvent,
+            string city,
+            AttackType attackType,
+            Sector sector,
+            int severity)
+        {
+            var subscriptions = await _context.AlertSubscriptions
+                .Where(s => s.IsActive && s.MinimumSeverity <= severity)
+                .ToListAsync();
+
+            var notifications = new List<(Guid UserId, Notification Notification)>();
+            var attackTypeValue = attackType.ToString();
+            var sectorValue = sector.ToString();
+
+            foreach (var subscription in subscriptions)
+            {
+                var attackTypes = ParseList(subscription.AttackTypes);
+                var cities = ParseList(subscription.Cities);
+                var sectors = ParseList(subscription.Sectors);
+
+                if (attackTypes.Count > 0 && !attackTypes.Contains(attackTypeValue))
+                    continue;
+
+                if (cities.Count > 0 && !cities.Contains(city))
+                    continue;
+
+                if (sectors.Count > 0 && !sectors.Contains(sectorValue))
+                    continue;
+
+                var notification = new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = subscription.UserId,
+                    SubscriptionId = subscription.Id,
+                    Message = $"New {attackTypeValue} attack in {city} targeting {sectorValue} (Severity {severity}).",
+                    NotificationType = "AttackEvent",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                notifications.Add((subscription.UserId, notification));
+            }
+
+            return notifications;
+        }
+
+        private static HashSet<string> ParseList(string value)
+        {
+            return value
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+
+>>>>>>> haadi-cyber
         // CRUD 3 — Reject Report
         [HttpPut("{id}/reject")]
         public async Task<IActionResult> RejectReport(Guid id, [FromBody] RejectReportDTO dto)

@@ -26,6 +26,22 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Layout/NavBar.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTmF2QmFyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/AdminUsers.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblVzZXJzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/Analytics.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBbmFseXRpY3MucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/AsminModeration.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBc21pbk1vZGVyYXRpb24ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3VudGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
@@ -34,12 +50,48 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFcnJvci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/Forum.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xGb3J1bS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/Glossary.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xHbG9zc2FyeS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/Home.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIb21lLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMb2dpbi5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/MyReports.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xNeVJlcG9ydHMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xOb3RGb3VuZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/Notifications.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xOb3RpZmljYXRpb25zLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/OAuthCallback.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xPQXV0aENhbGxiYWNrLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/Profile.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xQcm9maWxlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/Register.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xSZWdpc3Rlci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/SubmitReport.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdWJtaXRSZXBvcnQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Pages/Weather.razor]
@@ -48,6 +100,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/Shared/AuthGuard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcQXV0aEd1YXJkLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/CODING/Blazor/ThreatCast/ThreatCastPK.Web/Components/_Imports.razor]

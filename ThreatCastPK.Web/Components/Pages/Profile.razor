@@ -1,0 +1,1242 @@
+@page "/profile"
+@rendermode InteractiveServer
+@inject AuthService AuthService
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Profile — ThreatCast PK</PageTitle>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<AuthGuard>
+    <div class="profile-root">
+        <div class="bg-grid"></div>
+        <div class="scan-line"></div>
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+
+        @if (_loading)
+        {
+            <div class="loading-screen">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">LOADING OPERATOR PROFILE...</div>
+            </div>
+        }
+        else if (_profile == null)
+        {
+            <div class="access-denied">
+                <div class="denied-card">
+                    <div class="denied-icon">⚠</div>
+                    <div class="denied-title">FAILED TO LOAD PROFILE</div>
+                    <div class="denied-sub">@_loadError</div>
+                    <button class="denied-btn" @onclick="LoadProfile">↺ Retry</button>
+                </div>
+            </div>
+        }
+        else
+        {
+        <div class="profile-layout">
+
+            @* ── Left column ── *@
+            <div class="left-col">
+
+                @* Identity card *@
+                <div class="identity-card card">
+                    <div class="card-header">
+                        <span class="card-label">// OPERATOR IDENTITY</span>
+                    </div>
+
+                    <div class="avatar-section">
+                        <div class="avatar-ring">
+                            <div class="avatar-circle" style="background: @GetAvatarColor(_profile.Username)">
+                                <span class="avatar-initials">@GetInitials(_profile.Username)</span>
+                            </div>
+                            <div class="avatar-glow" style="background: @GetAvatarColor(_profile.Username)"></div>
+                        </div>
+                        <div class="avatar-info">
+                            <div class="avatar-username">@_profile.Username</div>
+                            <div class="avatar-email">@_profile.Email</div>
+                        </div>
+                    </div>
+
+                    <div class="role-row">
+                        <span class="role-label">ACCESS LEVEL</span>
+                        <span class="role-badge role-@_profile.Role.ToLower()">
+                            @GetRoleIcon(_profile.Role) @_profile.Role.ToUpper()
+                        </span>
+                    </div>
+
+                    <div class="rep-section">
+                        <div class="rep-header">
+                            <span class="rep-label">REPUTATION SCORE</span>
+                            <span class="rep-value">@_profile.ReputationScore</span>
+                        </div>
+                        <div class="rep-track">
+                            <div class="rep-fill" style="width: @Math.Min(_profile.ReputationScore, 100)%"></div>
+                        </div>
+                        <div class="rep-tiers">
+                            <span class="rep-tier">0</span>
+                            <span class="rep-tier tier-mid">75 AUTO-APPROVE</span>
+                            <span class="rep-tier">100+</span>
+                        </div>
+                    </div>
+
+                    <div class="meta-list">
+                        <div class="meta-row">
+                            <span class="meta-key">MEMBER SINCE</span>
+                            <span class="meta-val">@_profile.JoinDate.ToString("MMM dd, yyyy")</span>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-key">USER ID</span>
+                            <span class="meta-val mono truncate">@_profile.Id.ToString()[..8]…</span>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-key">REPORTS</span>
+                            <a href="/my-reports" class="meta-link">View history →</a>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-key">SUBSCRIPTIONS</span>
+                            <a href="/subscriptions" class="meta-link">Manage →</a>
+                        </div>
+                    </div>
+
+                    @* Reporter request *@
+                    @if (_profile.Role == "Registered")
+                    {
+                        <div class="reporter-section">
+                            @if (_profile.ReporterRequestPending)
+                            {
+                                <div class="reporter-pending">
+                                    <span class="pending-dot"></span>
+                                    <span>Reporter request pending admin review</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <button class="reporter-btn @(_requestLoading ? "loading" : "")"
+                                        @onclick="RequestReporter"
+                                        disabled="@_requestLoading">
+                                    @if (_requestLoading)
+                                    {
+                                        <span class="btn-spinner-sm"></span>
+                                        <span>REQUESTING...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>📡 REQUEST REPORTER ACCESS</span>
+                                    }
+                                </button>
+                                <div class="reporter-hint">
+                                    Reporters can submit attack events to the live map
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @* Quick stats *@
+                <div class="stats-card card">
+                    <div class="card-header">
+                        <span class="card-label">// ACTIVITY</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span class="stat-num green">@_profile.ReputationScore</span>
+                            <span class="stat-desc">Reputation</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-num blue">@GetRepTier(_profile.ReputationScore)</span>
+                            <span class="stat-desc">Trust Tier</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            @* ── Right column ── *@
+            <div class="right-col">
+
+                @* Toast notification *@
+                @if (!string.IsNullOrEmpty(_toastMessage))
+                {
+                    <div class="toast @(_toastType) @(_toastVisible ? "toast-show" : "toast-hide")">
+                        <span class="toast-icon">@(_toastType == "toast-success" ? "✓" : "⚠")</span>
+                        <span>@_toastMessage</span>
+                    </div>
+                }
+
+                @* Edit profile card *@
+                <div class="edit-card card">
+                    <div class="card-header">
+                        <span class="card-label">// ACCOUNT SETTINGS</span>
+                        @if (!_editMode)
+                        {
+                            <button class="edit-toggle-btn" @onclick="EnterEditMode">
+                                ✎ EDIT
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="cancel-btn" @onclick="CancelEdit">
+                                ✕ CANCEL
+                            </button>
+                        }
+                    </div>
+
+                    <div class="edit-body">
+                        @if (!_editMode)
+                        {
+                            @* View mode *@
+                            <div class="view-fields">
+                                <div class="view-field">
+                                    <span class="vf-label">USERNAME</span>
+                                    <span class="vf-value mono">@_profile.Username</span>
+                                </div>
+                                <div class="view-field">
+                                    <span class="vf-label">EMAIL ADDRESS</span>
+                                    <span class="vf-value">@_profile.Email</span>
+                                </div>
+                                <div class="view-field">
+                                    <span class="vf-label">PASSWORD</span>
+                                    <span class="vf-value">••••••••••••</span>
+                                </div>
+                                <div class="view-field">
+                                    <span class="vf-label">ROLE</span>
+                                    <span class="vf-value">
+                                        <span class="role-badge-sm role-@_profile.Role.ToLower()">
+                                            @_profile.Role
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @* Edit mode *@
+                            <div class="edit-fields">
+
+                                <div class="field-group">
+                                    <label class="field-label">
+                                        <span class="label-idx">01</span>
+                                        USERNAME
+                                    </label>
+                                    <div class="input-wrapper @(_userFocused ? "focused" : "")">
+                                        <span class="input-pre">◈</span>
+                                        <input type="text" class="field-input"
+                                               @bind="_editUsername"
+                                               @bind:event="oninput"
+                                               @onfocus="() => _userFocused = true"
+                                               @onblur="() => _userFocused = false"
+                                               placeholder="@_profile.Username"
+                                               disabled="@_saveLoading" />
+                                    </div>
+                                </div>
+
+                                <div class="field-group">
+                                    <label class="field-label">
+                                        <span class="label-idx">02</span>
+                                        EMAIL ADDRESS
+                                    </label>
+                                    <div class="input-wrapper @(_emailFocused ? "focused" : "")">
+                                        <span class="input-pre">@@</span>
+                                        <input type="email" class="field-input"
+                                               @bind="_editEmail"
+                                               @bind:event="oninput"
+                                               @onfocus="() => _emailFocused = true"
+                                               @onblur="() => _emailFocused = false"
+                                               placeholder="@_profile.Email"
+                                               disabled="@_saveLoading" />
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(_saveError))
+                                {
+                                    <div class="save-error">
+                                        <span>⚠ @_saveError</span>
+                                    </div>
+                                }
+
+                                <button class="save-btn @(_saveLoading ? "loading" : "")"
+                                        @onclick="SaveProfile"
+                                        disabled="@_saveLoading">
+                                    @if (_saveLoading)
+                                    {
+                                        <span class="btn-spinner-sm"></span>
+                                        <span>SAVING...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>→ SAVE CHANGES</span>
+                                    }
+                                </button>
+
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @* Security card *@
+                <div class="security-card card">
+                    <div class="card-header">
+                        <span class="card-label">// SECURITY</span>
+                    </div>
+                    <div class="security-body">
+                        <div class="sec-row">
+                            <div class="sec-info">
+                                <div class="sec-title">Authentication Method</div>
+                                <div class="sec-desc">Password-based with BCrypt hashing</div>
+                            </div>
+                            <div class="sec-badge active">ACTIVE</div>
+                        </div>
+                        <div class="sec-row">
+                            <div class="sec-info">
+                                <div class="sec-title">JWT Session Token</div>
+                                <div class="sec-desc">Expires 1 hour after login</div>
+                            </div>
+                            <div class="sec-badge active">ACTIVE</div>
+                        </div>
+                        <div class="sec-row">
+                            <div class="sec-info">
+                                <div class="sec-title">Google OAuth</div>
+                                <div class="sec-desc">Link your Google account for one-click login</div>
+                            </div>
+                            <div class="sec-badge soon">SOON</div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Danger zone *@
+                <div class="danger-card card">
+                    <div class="card-header">
+                        <span class="card-label danger-label">// DANGER ZONE</span>
+                    </div>
+                    <div class="danger-body">
+                        <div class="danger-row">
+                            <div class="danger-info">
+                                <div class="danger-title">Sign out of all sessions</div>
+                                <div class="danger-desc">Invalidates your current JWT token</div>
+                            </div>
+                            <button class="danger-btn" @onclick="Logout">
+                                LOGOUT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    }
+</div>
+</AuthGuard>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .profile-root {
+        min-height: 100vh;
+        background: #0d1117;
+        font-family: 'Inter', sans-serif;
+        padding: 80px 32px 48px;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    .bg-grid {
+        position: fixed;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(159,239,0,0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(159,239,0,0.025) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .scan-line {
+        position: fixed;
+        top: -2px; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #9fef00, transparent);
+        animation: scan 8s linear infinite;
+        opacity: 0.3;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    @@keyframes scan {
+        0%   { top: -2px; }
+        100% { top: 100vh; }
+    }
+
+    .corner {
+        position: fixed;
+        width: 18px; height: 18px;
+        z-index: 2; pointer-events: none;
+    }
+    .corner-tl { top: 14px; left: 14px; border-top: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-tr { top: 14px; right: 14px; border-top: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+    .corner-bl { bottom: 14px; left: 14px; border-bottom: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-br { bottom: 14px; right: 14px; border-bottom: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+
+    /* ── Access denied / loading ── */
+    .access-denied, .loading-screen {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 3;
+    }
+
+    .denied-card {
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        padding: 48px 56px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        animation: fadeInUp 0.5s ease both;
+    }
+
+    .denied-icon { font-size: 40px; margin-bottom: 4px; }
+
+    .denied-title {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 14px;
+        font-weight: 600;
+        color: #ff3e3e;
+        letter-spacing: 2px;
+    }
+
+    .denied-sub { font-size: 13px; color: #6e7681; }
+
+    .denied-btn {
+        margin-top: 8px;
+        padding: 10px 24px;
+        background: #9fef00;
+        color: #0d1117;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        font-weight: 600;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        letter-spacing: 1px;
+        transition: opacity 0.15s;
+    }
+    .denied-btn:hover { opacity: 0.85; }
+
+    .loading-spinner {
+        width: 36px; height: 36px;
+        border: 3px solid #21262d;
+        border-top-color: #9fef00;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 16px;
+    }
+
+    .loading-text {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #6e7681;
+        letter-spacing: 2px;
+    }
+
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Layout ── */
+    .profile-layout {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 20px;
+        position: relative;
+        z-index: 3;
+        animation: fadeInUp 0.5s ease both;
+    }
+
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Card base ── */
+    .card {
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #30363d; }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid #21262d;
+        background: #0d1117;
+    }
+
+    .card-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #9fef00;
+        letter-spacing: 2px;
+        opacity: 0.8;
+    }
+
+    /* ── Left column ── */
+    .left-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* ── Identity card ── */
+    .avatar-section {
+        padding: 28px 20px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .avatar-ring {
+        position: relative;
+        width: 88px; height: 88px;
+    }
+
+    .avatar-circle {
+        width: 88px; height: 88px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(159,239,0,0.4);
+        position: relative;
+        z-index: 1;
+    }
+
+    .avatar-glow {
+        position: absolute;
+        inset: -4px;
+        border-radius: 50%;
+        opacity: 0.15;
+        filter: blur(12px);
+        animation: glow-pulse 3s ease-in-out infinite;
+    }
+
+    @@keyframes glow-pulse {
+        0%, 100% { opacity: 0.12; }
+        50%       { opacity: 0.25; }
+    }
+
+    .avatar-initials {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 28px;
+        font-weight: 600;
+        color: white;
+        text-shadow: 0 0 20px rgba(255,255,255,0.3);
+    }
+
+    .avatar-info { text-align: center; }
+
+    .avatar-username {
+        font-size: 18px;
+        font-weight: 700;
+        color: #e6edf3;
+        letter-spacing: -0.3px;
+        margin-bottom: 3px;
+    }
+
+    .avatar-email {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: #6e7681;
+    }
+
+    /* ── Role row ── */
+    .role-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .role-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        letter-spacing: 1px;
+    }
+
+    .role-badge {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+    }
+
+    .role-badge.role-public     { background: rgba(110,118,129,0.15); color: #8b949e; border: 1px solid #21262d; }
+    .role-badge.role-registered { background: rgba(0,200,255,0.1);   color: #00c8ff; border: 1px solid rgba(0,200,255,0.25); }
+    .role-badge.role-reporter   { background: rgba(159,239,0,0.1);   color: #9fef00; border: 1px solid rgba(159,239,0,0.3); }
+    .role-badge.role-admin      { background: rgba(255,165,0,0.12);  color: #ffa500; border: 1px solid rgba(255,165,0,0.3); }
+
+    /* ── Reputation ── */
+    .rep-section {
+        padding: 16px 20px;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .rep-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+    .rep-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        letter-spacing: 1px;
+    }
+
+    .rep-value {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 22px;
+        font-weight: 600;
+        color: #9fef00;
+        text-shadow: 0 0 12px rgba(159,239,0,0.4);
+    }
+
+    .rep-track {
+        height: 4px;
+        background: #21262d;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 6px;
+    }
+
+    .rep-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #00c8ff, #9fef00);
+        border-radius: 2px;
+        transition: width 1s ease;
+    }
+
+    .rep-tiers {
+        display: flex;
+        justify-content: space-between;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #4a5160;
+    }
+
+    .tier-mid { color: #ffa500; }
+
+    /* ── Meta list ── */
+    .meta-list { padding: 8px 20px 16px; }
+
+    .meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #161b22;
+    }
+    .meta-row:last-child { border-bottom: none; }
+
+    .meta-key {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        letter-spacing: 1px;
+    }
+
+    .meta-val {
+        font-size: 12px;
+        color: #c9d1d9;
+    }
+
+    .meta-val.mono { font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+    .meta-val.truncate { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .meta-link {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #9fef00;
+        text-decoration: none;
+        transition: opacity 0.15s;
+    }
+    .meta-link:hover { opacity: 0.7; }
+
+    /* ── Reporter request ── */
+    .reporter-section {
+        padding: 16px 20px;
+        border-top: 1px solid #21262d;
+    }
+
+    .reporter-btn {
+        width: 100%;
+        padding: 11px 16px;
+        background: transparent;
+        border: 1px solid rgba(159,239,0,0.4);
+        border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 600;
+        color: #9fef00;
+        cursor: pointer;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: background 0.15s, border-color 0.15s;
+        margin-bottom: 8px;
+    }
+    .reporter-btn:hover:not(:disabled) {
+        background: rgba(159,239,0,0.08);
+        border-color: #9fef00;
+    }
+    .reporter-btn.loading { opacity: 0.6; cursor: not-allowed; }
+
+    .reporter-hint {
+        font-size: 11px;
+        color: #4a5160;
+        text-align: center;
+    }
+
+    .reporter-pending {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #ffa500;
+        padding: 10px;
+        background: rgba(255,165,0,0.06);
+        border: 1px solid rgba(255,165,0,0.2);
+        border-radius: 4px;
+    }
+
+    .pending-dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: #ffa500;
+        animation: blink 1.2s ease-in-out infinite;
+        flex-shrink: 0;
+    }
+
+    @@keyframes blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.2; }
+    }
+
+    /* ── Stats card ── */
+    .stats-card .card-header { }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+    }
+
+    .stat-box {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        border-right: 1px solid #21262d;
+    }
+    .stat-box:last-child { border-right: none; }
+
+    .stat-num {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 28px;
+        font-weight: 600;
+    }
+    .stat-num.green { color: #9fef00; text-shadow: 0 0 12px rgba(159,239,0,0.3); }
+    .stat-num.blue  { color: #00c8ff; text-shadow: 0 0 12px rgba(0,200,255,0.3); }
+
+    .stat-desc {
+        font-size: 11px;
+        color: #6e7681;
+        letter-spacing: 0.5px;
+    }
+
+    /* ── Right column ── */
+    .right-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* ── Toast ── */
+    .toast {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 18px;
+        border-radius: 6px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid;
+        transition: opacity 0.4s, transform 0.4s;
+    }
+
+    .toast-success {
+        background: rgba(159,239,0,0.08);
+        border-color: rgba(159,239,0,0.3);
+        color: #9fef00;
+    }
+
+    .toast-error {
+        background: rgba(255,62,62,0.08);
+        border-color: rgba(255,62,62,0.3);
+        color: #ff3e3e;
+    }
+
+    .toast-show { opacity: 1; transform: translateY(0); }
+    .toast-hide { opacity: 0; transform: translateY(-8px); pointer-events: none; }
+
+    .toast-icon { font-size: 14px; flex-shrink: 0; }
+
+    /* ── Edit card ── */
+    .edit-toggle-btn {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #9fef00;
+        background: rgba(159,239,0,0.08);
+        border: 1px solid rgba(159,239,0,0.3);
+        border-radius: 4px;
+        padding: 4px 12px;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: background 0.15s;
+    }
+    .edit-toggle-btn:hover { background: rgba(159,239,0,0.15); }
+
+    .cancel-btn {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #6e7681;
+        background: transparent;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        padding: 4px 12px;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+    .cancel-btn:hover { border-color: #6e7681; color: #c9d1d9; }
+
+    .edit-body { padding: 24px; }
+
+    /* ── View fields ── */
+    .view-fields { display: flex; flex-direction: column; gap: 0; }
+
+    .view-field {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 0;
+        border-bottom: 1px solid #21262d;
+    }
+    .view-field:last-child { border-bottom: none; }
+
+    .vf-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        letter-spacing: 1px;
+    }
+
+    .vf-value {
+        font-size: 13px;
+        color: #c9d1d9;
+    }
+    .vf-value.mono { font-family: 'IBM Plex Mono', monospace; }
+
+    .role-badge-sm {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 3px;
+    }
+    .role-badge-sm.role-public     { background: rgba(110,118,129,0.15); color: #8b949e; border: 1px solid #21262d; }
+    .role-badge-sm.role-registered { background: rgba(0,200,255,0.1);   color: #00c8ff; border: 1px solid rgba(0,200,255,0.25); }
+    .role-badge-sm.role-reporter   { background: rgba(159,239,0,0.1);   color: #9fef00; border: 1px solid rgba(159,239,0,0.3); }
+    .role-badge-sm.role-admin      { background: rgba(255,165,0,0.12);  color: #ffa500; border: 1px solid rgba(255,165,0,0.3); }
+
+    /* ── Edit fields ── */
+    .edit-fields { display: flex; flex-direction: column; gap: 20px; }
+
+    .field-group { display: flex; flex-direction: column; gap: 8px; }
+
+    .field-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        letter-spacing: 2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .label-idx { color: #9fef00; opacity: 0.6; }
+
+    .input-wrapper {
+        display: flex;
+        align-items: center;
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        overflow: hidden;
+    }
+    .input-wrapper.focused {
+        border-color: #9fef00;
+        box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+    }
+
+    .input-pre {
+        padding: 0 12px;
+        font-size: 13px;
+        color: #4a5160;
+        border-right: 1px solid #21262d;
+        flex-shrink: 0;
+        user-select: none;
+        line-height: 44px;
+    }
+
+    .field-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        padding: 12px 14px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+        color: #c9d1d9;
+        caret-color: #9fef00;
+    }
+    .field-input::placeholder { color: #4a5160; }
+    .field-input:disabled { opacity: 0.5; }
+
+    .save-error {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: #ff3e3e;
+        background: rgba(255,62,62,0.07);
+        border: 1px solid rgba(255,62,62,0.2);
+        border-radius: 4px;
+        padding: 10px 14px;
+    }
+
+    .save-btn {
+        width: 100%;
+        padding: 13px 20px;
+        background: #9fef00;
+        border: none;
+        border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        font-weight: 600;
+        color: #0d1117;
+        letter-spacing: 2px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+    .save-btn:hover:not(:disabled) {
+        opacity: 0.92;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 18px rgba(159,239,0,0.25);
+    }
+    .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .save-btn.loading { background: #21262d; color: #6e7681; }
+
+    .btn-spinner-sm {
+        width: 12px; height: 12px;
+        border: 2px solid #4a5160;
+        border-top-color: #9fef00;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+
+    /* ── Security card ── */
+    .security-body { padding: 8px 0; }
+
+    .sec-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid #21262d;
+        transition: background 0.15s;
+    }
+    .sec-row:last-child { border-bottom: none; }
+    .sec-row:hover { background: rgba(159,239,0,0.02); }
+
+    .sec-info { flex: 1; }
+
+    .sec-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #c9d1d9;
+        margin-bottom: 2px;
+    }
+
+    .sec-desc {
+        font-size: 12px;
+        color: #6e7681;
+    }
+
+    .sec-badge {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+        flex-shrink: 0;
+    }
+
+    .sec-badge.active {
+        background: rgba(159,239,0,0.1);
+        color: #9fef00;
+        border: 1px solid rgba(159,239,0,0.25);
+    }
+
+    .sec-badge.soon {
+        background: rgba(110,118,129,0.1);
+        color: #6e7681;
+        border: 1px solid #21262d;
+    }
+
+    /* ── Danger card ── */
+    .danger-label { color: #ff3e3e !important; }
+
+    .danger-body { padding: 4px 0; }
+
+    .danger-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+    }
+
+    .danger-info { flex: 1; }
+
+    .danger-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #c9d1d9;
+        margin-bottom: 2px;
+    }
+
+    .danger-desc { font-size: 12px; color: #6e7681; }
+
+    .danger-btn {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 600;
+        color: #ff3e3e;
+        background: rgba(255,62,62,0.07);
+        border: 1px solid rgba(255,62,62,0.25);
+        border-radius: 4px;
+        padding: 7px 16px;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: background 0.15s, border-color 0.15s;
+        flex-shrink: 0;
+    }
+    .danger-btn:hover {
+        background: rgba(255,62,62,0.15);
+        border-color: #ff3e3e;
+    }
+
+    /* ── Responsive ── */
+    @@media (max-width: 860px) {
+        .profile-layout {
+            grid-template-columns: 1fr;
+        }
+        .profile-root { padding: 72px 16px 40px; }
+    }
+</style>
+
+@code {
+    private ProfileResponse? _profile;
+    private bool _loading = true;
+    private string _loadError = string.Empty;
+
+    private bool _editMode = false;
+    private string _editUsername = string.Empty;
+    private string _editEmail = string.Empty;
+    private bool _userFocused = false;
+    private bool _emailFocused = false;
+    private bool _saveLoading = false;
+    private string _saveError = string.Empty;
+
+    private bool _requestLoading = false;
+
+    private string _toastMessage = string.Empty;
+    private string _toastType = "toast-success";
+    private bool _toastVisible = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+{
+    if (firstRender)
+    {
+        await LoadProfile();
+        StateHasChanged();
+    }
+}
+
+    private async Task LoadProfile()
+    {
+        _loading = true;
+        var (data, error) = await ApiService.GetProfileAsync();
+        _loading = false;
+
+        if (error != null)
+            _loadError = error;
+        else
+            _profile = data;
+    }
+
+    private void EnterEditMode()
+    {
+        _editUsername = _profile!.Username;
+        _editEmail = _profile.Email;
+        _saveError = string.Empty;
+        _editMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        _editMode = false;
+        _saveError = string.Empty;
+    }
+
+    private async Task SaveProfile()
+    {
+        _saveError = string.Empty;
+        if (string.IsNullOrWhiteSpace(_editUsername) || string.IsNullOrWhiteSpace(_editEmail))
+        {
+            _saveError = "Username and email cannot be empty.";
+            return;
+        }
+
+        _saveLoading = true;
+        var error = await ApiService.UpdateProfileAsync(_editUsername, _editEmail);
+        _saveLoading = false;
+
+        if (error != null)
+        {
+            _saveError = error;
+        }
+        else
+        {
+            _profile!.Username = _editUsername;
+            _profile.Email = _editEmail;
+            _editMode = false;
+            await ShowToast("Profile updated successfully.", "toast-success");
+        }
+    }
+
+    private async Task RequestReporter()
+    {
+        _requestLoading = true;
+        var error = await ApiService.RequestReporterAsync();
+        _requestLoading = false;
+
+        if (error != null)
+        {
+            await ShowToast(error, "toast-error");
+        }
+        else
+        {
+            _profile!.ReporterRequestPending = true;
+            await ShowToast("Reporter access requested. Pending admin review.", "toast-success");
+        }
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+        Navigation.NavigateTo("/login");
+    }
+
+    private async Task ShowToast(string message, string type)
+    {
+        _toastMessage = message;
+        _toastType = type;
+        _toastVisible = true;
+        StateHasChanged();
+        await Task.Delay(3500);
+        _toastVisible = false;
+        StateHasChanged();
+        await Task.Delay(500);
+        _toastMessage = string.Empty;
+        StateHasChanged();
+    }
+
+    // ── Helpers ──
+
+    private static string GetInitials(string username)
+    {
+        if (string.IsNullOrEmpty(username)) return "?";
+        return username.Length >= 2 ? username[..2].ToUpper() : username[..1].ToUpper();
+    }
+
+    private static string GetAvatarColor(string username)
+    {
+        // Deterministic color based on username so it stays consistent
+        var colors = new[]
+        {
+            "#1a472a", "#1e3a5f", "#4a1942", "#2d2b55",
+            "#3d2b1f", "#1a3a3a", "#2b3a1a", "#3a1a2b"
+        };
+        var idx = Math.Abs(username.GetHashCode()) % colors.Length;
+        return colors[idx];
+    }
+
+    private static string GetRoleIcon(string role) => role switch
+    {
+        "Admin"      => "⚡",
+        "Reporter"   => "📡",
+        "Registered" => "◈",
+        _            => "👁"
+    };
+
+    private static string GetRepTier(int score) => score switch
+    {
+        >= 75  => "TRUSTED",
+        >= 40  => "ACTIVE",
+        >= 10  => "NOVICE",
+        _      => "NEW"
+    };
+}

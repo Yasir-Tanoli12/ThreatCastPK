@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 <Project Sdk="Microsoft.NET.Sdk.Web">
+=======
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+>>>>>>> haadi-cyber
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -7,4 +11,11 @@
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
 
+<<<<<<< HEAD
+=======
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
+  </ItemGroup>
+
+>>>>>>> haadi-cyber
 </Project>

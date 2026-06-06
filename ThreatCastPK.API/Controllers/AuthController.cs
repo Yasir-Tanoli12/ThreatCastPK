@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 ﻿using Microsoft.AspNetCore.Mvc;
+=======
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Mvc;
+>>>>>>> haadi-cyber
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -6,8 +12,13 @@ using System.Security.Claims;
 using System.Text;
 using ThreatCastPK.API.DTOs;
 using ThreatCastPK.Database.Context;
+<<<<<<< HEAD
 using ThreatCastPK.Database.Models;
 using ThreatCastPK.Database.Enums;
+=======
+using ThreatCastPK.Database.Enums;
+using ThreatCastPK.Database.Models;
+>>>>>>> haadi-cyber
 
 namespace ThreatCastPK.API.Controllers
 {
@@ -102,11 +113,32 @@ namespace ThreatCastPK.API.Controllers
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
+<<<<<<< HEAD
                 expires: DateTime.UtcNow.AddHours(24),
+=======
+                expires: DateTime.UtcNow.AddHours(1),
+>>>>>>> haadi-cyber
                 signingCredentials: credentials
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+<<<<<<< HEAD
+=======
+
+        // GET /api/auth/google-login
+        // Redirects the browser to Google's consent screen
+        [HttpGet("google-login")]
+        public IActionResult GoogleLogin([FromQuery] string? returnUrl = null)
+        {
+            var properties = new AuthenticationProperties
+            {
+                RedirectUri = Url.Action("GoogleCallback", "Auth"),
+                Items = { { "returnUrl", returnUrl ?? "/" } }
+            };
+            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+        }
+
+>>>>>>> haadi-cyber
     }
 }
