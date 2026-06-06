@@ -18,7 +18,6 @@ def get_db_connection():
     except Exception:
         return None
 
-
 class AttackEvent(BaseModel):
     ip_count: float
     attack_frequency: float
@@ -28,16 +27,13 @@ class AttackEvent(BaseModel):
 class CampaignRequest(BaseModel):
     events: List[AttackEvent]
 
-
 @app.get("/")
 def root():
     return {"message": "ThreatCast PK ML Service Running"}
 
-
 @app.get("/health")
 def health():
     return {"status": "healthy"}
-
 
 @app.post("/detect-campaign")
 def detect_campaign(request: CampaignRequest):
@@ -49,7 +45,6 @@ def detect_campaign(request: CampaignRequest):
         for e in request.events
     ])
 
-    # Fallback sample data for training when DB not available
     sample = np.array([
         [10, 5, 3, 2], [50, 20, 4, 6], [5, 2, 1, 1],
         [100, 50, 5, 12], [3, 1, 2, 0.5], [80, 40, 5, 8],
@@ -71,11 +66,9 @@ def detect_campaign(request: CampaignRequest):
         "message": "Coordinated campaign detected!" if is_campaign else "Normal activity"
     }
 
-
 @app.get("/sector-risk")
 def sector_risk():
     conn = get_db_connection()
-
     if conn:
         try:
             cur = conn.cursor()
@@ -89,7 +82,6 @@ def sector_risk():
             rows = cur.fetchall()
             cur.close()
             conn.close()
-
             risk_map = {}
             for sector, count in rows:
                 if count >= 20:
@@ -98,15 +90,11 @@ def sector_risk():
                     risk_map[sector] = "MEDIUM"
                 else:
                     risk_map[sector] = "LOW"
-
             return risk_map if risk_map else _default_sector_risk()
-
         except Exception:
             conn.close()
             return _default_sector_risk()
-
     return _default_sector_risk()
-
 
 def _default_sector_risk():
     return {
@@ -118,11 +106,9 @@ def _default_sector_risk():
         "Energy": "MEDIUM"
     }
 
-
 @app.get("/heatmap-data")
 def get_heatmap_data():
     conn = get_db_connection()
-
     if conn:
         try:
             cur = conn.cursor()
@@ -136,7 +122,6 @@ def get_heatmap_data():
             rows = cur.fetchall()
             cur.close()
             conn.close()
-
             if rows:
                 return {"attacks": [
                     {"city": r[0], "lat": r[1], "lng": r[2],
@@ -145,13 +130,11 @@ def get_heatmap_data():
                 ]}
         except Exception:
             conn.close()
-
-    # Fallback static data
     return {"attacks": [
-        {"city": "Karachi",   "lat": 24.8607, "lng": 67.0011, "severity": 5, "type": "DDoS"},
-        {"city": "Lahore",    "lat": 31.5204, "lng": 74.3587, "severity": 4, "type": "Ransomware"},
-        {"city": "Islamabad", "lat": 33.6844, "lng": 73.0479, "severity": 3, "type": "Phishing"},
-        {"city": "Peshawar",  "lat": 34.0151, "lng": 71.5249, "severity": 4, "type": "Malware"},
-        {"city": "Quetta",    "lat": 30.1798, "lng": 66.9750, "severity": 2, "type": "Phishing"},
-        {"city": "Faisalabad","lat": 31.4504, "lng": 73.1350, "severity": 3, "type": "DDoS"}
+        {"city": "Karachi",    "lat": 24.8607, "lng": 67.0011, "severity": 5, "type": "DDoS"},
+        {"city": "Lahore",     "lat": 31.5204, "lng": 74.3587, "severity": 4, "type": "Ransomware"},
+        {"city": "Islamabad",  "lat": 33.6844, "lng": 73.0479, "severity": 3, "type": "Phishing"},
+        {"city": "Peshawar",   "lat": 34.0151, "lng": 71.5249, "severity": 4, "type": "Malware"},
+        {"city": "Quetta",     "lat": 30.1798, "lng": 66.9750, "severity": 2, "type": "Phishing"},
+        {"city": "Faisalabad", "lat": 31.4504, "lng": 73.1350, "severity": 3, "type": "DDoS"}
     ]}
