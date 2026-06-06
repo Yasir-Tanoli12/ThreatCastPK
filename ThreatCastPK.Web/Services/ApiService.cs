@@ -240,7 +240,10 @@ public class ApiService
         => GetAsync<List<SectorRiskResponse>>("/api/analytics/sector-risk");
 
     public Task<(List<RecentEventResponse>? Data, string? Error)> GetRecentEventsAsync()
-        => GetAsync<List<RecentEventResponse>>("/api/analytics/recent-events");
+    => GetAsync<List<RecentEventResponse>>("/api/analytics/recent-events");
+
+    public Task<(List<MapEventResponse>? Data, string? Error)> GetEventsAsync(string timeFilter = "24h")
+        => GetAsync<List<MapEventResponse>>($"/api/analytics/events?timeFilter={timeFilter}");
 
     // Subscriptions
     public Task<(List<SubscriptionResponse>? Data, string? Error)> GetSubscriptionsAsync()
@@ -456,4 +459,16 @@ public class ReplyResponseDTO
     public string AuthorUsername { get; set; } = string.Empty;
     public string AuthorRole { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+}
+public class MapEventResponse
+{
+    public Guid Id { get; set; }
+    public string AttackType { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string TargetSector { get; set; } = string.Empty;
+    public int Severity { get; set; }
+    public DateTime OccurredAt { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public string Source { get; set; } = string.Empty;
 }

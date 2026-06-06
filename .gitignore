@@ -3,4 +3,4 @@
 *.user
 .vs/
 DataProtection-Keys/
-ThreatCastPK.Web/
+appsettings.Development.json

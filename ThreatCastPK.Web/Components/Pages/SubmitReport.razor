@@ -1,0 +1,992 @@
+﻿@* ThreatCastPK.Web/Components/Pages/SubmitReport.razor *@
+@page "/submit-report"
+@rendermode InteractiveServer
+@inject AuthService AuthService
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Submit Report — ThreatCast PK</PageTitle>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<AuthGuard RequiredRole="Reporter">
+<div class="sr-root">
+    <div class="bg-grid"></div>
+    <div class="scan-line"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="sr-layout">
+
+        @* ── Left — Form ── *@
+        <div class="sr-left">
+
+            @* Page heading *@
+            <div class="page-heading">
+                <div class="heading-label">// THREAT REPORTING TERMINAL</div>
+                <h1 class="heading-title">
+                    Submit Attack<br />
+                    <span class="heading-accent">Report</span>
+                </h1>
+                <p class="heading-sub">
+                    Document a cyber incident for community intelligence.
+                    Reports are cross-verified against AbuseIPDB.
+                </p>
+            </div>
+
+            @* Toast *@
+            @if (!string.IsNullOrEmpty(_toastMessage))
+            {
+                <div class="toast @_toastType @(_toastVisible ? "toast-show" : "toast-hide")">
+                    <span class="toast-icon">@(_toastType == "toast-success" ? "✓" : "⚠")</span>
+                    <span>@_toastMessage</span>
+                </div>
+            }
+
+            @* Form card *@
+            <div class="form-card">
+
+                <div class="form-card-header">
+                    <span class="fch-prompt">$</span>
+                    <span class="fch-title">report.new</span>
+                    <span class="fch-cursor">_</span>
+                    <div class="fch-right">
+                        <span class="fch-badge">
+                            <span class="fch-dot"></span>
+                            REPORTER
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-body">
+
+                    @* Row 1 — Attack type + Sector *@
+                    <div class="form-row">
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="fl-idx">01</span>
+                                ATTACK_TYPE
+                            </label>
+                            <div class="select-wrapper @(_attackTypeFocused ? "focused" : "") @(string.IsNullOrEmpty(_attackType) ? "" : "has-value")">
+                                <select class="field-select"
+                                        @bind="_attackType"
+                                        @onfocus="() => _attackTypeFocused = true"
+                                        @onblur="() => _attackTypeFocused = false"
+                                        disabled="@_loading">
+                                    <option value="">-- SELECT --</option>
+                                    @foreach (var t in _attackTypes)
+                                    {
+                                        <option value="@t">@t</option>
+                                    }
+                                </select>
+                                <span class="select-arrow">▾</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(_attackType))
+                            {
+                                <div class="attack-type-chip chip-@_attackType.ToLower().Replace(" ","")">
+                                    @GetAttackIcon(_attackType) @_attackType
+                                </div>
+                            }
+                        </div>
+
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="fl-idx">02</span>
+                                TARGET_SECTOR
+                            </label>
+                            <div class="select-wrapper @(_sectorFocused ? "focused" : "") @(string.IsNullOrEmpty(_sector) ? "" : "has-value")">
+                                <select class="field-select"
+                                        @bind="_sector"
+                                        @onfocus="() => _sectorFocused = true"
+                                        @onblur="() => _sectorFocused = false"
+                                        disabled="@_loading">
+                                    <option value="">-- SELECT --</option>
+                                    @foreach (var s in _sectors)
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                </select>
+                                <span class="select-arrow">▾</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Row 2 — City + Severity *@
+                    <div class="form-row">
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="fl-idx">03</span>
+                                AFFECTED_CITY
+                            </label>
+                            <div class="select-wrapper @(_cityFocused ? "focused" : "") @(string.IsNullOrEmpty(_city) ? "" : "has-value")">
+                                <select class="field-select"
+                                        @bind="_city"
+                                        @onfocus="() => _cityFocused = true"
+                                        @onblur="() => _cityFocused = false"
+                                        disabled="@_loading">
+                                    <option value="">-- SELECT --</option>
+                                    @foreach (var c in _cities)
+                                    {
+                                        <option value="@c">@c</option>
+                                    }
+                                </select>
+                                <span class="select-arrow">▾</span>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <label class="field-label">
+                                <span class="fl-idx">04</span>
+                                SEVERITY_LEVEL
+                            </label>
+                            <div class="severity-row">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    var level = i;
+                                    <button type="button"
+                                            class="sev-btn @(_severity == level ? "sev-active" : "") sev-@level"
+                                            @onclick="() => _severity = level"
+                                            disabled="@_loading">
+                                        <span class="sev-num">@level</span>
+                                        <span class="sev-label">@GetSeverityLabel(level)</span>
+                                    </button>
+                                }
+                            </div>
+                            @if (_severity > 0)
+                            {
+                                <div class="sev-indicator sev-color-@_severity">
+                                    @GetSeverityLabel(_severity) — @GetSeverityDesc(_severity)
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    @* Source IP *@
+                    <div class="field-group">
+                        <label class="field-label">
+                            <span class="fl-idx">05</span>
+                            SOURCE_IP
+                            <span class="fl-optional">OPTIONAL</span>
+                        </label>
+                        <div class="input-wrapper @(_ipFocused ? "focused" : "") @(GetIpState())">
+                            <span class="input-pre mono">&gt;_</span>
+                            <input type="text"
+                                   class="field-input mono"
+                                   placeholder="e.g. 192.168.1.1"
+                                   value="@_sourceIP"
+                                   @oninput="OnIpInput"
+                                   @onfocus="() => _ipFocused = true"
+                                   @onblur="() => _ipFocused = false"
+                                   disabled="@_loading" />
+                            @if (!string.IsNullOrEmpty(_sourceIP))
+                            {
+                                <span class="ip-status @(IsValidIP(_sourceIP) ? "valid" : "invalid")">
+                                    @(IsValidIP(_sourceIP) ? "✓" : "✗")
+                                </span>
+                            }
+                        </div>
+                        <span class="field-hint">
+                            Providing a source IP triggers AbuseIPDB reputation check and may enable auto-approval
+                        </span>
+                    </div>
+
+                    @* Description *@
+                    <div class="field-group">
+                        <label class="field-label">
+                            <span class="fl-idx">06</span>
+                            INCIDENT_DESCRIPTION
+                            <span class="fl-optional">OPTIONAL</span>
+                        </label>
+                        <div class="textarea-wrapper @(_descFocused ? "focused" : "")">
+                            <textarea class="field-textarea"
+                                      placeholder="Describe what you observed — attack vectors, affected systems, timeline, IOCs..."
+                                      rows="4"
+                                      @bind="_description"
+                                      @bind:event="oninput"
+                                      @onfocus="() => _descFocused = true"
+                                      @onblur="() => _descFocused = false"
+                                      disabled="@_loading">
+                            </textarea>
+                            <div class="textarea-footer">
+                                <span class="char-count @(_description.Length > 900 ? "count-warn" : "")">
+                                    @_description.Length / 1000
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* Pre-submit checklist *@
+                    <div class="checklist">
+                        <div class="cl-item @(IsAttackValid() ? "cl-done" : "")">
+                            <span class="cl-icon">@(IsAttackValid() ? "✓" : "○")</span>
+                            Attack type selected
+                        </div>
+                        <div class="cl-item @(!string.IsNullOrEmpty(_sector) ? "cl-done" : "")">
+                            <span class="cl-icon">@(!string.IsNullOrEmpty(_sector) ? "✓" : "○")</span>
+                            Target sector selected
+                        </div>
+                        <div class="cl-item @(!string.IsNullOrEmpty(_city) ? "cl-done" : "")">
+                            <span class="cl-icon">@(!string.IsNullOrEmpty(_city) ? "✓" : "○")</span>
+                            Affected city selected
+                        </div>
+                        <div class="cl-item @(_severity > 0 ? "cl-done" : "")">
+                            <span class="cl-icon">@(_severity > 0 ? "✓" : "○")</span>
+                            Severity level set
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="error-box">
+                            <span class="eb-icon">⚠</span>
+                            <span>@_errorMessage</span>
+                        </div>
+                    }
+
+                    <button class="@SubmitBtnClass()"
+                            @onclick="HandleSubmit"
+                            disabled="@_loading">
+                        @if (_loading)
+                        {
+                            <span class="btn-spinner"></span>
+                            <span>TRANSMITTING REPORT...</span>
+                        }
+                        else
+                        {
+                            <span class="submit-icon">📡</span>
+                            <span>TRANSMIT REPORT</span>
+                        }
+                    </button>
+
+                    <div class="form-footnote">
+                        <a href="/my-reports" class="footnote-link">
+                            View my submitted reports →
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        @* ── Right — Info panel ── *@
+        <div class="sr-right">
+
+            @* Auto-approval info *@
+            <div class="info-card">
+                <div class="ic-header">
+                    <span class="ic-icon">⚡</span>
+                    <span class="ic-title">AUTO-APPROVAL ENGINE</span>
+                </div>
+                <div class="ic-body">
+                    <p class="ic-text">
+                        Reports meeting both criteria are instantly approved
+                        and pushed live to the threat map.
+                    </p>
+                    <div class="criteria-list">
+                        <div class="criteria-item">
+                            <div class="cri-bar @(AuthService.IsLoggedIn ? "cri-check" : "")">
+                                <span class="cri-label">REPUTATION SCORE</span>
+                                <span class="cri-value green">≥ 75</span>
+                            </div>
+                        </div>
+                        <div class="criteria-and">AND</div>
+                        <div class="criteria-item">
+                            <div class="cri-bar">
+                                <span class="cri-label">ABUSEIPDB CONFIDENCE</span>
+                                <span class="cri-value green">≥ 80%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ic-note">
+                        Reports not meeting criteria go to the admin moderation queue.
+                    </div>
+                </div>
+            </div>
+
+            @* Attack type reference *@
+            <div class="info-card">
+                <div class="ic-header">
+                    <span class="ic-icon">◈</span>
+                    <span class="ic-title">ATTACK TYPE REFERENCE</span>
+                </div>
+                <div class="ic-body ref-list">
+                    @foreach (var item in _attackTypeInfo)
+                    {
+                        <div class="ref-row @(_attackType == item.Name ? "ref-active" : "")">
+                            <span class="ref-icon">@item.Icon</span>
+                            <div class="ref-info">
+                                <span class="ref-name">@item.Name</span>
+                                <span class="ref-desc">@item.Desc</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* Rate limit info *@
+            <div class="info-card info-card-dim">
+                <div class="ic-header">
+                    <span class="ic-icon">⏱</span>
+                    <span class="ic-title">SUBMISSION LIMITS</span>
+                </div>
+                <div class="ic-body">
+                    <div class="limit-row">
+                        <span class="limit-label">MAX PER HOUR</span>
+                        <span class="limit-value">10 reports</span>
+                    </div>
+                    <div class="limit-row">
+                        <span class="limit-label">DUPLICATE WINDOW</span>
+                        <span class="limit-value">24 hours</span>
+                    </div>
+                    <div class="limit-row">
+                        <span class="limit-label">FALSE REPORT PENALTY</span>
+                        <span class="limit-value red">-5 reputation</span>
+                    </div>
+                    <div class="limit-row">
+                        <span class="limit-label">APPROVED REPORT REWARD</span>
+                        <span class="limit-value green">+10 reputation</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</AuthGuard>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .sr-root {
+        min-height: 100vh;
+        background: #0d1117;
+        font-family: 'Inter', sans-serif;
+        padding: 76px 32px 48px;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    .bg-grid {
+        position: fixed; inset: 0;
+        background-image:
+            linear-gradient(rgba(159,239,0,0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(159,239,0,0.025) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none; z-index: 0;
+    }
+
+    .scan-line {
+        position: fixed; top: -2px; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, transparent, #9fef00, transparent);
+        animation: scan 8s linear infinite; opacity: 0.3;
+        z-index: 1; pointer-events: none;
+    }
+
+    @@keyframes scan { 0% { top: -2px; } 100% { top: 100vh; } }
+
+    .corner { position: fixed; width: 18px; height: 18px; z-index: 2; pointer-events: none; }
+    .corner-tl { top: 14px; left: 14px; border-top: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-tr { top: 14px; right: 14px; border-top: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+    .corner-bl { bottom: 14px; left: 14px; border-bottom: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-br { bottom: 14px; right: 14px; border-bottom: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+
+    /* ── Layout ── */
+    .sr-layout {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 24px;
+        position: relative; z-index: 3;
+        animation: fadeInUp 0.5s ease both;
+    }
+
+    @@keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Page heading ── */
+    .page-heading { margin-bottom: 28px; }
+
+    .heading-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #9fef00;
+        letter-spacing: 2px;
+        opacity: 0.7;
+        margin-bottom: 12px;
+    }
+
+    .heading-title {
+        font-size: 40px;
+        font-weight: 700;
+        color: #e6edf3;
+        line-height: 1.1;
+        letter-spacing: -1px;
+        margin-bottom: 12px;
+    }
+
+    .heading-accent { color: #9fef00; }
+
+    .heading-sub {
+        font-size: 14px;
+        color: #6e7681;
+        line-height: 1.6;
+        max-width: 500px;
+    }
+
+    /* ── Toast ── */
+    .toast {
+        display: flex; align-items: center; gap: 10px;
+        padding: 13px 18px; border-radius: 6px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+        border: 1px solid; margin-bottom: 20px;
+        transition: opacity 0.4s, transform 0.4s;
+    }
+    .toast-success { background: rgba(159,239,0,0.08); border-color: rgba(159,239,0,0.3); color: #9fef00; }
+    .toast-error   { background: rgba(255,62,62,0.08); border-color: rgba(255,62,62,0.3); color: #ff3e3e; }
+    .toast-show { opacity: 1; transform: translateY(0); }
+    .toast-hide { opacity: 0; transform: translateY(-8px); pointer-events: none; }
+    .toast-icon { font-size: 14px; flex-shrink: 0; }
+
+    /* ── Form card ── */
+    .form-card {
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .form-card-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 24px;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .fch-prompt { font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #9fef00; font-weight: 600; }
+    .fch-title  { font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #c9d1d9; font-weight: 600; }
+    .fch-cursor {
+        font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #9fef00;
+        animation: blink 1s step-end infinite;
+    }
+    @@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+    .fch-right { margin-left: auto; }
+
+    .fch-badge {
+        display: flex; align-items: center; gap: 6px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #9fef00; letter-spacing: 1px;
+        background: rgba(159,239,0,0.08);
+        border: 1px solid rgba(159,239,0,0.2);
+        padding: 3px 10px; border-radius: 3px;
+    }
+
+    .fch-dot {
+        width: 6px; height: 6px; border-radius: 50%; background: #9fef00;
+        animation: blink 1.5s ease-in-out infinite;
+    }
+
+    /* ── Form body ── */
+    .form-body { padding: 28px; display: flex; flex-direction: column; gap: 24px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    /* ── Field groups ── */
+    .field-group { display: flex; flex-direction: column; gap: 8px; }
+
+    .field-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #6e7681; letter-spacing: 2px;
+        display: flex; align-items: center; gap: 8px;
+    }
+
+    .fl-idx { color: #9fef00; opacity: 0.6; }
+
+    .fl-optional {
+        margin-left: auto;
+        font-size: 9px; color: #4a5160;
+        background: #21262d; padding: 1px 6px; border-radius: 2px;
+        letter-spacing: 1px;
+    }
+
+    /* ── Select ── */
+    .select-wrapper {
+        position: relative;
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        overflow: hidden;
+    }
+    .select-wrapper.focused { border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
+    .select-wrapper.has-value { border-color: rgba(159,239,0,0.3); }
+
+    .field-select {
+        width: 100%; padding: 11px 36px 11px 14px;
+        background: transparent; border: none; outline: none;
+        font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+        color: #c9d1d9; cursor: pointer; appearance: none;
+    }
+    .field-select:disabled { opacity: 0.5; cursor: not-allowed; }
+    .field-select option { background: #161b22; color: #c9d1d9; }
+
+    .select-arrow {
+        position: absolute; right: 12px; top: 50%;
+        transform: translateY(-50%); color: #4a5160;
+        font-size: 10px; pointer-events: none;
+    }
+
+    /* Attack type chip */
+    .attack-type-chip {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        padding: 4px 10px; border-radius: 3px; align-self: flex-start;
+        animation: chipIn 0.2s ease both;
+    }
+    @@keyframes chipIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .chip-ransomware  { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid rgba(255,62,62,0.25); }
+    .chip-phishing    { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.25); }
+    .chip-ddos        { background: rgba(0,200,255,0.1); color: #00c8ff; border: 1px solid rgba(0,200,255,0.25); }
+    .chip-malware     { background: rgba(191,64,191,0.1); color: #bf40bf; border: 1px solid rgba(191,64,191,0.25); }
+    .chip-identitytheft { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.25); }
+    .chip-other       { background: rgba(110,118,129,0.1); color: #6e7681; border: 1px solid rgba(110,118,129,0.25); }
+
+    /* ── Severity ── */
+    .severity-row { display: flex; gap: 6px; }
+
+    .sev-btn {
+        flex: 1; padding: 10px 4px;
+        background: #0d1117; border: 1px solid #21262d;
+        border-radius: 4px; cursor: pointer;
+        display: flex; flex-direction: column; align-items: center; gap: 3px;
+        transition: all 0.15s;
+    }
+    .sev-btn:hover { border-color: #30363d; background: #161b22; }
+    .sev-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .sev-num {
+        font-family: 'IBM Plex Mono', monospace; font-size: 15px;
+        font-weight: 600; color: #6e7681;
+    }
+
+    .sev-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 8px;
+        color: #4a5160; letter-spacing: 1px; text-align: center;
+    }
+
+    /* Active states */
+    .sev-btn.sev-active.sev-1 { border-color: #9fef00; background: rgba(159,239,0,0.08); }
+    .sev-btn.sev-active.sev-1 .sev-num { color: #9fef00; }
+
+    .sev-btn.sev-active.sev-2 { border-color: #7dc700; background: rgba(125,199,0,0.08); }
+    .sev-btn.sev-active.sev-2 .sev-num { color: #7dc700; }
+
+    .sev-btn.sev-active.sev-3 { border-color: #ffa500; background: rgba(255,165,0,0.08); }
+    .sev-btn.sev-active.sev-3 .sev-num { color: #ffa500; }
+
+    .sev-btn.sev-active.sev-4 { border-color: #ff6b35; background: rgba(255,107,53,0.08); }
+    .sev-btn.sev-active.sev-4 .sev-num { color: #ff6b35; }
+
+    .sev-btn.sev-active.sev-5 { border-color: #ff3e3e; background: rgba(255,62,62,0.08); }
+    .sev-btn.sev-active.sev-5 .sev-num { color: #ff3e3e; }
+
+    .sev-indicator {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        padding: 6px 10px; border-radius: 3px;
+        background: #0d1117; border: 1px solid #21262d;
+        animation: chipIn 0.2s ease both;
+    }
+    .sev-color-1 { color: #9fef00; border-color: rgba(159,239,0,0.2); }
+    .sev-color-2 { color: #7dc700; border-color: rgba(125,199,0,0.2); }
+    .sev-color-3 { color: #ffa500; border-color: rgba(255,165,0,0.2); }
+    .sev-color-4 { color: #ff6b35; border-color: rgba(255,107,53,0.2); }
+    .sev-color-5 { color: #ff3e3e; border-color: rgba(255,62,62,0.2); }
+
+    /* ── Input ── */
+    .input-wrapper {
+        display: flex; align-items: center;
+        background: #0d1117; border: 1px solid #21262d;
+        border-radius: 4px;
+        transition: border-color 0.15s, box-shadow 0.15s; overflow: hidden;
+    }
+    .input-wrapper.focused { border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
+    .input-wrapper.valid-ip   { border-color: rgba(159,239,0,0.4); }
+    .input-wrapper.invalid-ip { border-color: rgba(255,62,62,0.3); }
+
+    .input-pre {
+        padding: 0 12px; color: #4a5160;
+        border-right: 1px solid #21262d; flex-shrink: 0;
+        user-select: none; line-height: 44px; font-size: 13px;
+    }
+    .input-pre.mono { font-family: 'IBM Plex Mono', monospace; }
+
+    .field-input {
+        flex: 1; background: transparent; border: none; outline: none;
+        padding: 11px 14px; font-size: 13px; color: #c9d1d9;
+        caret-color: #9fef00;
+    }
+    .field-input.mono { font-family: 'IBM Plex Mono', monospace; }
+    .field-input::placeholder { color: #4a5160; }
+    .field-input:disabled { opacity: 0.5; }
+
+    .ip-status { padding: 0 12px; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+    .ip-status.valid  { color: #9fef00; }
+    .ip-status.invalid { color: #ff3e3e; }
+
+    .field-hint {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #4a5160; line-height: 1.5;
+    }
+
+    /* ── Textarea ── */
+    .textarea-wrapper {
+        background: #0d1117; border: 1px solid #21262d;
+        border-radius: 4px; overflow: hidden;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .textarea-wrapper.focused { border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
+
+    .field-textarea {
+        width: 100%; background: transparent; border: none; outline: none;
+        padding: 12px 14px; font-family: 'Inter', sans-serif; font-size: 13px;
+        color: #c9d1d9; resize: none; caret-color: #9fef00; line-height: 1.6;
+    }
+    .field-textarea::placeholder { color: #4a5160; }
+    .field-textarea:disabled { opacity: 0.5; }
+
+    .textarea-footer {
+        display: flex; justify-content: flex-end;
+        padding: 6px 12px; border-top: 1px solid #21262d;
+    }
+
+    .char-count { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #4a5160; }
+    .char-count.count-warn { color: #ffa500; }
+
+    /* ── Checklist ── */
+    .checklist {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+        padding: 16px; background: #0d1117; border: 1px solid #21262d;
+        border-radius: 4px;
+    }
+
+    .cl-item {
+        display: flex; align-items: center; gap: 8px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #4a5160; transition: color 0.2s;
+    }
+    .cl-item.cl-done { color: #9fef00; }
+
+    .cl-icon { font-size: 12px; width: 14px; text-align: center; flex-shrink: 0; }
+
+    /* ── Error box ── */
+    .error-box {
+        display: flex; align-items: center; gap: 10px;
+        padding: 12px 16px; background: rgba(255,62,62,0.07);
+        border: 1px solid rgba(255,62,62,0.2); border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ff3e3e;
+    }
+    .eb-icon { font-size: 14px; flex-shrink: 0; }
+
+    /* ── Submit button ── */
+    .submit-btn {
+        width: 100%; padding: 15px 20px;
+        background: #9fef00; border: none; border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+        font-weight: 600; color: #0d1117; letter-spacing: 2px;
+        cursor: pointer; display: flex; align-items: center;
+        justify-content: center; gap: 10px;
+        transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+    .submit-btn:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(159,239,0,0.25); }
+    .submit-btn:active { transform: translateY(0); }
+
+    .submit-btn-disabled {
+        width: 100%; padding: 15px 20px;
+        background: #21262d; border: none; border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+        font-weight: 600; color: #4a5160; letter-spacing: 2px;
+        cursor: not-allowed; display: flex; align-items: center;
+        justify-content: center; gap: 10px;
+    }
+
+    .submit-loading {
+        width: 100%; padding: 15px 20px;
+        background: #21262d; border: none; border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+        font-weight: 600; color: #6e7681; letter-spacing: 2px;
+        cursor: not-allowed; display: flex; align-items: center;
+        justify-content: center; gap: 10px;
+    }
+
+    .submit-icon { font-size: 16px; }
+
+    .btn-spinner {
+        width: 14px; height: 14px;
+        border: 2px solid #4a5160; border-top-color: #9fef00;
+        border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .form-footnote { text-align: center; }
+
+    .footnote-link {
+        font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+        color: #6e7681; text-decoration: none; transition: color 0.15s;
+    }
+    .footnote-link:hover { color: #9fef00; }
+
+    /* ── Right panel ── */
+    .sr-right { display: flex; flex-direction: column; gap: 16px; }
+
+    .info-card {
+        background: #161b22; border: 1px solid #21262d;
+        border-radius: 8px; overflow: hidden;
+        transition: border-color 0.2s;
+    }
+    .info-card:hover { border-color: #30363d; }
+    .info-card-dim { opacity: 0.8; }
+
+    .ic-header {
+        display: flex; align-items: center; gap: 10px;
+        padding: 12px 16px; background: #0d1117;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .ic-icon { font-size: 14px; }
+
+    .ic-title {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #9fef00; letter-spacing: 2px; opacity: 0.8;
+    }
+
+    .ic-body { padding: 16px; }
+
+    .ic-text { font-size: 12px; color: #6e7681; line-height: 1.6; margin-bottom: 14px; }
+
+    .criteria-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+
+    .criteria-item { }
+
+    .cri-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 12px; background: #0d1117;
+        border: 1px solid #21262d; border-radius: 3px;
+    }
+
+    .cri-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #6e7681; letter-spacing: 1px;
+    }
+
+    .cri-value {
+        font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600;
+    }
+    .cri-value.green { color: #9fef00; }
+
+    .criteria-and {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #4a5160; text-align: center; padding: 3px 0; letter-spacing: 2px;
+    }
+
+    .ic-note {
+        font-size: 11px; color: #4a5160; line-height: 1.5;
+        padding: 8px; background: #0d1117;
+        border: 1px solid #21262d; border-radius: 3px;
+    }
+
+    .ref-list { display: flex; flex-direction: column; gap: 0; padding: 0; }
+
+    .ref-row {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 10px 16px; border-bottom: 1px solid #21262d;
+        transition: background 0.15s;
+    }
+    .ref-row:last-child { border-bottom: none; }
+    .ref-row:hover { background: #0d1117; }
+    .ref-row.ref-active { background: rgba(159,239,0,0.04); border-left: 2px solid #9fef00; }
+
+    .ref-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+    .ref-info { display: flex; flex-direction: column; gap: 2px; }
+
+    .ref-name {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        font-weight: 600; color: #c9d1d9;
+    }
+
+    .ref-desc { font-size: 11px; color: #6e7681; }
+
+    .limit-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 0; border-bottom: 1px solid #21262d;
+    }
+    .limit-row:last-child { border-bottom: none; }
+
+    .limit-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #6e7681; letter-spacing: 1px;
+    }
+
+    .limit-value {
+        font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #c9d1d9;
+    }
+    .limit-value.green { color: #9fef00; }
+    .limit-value.red   { color: #ff3e3e; }
+
+    /* ── Responsive ── */
+    @@media (max-width: 960px) {
+        .sr-layout { grid-template-columns: 1fr; }
+        .sr-right { display: none; }
+        .sr-root { padding: 72px 16px 40px; }
+        .form-row { grid-template-columns: 1fr; }
+        .checklist { grid-template-columns: 1fr; }
+    }
+</style>
+
+@code {
+    private string _attackType = string.Empty;
+    private string _sector = string.Empty;
+    private string _city = string.Empty;
+    private int _severity = 0;
+    private string _sourceIP = string.Empty;
+    private string _description = string.Empty;
+    private bool _loading = false;
+    private string _errorMessage = string.Empty;
+    private string _toastMessage = string.Empty;
+    private string _toastType = "toast-success";
+    private bool _toastVisible = false;
+
+    private bool _attackTypeFocused = false;
+    private bool _sectorFocused = false;
+    private bool _cityFocused = false;
+    private bool _ipFocused = false;
+    private bool _descFocused = false;
+
+    private readonly string[] _attackTypes = { "Ransomware", "Phishing", "DDoS", "IdentityTheft", "Malware", "Other" };
+    private readonly string[] _sectors = { "Banking", "Telecom", "Healthcare", "Education", "Government", "Energy", "Other" };
+    private readonly string[] _cities = { "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Hyderabad", "Gujranwala", "Sialkot", "Abbottabad" };
+
+    private readonly (string Name, string Icon, string Desc)[] _attackTypeInfo = {
+        ("Ransomware",    "🔐", "Encrypts files and demands payment"),
+        ("Phishing",      "🎣", "Deceptive emails or sites stealing credentials"),
+        ("DDoS",          "🌊", "Floods systems to cause service disruption"),
+        ("IdentityTheft", "👤", "Unauthorized access to personal/financial data"),
+        ("Malware",       "🦠", "Malicious software infection or deployment"),
+        ("Other",         "⚠", "Incidents not covered by above categories"),
+    };
+
+    private bool IsAttackValid() => !string.IsNullOrEmpty(_attackType);
+
+    private bool CanSubmit() =>
+        !string.IsNullOrEmpty(_attackType) &&
+        !string.IsNullOrEmpty(_sector) &&
+        !string.IsNullOrEmpty(_city) &&
+        _severity > 0 &&
+        !_loading;
+
+    private string SubmitBtnClass() => _loading ? "submit-loading" :
+        CanSubmit() ? "submit-btn" : "submit-btn-disabled";
+
+    private void OnIpInput(ChangeEventArgs e)
+    {
+        _sourceIP = e.Value?.ToString() ?? string.Empty;
+    }
+
+    private static bool IsValidIP(string ip)
+    {
+        if (string.IsNullOrWhiteSpace(ip)) return false;
+        return System.Net.IPAddress.TryParse(ip, out _);
+    }
+
+    private string GetIpState()
+    {
+        if (string.IsNullOrEmpty(_sourceIP)) return string.Empty;
+        return IsValidIP(_sourceIP) ? "valid-ip" : "invalid-ip";
+    }
+
+    private static string GetAttackIcon(string type) => type switch
+    {
+        "Ransomware"    => "🔐",
+        "Phishing"      => "🎣",
+        "DDoS"          => "🌊",
+        "IdentityTheft" => "👤",
+        "Malware"       => "🦠",
+        _               => "⚠"
+    };
+
+    private static string GetSeverityLabel(int s) => s switch
+    {
+        1 => "LOW",
+        2 => "MED",
+        3 => "HIGH",
+        4 => "CRIT",
+        5 => "CATA",
+        _ => ""
+    };
+
+    private static string GetSeverityDesc(int s) => s switch
+    {
+        1 => "Minor incident, limited impact",
+        2 => "Moderate disruption to services",
+        3 => "Significant impact, active threat",
+        4 => "Critical systems compromised",
+        5 => "Catastrophic, widespread damage",
+        _ => ""
+    };
+
+    private async Task HandleSubmit()
+    {
+        if (!CanSubmit()) return;
+        _errorMessage = string.Empty;
+        _loading = true;
+        StateHasChanged();
+
+        var error = await ApiService.SubmitReportAsync(new
+        {
+            attackType  = _attackType,
+            targetSector = _sector,
+            city        = _city,
+            severity    = _severity,
+            sourceIP    = string.IsNullOrWhiteSpace(_sourceIP) ? null : _sourceIP,
+            description = string.IsNullOrWhiteSpace(_description) ? null : _description
+        });
+
+        _loading = false;
+
+        if (error == null)
+        {
+            // Reset form
+            _attackType = _sector = _city = _sourceIP = _description = string.Empty;
+            _severity = 0;
+            await ShowToast("Report transmitted successfully. Pending verification.", "toast-success");
+        }
+        else if (error.Contains("429") || error.Contains("Rate limit"))
+        {
+            _errorMessage = "Rate limit reached — maximum 10 reports per hour.";
+        }
+        else
+        {
+            _errorMessage = error;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ShowToast(string message, string type)
+    {
+        _toastMessage = message; _toastType = type; _toastVisible = true;
+        StateHasChanged();
+        await Task.Delay(4000);
+        _toastVisible = false; StateHasChanged();
+        await Task.Delay(500);
+        _toastMessage = string.Empty; StateHasChanged();
+    }
+}

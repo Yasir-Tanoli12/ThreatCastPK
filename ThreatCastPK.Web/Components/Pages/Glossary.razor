@@ -1,0 +1,808 @@
+﻿@* ThreatCastPK.Web/Components/Pages/Glossary.razor *@
+@page "/glossary"
+@rendermode InteractiveServer
+
+<PageTitle>Glossary — ThreatCast PK</PageTitle>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<div class="glossary-root">
+    <div class="bg-grid"></div>
+    <div class="scan-line"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="glossary-layout">
+
+        @* ── Left sidebar ── *@
+        <aside class="gloss-sidebar">
+
+            <div class="sidebar-brand">
+                <div class="sb-label">// REFERENCE</div>
+                <h1 class="sb-title">Threat<br /><span class="sb-accent">Glossary</span></h1>
+                <p class="sb-sub">
+                    Definitions of cybersecurity terms and
+                    platform-specific concepts used in ThreatCast PK.
+                </p>
+            </div>
+
+            @* Letter jump links *@
+            <div class="letter-nav-card">
+                <div class="sc-header">JUMP TO LETTER</div>
+                <div class="letter-grid">
+                    @foreach (var letter in GetAvailableLetters())
+                    {
+                        <button class="letter-btn @(_activeLetter == letter ? "letter-active" : "")"
+                                @onclick="() => JumpToLetter(letter)">
+                            @letter
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @* Category filter *@
+            <div class="sidebar-card">
+                <div class="sc-header">FILTER BY CATEGORY</div>
+                @foreach (var cat in _filterCategories)
+                {
+                    <button class="cat-btn @(_activeFilter == cat.Key ? "cat-active" : "")"
+                            @onclick="() => _activeFilter = cat.Key">
+                        <span class="cat-icon">@cat.Icon</span>
+                        <span class="cat-name">@cat.Label</span>
+                        <span class="cat-count">
+                            @(cat.Key == "all"
+                                ? _terms.Count
+                                : _terms.Count(t => t.Category == cat.Key))
+                        </span>
+                    </button>
+                }
+            </div>
+
+            <div class="sidebar-stat">
+                <span class="ss-val">@FilteredTerms.Count</span>
+                <span class="ss-label">terms shown</span>
+            </div>
+
+        </aside>
+
+        @* ── Main content ── *@
+        <main class="gloss-main">
+
+            @* Search bar *@
+            <div class="gloss-topbar">
+                <div class="search-box @(_searchFocused ? "focused" : "")">
+                    <span class="search-icon">⌕</span>
+                    <input type="text" class="search-input"
+                           placeholder="Search terms, acronyms, or definitions..."
+                           value="@_searchQuery"
+                           @oninput="e => { _searchQuery = e.Value?.ToString() ?? string.Empty; _activeLetter = null; }"
+                           @onfocus="() => _searchFocused = true"
+                           @onblur="() => _searchFocused = false" />
+                    @if (!string.IsNullOrEmpty(_searchQuery))
+                    {
+                        <button class="search-clear" @onclick="() => { _searchQuery = string.Empty; }">✕</button>
+                    }
+                </div>
+                <div class="result-info">
+                    @if (!string.IsNullOrEmpty(_searchQuery))
+                    {
+                        <span class="ri-text">
+                            <span class="ri-count">@FilteredTerms.Count</span> result@(FilteredTerms.Count != 1 ? "s" : "")
+                            for "@_searchQuery"
+                        </span>
+                    }
+                </div>
+            </div>
+
+            @* Terms list *@
+            @if (FilteredTerms.Count == 0)
+            {
+                <div class="no-results">
+                    <div class="nr-icon">⌕</div>
+                    <div class="nr-title">NO TERMS FOUND</div>
+                    <div class="nr-sub">No results for "@_searchQuery". Try a different search.</div>
+                    <button class="nr-btn" @onclick="ResetFilters">
+                        Clear filters
+                    </button>
+                </div>
+            }
+            else
+            {
+                @* Group by first letter *@
+                @foreach (var group in FilteredTerms.GroupBy(t => t.Term[0].ToString().ToUpper()).OrderBy(g => g.Key))
+                {
+                    <div class="letter-section" id="letter-@group.Key">
+                        <div class="letter-header">@group.Key</div>
+
+                        @foreach (var term in group.OrderBy(t => t.Term))
+                        {
+                            <div class="term-card @(_expandedTerm == term.Term ? "term-expanded" : "")"
+                                 @onclick="() => ToggleTerm(term.Term)">
+
+                                <div class="tc-main">
+                                    <div class="tc-left">
+                                        <div class="tc-term-row">
+                                            <span class="tc-term">@term.Term</span>
+                                            @if (!string.IsNullOrEmpty(term.Acronym))
+                                            {
+                                                <span class="tc-acronym">@term.Acronym</span>
+                                            }
+                                            <span class="tc-cat-pill cat-pill-@term.Category">
+                                                @GetCategoryLabel(term.Category)
+                                            </span>
+                                            @if (term.IsProjectSpecific)
+                                            {
+                                                <span class="tc-platform-badge">PLATFORM</span>
+                                            }
+                                        </div>
+                                        <div class="tc-short">@term.ShortDef</div>
+                                    </div>
+                                    <div class="tc-chevron @(_expandedTerm == term.Term ? "chevron-open" : "")">▾</div>
+                                </div>
+
+                                @if (_expandedTerm == term.Term)
+                                {
+                                    <div class="tc-expanded" @onclick:stopPropagation="true">
+                                        <div class="tce-body">
+                                            <p class="tce-full">@term.FullDef</p>
+                                            @if (term.AttackTypes != null && term.AttackTypes.Any())
+                                            {
+                                                <div class="tce-types">
+                                                    <span class="tce-types-label">RELATED ATTACK TYPES:</span>
+                                                    @foreach (var at in term.AttackTypes)
+                                                    {
+                                                        <span class="type-chip chip-@at.ToLower().Replace(" ","")">
+                                                            @at
+                                                        </span>
+                                                    }
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(term.Example))
+                                            {
+                                                <div class="tce-example">
+                                                    <span class="tce-example-label">EXAMPLE</span>
+                                                    <div class="tce-example-text">@term.Example</div>
+                                                </div>
+                                            }
+                                            @if (term.SeeAlso != null && term.SeeAlso.Any())
+                                            {
+                                                <div class="tce-seealso">
+                                                    <span class="tce-sa-label">SEE ALSO:</span>
+                                                    @foreach (var sa in term.SeeAlso)
+                                                    {
+                                                        <button class="sa-link" @onclick="() => SearchFor(sa)">
+                                                            @sa →
+                                                        </button>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            }
+
+        </main>
+    </div>
+</div>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .glossary-root {
+        min-height: 100vh; background: #0d1117;
+        font-family: 'Inter', sans-serif;
+        padding: 72px 0 0; position: relative; overflow-x: hidden;
+    }
+
+    .bg-grid {
+        position: fixed; inset: 0;
+        background-image:
+            linear-gradient(rgba(159,239,0,0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(159,239,0,0.025) 1px, transparent 1px);
+        background-size: 40px 40px; pointer-events: none; z-index: 0;
+    }
+
+    .scan-line {
+        position: fixed; top: -2px; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, transparent, #9fef00, transparent);
+        animation: scan 8s linear infinite; opacity: 0.3;
+        z-index: 1; pointer-events: none;
+    }
+
+    .corner { position: fixed; width: 18px; height: 18px; z-index: 2; pointer-events: none; }
+    .corner-tl { top: 14px; left: 14px; border-top: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-tr { top: 14px; right: 14px; border-top: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+    .corner-bl { bottom: 14px; left: 14px; border-bottom: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-br { bottom: 14px; right: 14px; border-bottom: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+
+    /* ── Layout ── */
+    .glossary-layout {
+        max-width: 1200px; margin: 0 auto;
+        display: grid; grid-template-columns: 260px 1fr;
+        min-height: calc(100vh - 72px);
+        position: relative; z-index: 3;
+    }
+
+    /* ── Sidebar ── */
+    .gloss-sidebar {
+        border-right: 1px solid #21262d;
+        padding: 28px 20px;
+        display: flex; flex-direction: column; gap: 16px;
+        position: sticky; top: 72px;
+        height: calc(100vh - 72px); overflow-y: auto;
+    }
+
+    .sidebar-brand { }
+
+    .sb-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #9fef00; letter-spacing: 2px; opacity: 0.7; margin-bottom: 10px;
+    }
+
+    .sb-title {
+        font-size: 28px; font-weight: 700; color: #e6edf3;
+        line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 10px;
+    }
+
+    .sb-accent { color: #9fef00; }
+    .sb-sub { font-size: 12px; color: #6e7681; line-height: 1.6; }
+
+    .sidebar-card, .letter-nav-card {
+        background: #161b22; border: 1px solid #21262d;
+        border-radius: 8px; overflow: hidden;
+    }
+
+    .sc-header {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+        color: #4a5160; letter-spacing: 2px; padding: 10px 14px;
+        background: #0d1117; border-bottom: 1px solid #21262d;
+    }
+
+    .letter-grid {
+        display: grid; grid-template-columns: repeat(6, 1fr); gap: 0;
+        padding: 8px;
+    }
+
+    .letter-btn {
+        width: 100%; aspect-ratio: 1; background: none; border: none;
+        border-radius: 4px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        font-weight: 600; color: #4a5160;
+        transition: background 0.1s, color 0.1s;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .letter-btn:hover { background: #21262d; color: #c9d1d9; }
+    .letter-active { background: rgba(159,239,0,0.1) !important; color: #9fef00 !important; }
+
+    .cat-btn {
+        width: 100%; display: flex; align-items: center; gap: 10px;
+        padding: 9px 14px; background: none; border: none;
+        border-bottom: 1px solid #21262d; cursor: pointer;
+        transition: background 0.1s;
+    }
+    .cat-btn:last-child { border-bottom: none; }
+    .cat-btn:hover { background: #0d1117; }
+    .cat-active { background: rgba(159,239,0,0.04) !important; }
+    .cat-active .cat-name { color: #9fef00 !important; }
+
+    .cat-icon { font-size: 13px; flex-shrink: 0; }
+    .cat-name { font-size: 12px; color: #c9d1d9; flex: 1; transition: color 0.1s; }
+    .cat-count {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #4a5160; background: #21262d;
+        padding: 1px 6px; border-radius: 8px;
+    }
+
+    .sidebar-stat {
+        display: flex; align-items: baseline; gap: 6px;
+        padding: 8px 4px;
+    }
+
+    .ss-val {
+        font-family: 'IBM Plex Mono', monospace; font-size: 22px;
+        font-weight: 600; color: #9fef00;
+    }
+
+    .ss-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #4a5160; letter-spacing: 1px;
+    }
+
+    /* ── Main ── */
+    .gloss-main { padding: 24px 32px 48px; }
+
+    /* ── Search ── */
+    .gloss-topbar {
+        display: flex; align-items: center; gap: 16px;
+        margin-bottom: 24px; flex-wrap: wrap;
+    }
+
+    .search-box {
+        display: flex; align-items: center;
+        background: #161b22; border: 1px solid #21262d;
+        border-radius: 4px; overflow: hidden; flex: 1; max-width: 520px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .search-box.focused {
+        border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+    }
+
+    .search-icon {
+        padding: 0 12px; color: #4a5160; font-size: 18px;
+        border-right: 1px solid #21262d; line-height: 44px; flex-shrink: 0;
+    }
+
+    .search-input {
+        flex: 1; background: transparent; border: none; outline: none;
+        padding: 11px 12px; font-family: 'Inter', sans-serif;
+        font-size: 14px; color: #c9d1d9; caret-color: #9fef00;
+    }
+    .search-input::placeholder { color: #4a5160; }
+
+    .search-clear {
+        padding: 0 12px; background: none; border: none;
+        color: #4a5160; cursor: pointer; font-size: 11px;
+        transition: color 0.15s; height: 100%;
+    }
+    .search-clear:hover { color: #ff3e3e; }
+
+    .result-info { }
+
+    .ri-text { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4a5160; }
+    .ri-count { color: #9fef00; }
+
+    /* ── Letter section ── */
+    .letter-section { margin-bottom: 28px; }
+
+    .letter-header {
+        font-family: 'IBM Plex Mono', monospace; font-size: 28px;
+        font-weight: 700; color: #21262d; margin-bottom: 8px;
+        padding-bottom: 8px; border-bottom: 1px solid #21262d;
+        letter-spacing: -0.5px;
+    }
+
+    /* ── Term cards ── */
+    .term-card {
+        border-bottom: 1px solid #21262d;
+        transition: background 0.1s; cursor: pointer;
+    }
+    .term-card:hover { background: rgba(159,239,0,0.015); }
+    .term-expanded {
+        background: rgba(159,239,0,0.02) !important;
+        border-left: 3px solid #9fef00;
+    }
+
+    .tc-main {
+        display: flex; align-items: center; gap: 14px;
+        padding: 14px 16px;
+    }
+
+    .tc-left { flex: 1; min-width: 0; }
+
+    .tc-term-row {
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 5px; flex-wrap: wrap;
+    }
+
+    .tc-term {
+        font-family: 'IBM Plex Mono', monospace; font-size: 14px;
+        font-weight: 600; color: #9fef00; letter-spacing: 0.3px;
+    }
+
+    .tc-acronym {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #4a5160; background: #21262d;
+        padding: 1px 7px; border-radius: 3px;
+    }
+
+    .tc-cat-pill {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+        font-weight: 600; padding: 2px 7px; border-radius: 3px;
+        letter-spacing: 1px;
+    }
+
+    .cat-pill-attack    { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid rgba(255,62,62,0.2); }
+    .cat-pill-platform  { background: rgba(159,239,0,0.08); color: #9fef00; border: 1px solid rgba(159,239,0,0.2); }
+    .cat-pill-defense   { background: rgba(0,200,255,0.08); color: #00c8ff; border: 1px solid rgba(0,200,255,0.2); }
+    .cat-pill-intel     { background: rgba(255,165,0,0.08); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
+    .cat-pill-malware   { background: rgba(191,64,191,0.1); color: #bf40bf; border: 1px solid rgba(191,64,191,0.2); }
+    .cat-pill-general   { background: rgba(110,118,129,0.1); color: #6e7681; border: 1px solid #21262d; }
+
+    .tc-platform-badge {
+        font-family: 'IBM Plex Mono', monospace; font-size: 8px;
+        font-weight: 700; color: #ffa500; letter-spacing: 1px;
+        background: rgba(255,165,0,0.08); border: 1px solid rgba(255,165,0,0.2);
+        padding: 2px 6px; border-radius: 3px;
+    }
+
+    .tc-short { font-size: 13px; color: #6e7681; line-height: 1.5; }
+
+    .tc-chevron {
+        font-size: 12px; color: #4a5160; flex-shrink: 0;
+        transition: transform 0.2s, color 0.2s;
+    }
+    .chevron-open { transform: rotate(180deg); color: #9fef00; }
+
+    /* ── Expanded term ── */
+    .tc-expanded {
+        border-top: 1px solid #21262d;
+        animation: expandIn 0.2s ease both;
+    }
+
+    .tce-body {
+        padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;
+    }
+
+    .tce-full {
+        font-size: 14px; color: #c9d1d9; line-height: 1.75;
+    }
+
+    .tce-types {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+
+    .tce-types-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+        color: #4a5160; letter-spacing: 2px; flex-shrink: 0;
+    }
+
+    .type-chip {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        padding: 3px 8px; border-radius: 3px;
+        display: inline-flex; align-items: center; gap: 4px;
+    }
+    .chip-ransomware    { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid rgba(255,62,62,0.2); }
+    .chip-phishing      { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
+    .chip-ddos          { background: rgba(0,200,255,0.1); color: #00c8ff; border: 1px solid rgba(0,200,255,0.2); }
+    .chip-malware       { background: rgba(191,64,191,0.1); color: #bf40bf; border: 1px solid rgba(191,64,191,0.2); }
+    .chip-identitytheft { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
+    .chip-other         { background: rgba(110,118,129,0.1); color: #6e7681; border: 1px solid rgba(110,118,129,0.2); }
+
+    .tce-example {
+        background: #0d1117; border: 1px solid #21262d;
+        border-radius: 4px; padding: 12px 16px;
+    }
+
+    .tce-example-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+        color: #4a5160; letter-spacing: 2px; display: block; margin-bottom: 6px;
+    }
+
+    .tce-example-text {
+        font-size: 13px; color: #c9d1d9; line-height: 1.6;
+        font-style: italic;
+    }
+
+    .tce-seealso { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+    .tce-sa-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+        color: #4a5160; letter-spacing: 2px;
+    }
+
+    .sa-link {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #00c8ff; background: none; border: none; cursor: pointer;
+        padding: 0; text-decoration: none; transition: opacity 0.15s;
+    }
+    .sa-link:hover { opacity: 0.7; }
+
+    /* ── No results ── */
+    .no-results {
+        display: flex; flex-direction: column; align-items: center;
+        padding: 80px 40px; background: #161b22;
+        border: 1px solid #21262d; border-radius: 8px;
+        text-align: center; gap: 12px;
+    }
+
+    .nr-icon { font-size: 40px; opacity: 0.3; }
+    .nr-title { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #6e7681; letter-spacing: 2px; }
+    .nr-sub   { font-size: 13px; color: #4a5160; max-width: 360px; }
+
+    .nr-btn {
+        padding: 8px 20px; background: transparent;
+        border: 1px solid #21262d; border-radius: 4px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #6e7681; letter-spacing: 1px; margin-top: 4px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+    .nr-btn:hover { border-color: #9fef00; color: #9fef00; }
+
+    /* ── Animations ── */
+    @@keyframes expandIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes spin     { to { transform: rotate(360deg); } }
+    @@keyframes scan     { 0% { top: -2px; } 100% { top: 100vh; } }
+
+    /* ── Responsive ── */
+    @@media (max-width: 860px) {
+        .glossary-layout { grid-template-columns: 1fr; }
+        .gloss-sidebar { display: none; }
+        .gloss-main { padding: 20px 16px 40px; }
+    }
+</style>
+
+@code {
+    private string _searchQuery = string.Empty;
+    private bool _searchFocused = false;
+    private string _activeFilter = "all";
+    private string? _activeLetter = null;
+    private string? _expandedTerm = null;
+
+    private record FilterCategory(string Key, string Label, string Icon);
+
+    private readonly FilterCategory[] _filterCategories = {
+        new("all",      "All Terms",     "◈"),
+        new("attack",   "Attack Types",  "⚔"),
+        new("malware",  "Malware",       "🦠"),
+        new("defense",  "Defense",       "🛡"),
+        new("intel",    "Threat Intel",  "🔍"),
+        new("platform", "Platform",      "⚡"),
+        new("general",  "General",       "📖"),
+    };
+
+    private record GlossaryTerm(
+        string Term,
+        string ShortDef,
+        string FullDef,
+        string Category,
+        string? Acronym = null,
+        string? Example = null,
+        string[]? AttackTypes = null,
+        string[]? SeeAlso = null,
+        bool IsProjectSpecific = false
+    );
+
+    private List<GlossaryTerm> FilteredTerms
+    {
+        get
+        {
+            var list = _terms.AsEnumerable();
+
+            if (_activeFilter != "all")
+                list = list.Where(t => t.Category == _activeFilter);
+
+            if (_activeLetter != null)
+                list = list.Where(t => t.Term.StartsWith(_activeLetter, StringComparison.OrdinalIgnoreCase));
+
+            if (!string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                var q = _searchQuery.ToLower();
+                list = list.Where(t =>
+                    t.Term.ToLower().Contains(q) ||
+                    t.ShortDef.ToLower().Contains(q) ||
+                    t.FullDef.ToLower().Contains(q) ||
+                    (t.Acronym?.ToLower().Contains(q) ?? false)
+                );
+            }
+
+            return list.OrderBy(t => t.Term).ToList();
+        }
+    }
+
+    private IEnumerable<string> GetAvailableLetters()
+        => FilteredTerms
+            .Select(t => t.Term[0].ToString().ToUpper())
+            .Distinct()
+            .OrderBy(l => l);
+
+    private void JumpToLetter(string letter)
+    {
+        _activeLetter = _activeLetter == letter ? null : letter;
+    }
+
+    private void ToggleTerm(string term)
+        => _expandedTerm = _expandedTerm == term ? null : term;
+
+    private void SearchFor(string term)
+    {
+        _searchQuery = term;
+        _activeLetter = null;
+    }
+
+    private string GetCategoryLabel(string cat) => cat switch
+    {
+        "attack"   => "ATTACK",
+        "malware"  => "MALWARE",
+        "defense"  => "DEFENSE",
+        "intel"    => "INTEL",
+        "platform" => "PLATFORM",
+        _          => "GENERAL"
+    };
+
+    private void ResetFilters()
+{
+    _searchQuery = string.Empty;
+    _activeFilter = "all";
+}
+    private readonly List<GlossaryTerm> _terms = new()
+    {
+        // ── Attack Types ──
+        new("Ransomware",
+            "Malware that encrypts victim files and demands payment for decryption.",
+            "Ransomware is a type of malicious software that encrypts a victim's files or locks their system, rendering it inaccessible. The attacker then demands a ransom — typically in cryptocurrency — in exchange for the decryption key. Modern ransomware often also exfiltrates sensitive data before encryption, enabling double extortion tactics.",
+            "attack", Acronym: null,
+            Example: "The 2021 Colonial Pipeline attack used DarkSide ransomware, causing fuel shortages across the US East Coast.",
+            SeeAlso: new[] { "Malware", "Double Extortion", "Encryption" }),
+
+        new("Phishing",
+            "Social engineering attack using deceptive emails or websites to steal credentials.",
+            "Phishing is a cyberattack that uses disguised emails, websites, or messages to trick users into revealing sensitive information such as passwords, credit card numbers, or session tokens. Spear phishing targets specific individuals using personalized information. Whaling targets high-value executives. Smishing uses SMS messages. Vishing uses voice calls.",
+            "attack",
+            Example: "An email impersonating a Pakistan bank asks you to 'verify your account' by clicking a link to a convincing fake login page.",
+            AttackTypes: new[] { "Phishing" },
+            SeeAlso: new[] { "Social Engineering", "Spear Phishing" }),
+
+        new("DDoS",
+            "Overwhelms a target server with traffic to cause service outage.",
+            "A Distributed Denial of Service attack uses thousands of compromised machines — called a botnet — to flood a target system with more requests than it can handle. The goal is service disruption rather than data theft. Volumetric attacks consume bandwidth. Protocol attacks exploit weaknesses in network protocols. Application layer attacks target web application resources.",
+            "attack", Acronym: "DDoS (Distributed Denial of Service)",
+            Example: "A Pakistani telecom's website goes offline during peak hours after receiving 50Gbps of traffic from a botnet.",
+            AttackTypes: new[] { "DDoS" },
+            SeeAlso: new[] { "Botnet", "Volumetric Attack" }),
+
+        new("Malware",
+            "Any software intentionally designed to cause damage or gain unauthorized access.",
+            "Malware is an umbrella term for malicious software including viruses, worms, trojans, spyware, adware, and ransomware. It can be delivered through phishing emails, malicious downloads, infected USB drives, or software vulnerabilities. Once installed, malware may steal data, provide remote access, mine cryptocurrency, or participate in botnets.",
+            "malware",
+            AttackTypes: new[] { "Malware", "Ransomware" },
+            SeeAlso: new[] { "Ransomware", "Trojan", "Botnet", "Spyware" }),
+
+        new("Identity Theft",
+            "Unauthorized use of another person's personal information for fraud.",
+            "Identity theft occurs when an attacker obtains and uses someone's personal information — such as national ID, financial account numbers, or biometric data — without their knowledge to commit fraud. In the cyber context this often involves credential theft, account takeover, or synthetic identity creation using stolen data from breaches.",
+            "attack",
+            AttackTypes: new[] { "IdentityTheft" },
+            SeeAlso: new[] { "Credential Stuffing", "Data Breach", "Phishing" }),
+
+        // ── Malware ──
+        new("Botnet",
+            "Network of compromised computers controlled by an attacker.",
+            "A botnet is a collection of internet-connected devices infected with malware and controlled remotely by an attacker (botmaster). Botnets are used to conduct DDoS attacks, send spam, mine cryptocurrency, or spread further malware. Devices in a botnet are called 'bots' or 'zombies' and their owners are typically unaware of the compromise.",
+            "malware",
+            SeeAlso: new[] { "DDoS", "Malware", "Command and Control" }),
+
+        new("Trojan",
+            "Malware disguised as legitimate software.",
+            "A Trojan horse is malicious code hidden within apparently legitimate software. Unlike viruses, Trojans don't self-replicate. They rely on users executing them willingly, believing the software to be benign. Common types include remote access Trojans (RATs) that give attackers persistent backdoor access, and banking Trojans that steal financial credentials.",
+            "malware",
+            SeeAlso: new[] { "Malware", "RAT", "Backdoor" }),
+
+        new("Spyware",
+            "Software that covertly monitors user activity and exfiltrates data.",
+            "Spyware is software that secretly collects information about a user's activities without their knowledge. This can include keystrokes, screenshots, browsing history, location data, and credentials. Advanced spyware like Pegasus can compromise mobile devices and access encrypted communications.",
+            "malware",
+            SeeAlso: new[] { "Malware", "Keylogger", "RAT" }),
+
+        // ── Defense ──
+        new("Indicators of Compromise",
+            "Forensic evidence that a system may have been breached.",
+            "Indicators of Compromise (IoCs) are pieces of forensic data that identify potentially malicious activity in a system or network. They include file hashes of known malware, malicious IP addresses and domains, suspicious registry entries, unusual network traffic patterns, and anomalous user account behavior. IoCs are fundamental to threat intelligence sharing.",
+            "defense", Acronym: "IoC",
+            SeeAlso: new[] { "Threat Intelligence", "MITRE ATT&CK" }),
+
+        new("Zero-Day",
+            "A vulnerability with no available patch that is actively exploited.",
+            "A zero-day vulnerability is a software flaw unknown to the vendor, for which no patch exists. 'Zero-day' refers to the fact that developers have had zero days to fix it. When exploited, it's called a zero-day attack. These are highly valuable — nation-state actors and criminal groups pay millions for reliable zero-days targeting widely-used software.",
+            "defense", Acronym: "0-day",
+            Example: "An attacker exploits an unpatched flaw in a Pakistani government portal before the vendor is even aware of the vulnerability.",
+            SeeAlso: new[] { "Vulnerability", "Patch Management", "CVE" }),
+
+        new("Lateral Movement",
+            "Techniques attackers use to progress through a network after initial compromise.",
+            "After gaining initial access, attackers use lateral movement to explore and move across a network to reach higher-value targets. Techniques include pass-the-hash, credential reuse, remote service exploitation, and living-off-the-land using built-in system tools. Lateral movement is a key phase in advanced persistent threat campaigns.",
+            "defense",
+            SeeAlso: new[] { "APT", "Privilege Escalation", "MITRE ATT&CK" }),
+
+        new("Vulnerability",
+            "A weakness in a system that can be exploited to cause harm.",
+            "A vulnerability is a flaw or weakness in software, hardware, or a process that can be exploited by a threat actor to gain unauthorized access or cause harm. Vulnerabilities are tracked using the Common Vulnerabilities and Exposures (CVE) system and scored using CVSS (Common Vulnerability Scoring System) from 0 to 10.",
+            "defense", Acronym: "CVE",
+            SeeAlso: new[] { "Zero-Day", "Patch Management", "Exploit" }),
+
+        // ── Threat Intel ──
+        new("Threat Intelligence",
+            "Evidence-based knowledge about existing or emerging cyber threats.",
+            "Threat intelligence is analyzed information about the capabilities, motivations, and intentions of threat actors. It includes tactical intelligence (IoCs for immediate defense), operational intelligence (how campaigns work), and strategic intelligence (geopolitical context). Effective threat intelligence enables proactive rather than reactive defense.",
+            "intel", Acronym: "CTI (Cyber Threat Intelligence)",
+            SeeAlso: new[] { "Indicators of Compromise", "MITRE ATT&CK", "Threat Actor" }),
+
+        new("MITRE ATT&CK",
+            "Globally-accessible knowledge base of adversary tactics and techniques.",
+            "MITRE ATT&CK (Adversarial Tactics, Techniques & Common Knowledge) is a curated knowledge base of real-world cyber adversary behaviors. It organizes attack techniques into tactics (the why) and techniques (the how). Security teams use it to map defenses to specific attack vectors and prioritize monitoring rules.",
+            "intel",
+            SeeAlso: new[] { "Threat Intelligence", "Lateral Movement", "Indicators of Compromise" }),
+
+        new("APT",
+            "Advanced Persistent Threat — a sophisticated, long-term targeted attack campaign.",
+            "An Advanced Persistent Threat refers to a prolonged and targeted cyberattack in which an intruder establishes an undetected presence in a network to steal data or conduct espionage over time. APT groups are often nation-state sponsored and have significant resources, patience, and technical sophistication.",
+            "intel", Acronym: "APT",
+            SeeAlso: new[] { "Lateral Movement", "Command and Control", "Threat Actor" }),
+
+        new("Command and Control",
+            "Infrastructure used by attackers to communicate with compromised systems.",
+            "Command and Control (C2 or C&C) refers to the infrastructure attackers use to maintain communication with compromised hosts, issue commands, and exfiltrate data. C2 traffic may be disguised as legitimate traffic using protocols like HTTPS or DNS. Takedowns of C2 infrastructure can neutralize entire botnet operations.",
+            "intel", Acronym: "C2",
+            SeeAlso: new[] { "Botnet", "APT", "Malware" }),
+
+        // ── Platform-specific ──
+        new("Confidence Tier",
+            "ThreatCast PK's classification system for the reliability of attack reports.",
+            "ThreatCast PK assigns every attack event a Confidence Tier based on its verification status. Verified events come from automated API sources (AbuseIPDB) or admin-injected data and are the most reliable. CommunityReported events are human-submitted reports that have passed moderation. Unverified events are pending review and never shown on the public map.",
+            "platform",
+            IsProjectSpecific: true,
+            SeeAlso: new[] { "Reputation Score", "Auto-Approval", "Moderation Queue" }),
+
+        new("Reputation Score",
+            "A numeric trust rating for ThreatCast PK reporters based on submission accuracy.",
+            "Every Reporter on ThreatCast PK has a reputation score starting at 0. Approved reports earn +10 points; rejected reports deduct 5 points with a floor of 0. A score of 75 or higher, combined with a high AbuseIPDB confidence score, enables auto-approval of future reports — bypassing the manual moderation queue.",
+            "platform",
+            IsProjectSpecific: true,
+            SeeAlso: new[] { "Auto-Approval", "Confidence Tier", "AbuseIPDB" }),
+
+        new("Auto-Approval",
+            "Automatic approval of reports meeting reputation and IP reputation thresholds.",
+            "ThreatCast PK automatically approves a submitted report when two conditions are both met: the reporter's reputation score is at or above 75, AND the AbuseIPDB confidence score for the submitted source IP is at or above 80. Auto-approved reports immediately create an AttackEvent and appear live on the map without admin review.",
+            "platform",
+            IsProjectSpecific: true,
+            SeeAlso: new[] { "Reputation Score", "AbuseIPDB", "Moderation Queue" }),
+
+        new("AbuseIPDB",
+            "External API that scores IP addresses by their history of malicious activity.",
+            "AbuseIPDB is a public IP reputation database that aggregates community reports of IP addresses involved in malicious activity. ThreatCast PK queries this API when a reporter submits an attack report with a source IP. The returned confidence score (0-100) indicates the probability that the IP is malicious, and feeds into the auto-approval decision.",
+            "platform",
+            IsProjectSpecific: true,
+            SeeAlso: new[] { "Auto-Approval", "Reputation Score" }),
+
+        new("Moderation Queue",
+            "The admin review queue for attack reports that did not meet auto-approval criteria.",
+            "When a submitted attack report fails the auto-approval check — either because the reporter's reputation is below 75 or the source IP's AbuseIPDB score is below 80 — it enters the Moderation Queue. Administrators review queued reports and either approve them (creating a live AttackEvent and rewarding the reporter) or reject them (with a reason, penalizing the reporter's reputation).",
+            "platform",
+            IsProjectSpecific: true,
+            SeeAlso: new[] { "Auto-Approval", "Confidence Tier", "Reputation Score" }),
+
+        new("Sector Risk Score",
+            "ML-generated risk rating for each critical infrastructure sector.",
+            "ThreatCast PK's Python ML microservice runs every 30 minutes to compute a risk level for each of the 7 tracked sectors: Banking, Telecom, Healthcare, Education, Government, Energy, and Other. Risk levels are Low, Medium, High, or Critical, determined by the number and severity of attack events targeting that sector in the last 24 hours.",
+            "platform",
+            IsProjectSpecific: true,
+            SeeAlso: new[] { "Threat Intelligence" }),
+
+        // ── General ──
+        new("Attack Vector",
+            "The path or means by which an attacker gains access to a target.",
+            "An attack vector is the route or mechanism by which a threat actor delivers an attack or gains unauthorized access to a system. Common attack vectors include email (phishing), web browsers (drive-by downloads), removable media (infected USB drives), network services (unpatched vulnerabilities), and supply chain compromise. Organizations must defend all exposed vectors.",
+            "general",
+            SeeAlso: new[] { "Vulnerability", "Phishing", "Social Engineering" }),
+
+        new("Data Breach",
+            "Unauthorized access and exposure of sensitive or confidential data.",
+            "A data breach is an incident where sensitive, protected, or confidential data is accessed, disclosed, or stolen by an unauthorized party. Breaches can occur through hacking, malware, insider threats, or accidental exposure. In Pakistan, breaches of financial institutions, government databases, and mobile operator records have been documented.",
+            "general",
+            SeeAlso: new[] { "Identity Theft", "Indicators of Compromise" }),
+
+        new("Encryption",
+            "The process of encoding data so only authorized parties can read it.",
+            "Encryption is the transformation of readable data (plaintext) into an unreadable format (ciphertext) using a cryptographic algorithm and key. Legitimate encryption protects sensitive data in transit and at rest. Attackers weaponize encryption in ransomware attacks to make victim files inaccessible until a decryption key is provided.",
+            "defense",
+            SeeAlso: new[] { "Ransomware" }),
+
+        new("Social Engineering",
+            "Psychological manipulation of people into performing actions or divulging information.",
+            "Social engineering attacks exploit human psychology rather than technical vulnerabilities. Attackers impersonate trusted entities, create urgency, or appeal to authority to trick victims into clicking malicious links, revealing credentials, or transferring funds. Phishing, vishing, smishing, and pretexting are all social engineering techniques.",
+            "general",
+            SeeAlso: new[] { "Phishing" }),
+
+        new("Patch Management",
+            "The process of identifying and applying software updates to fix vulnerabilities.",
+            "Patch management is the systematic process of acquiring, testing, and installing security patches and updates for software and firmware. Unpatched systems are a leading cause of successful cyberattacks. Effective patch management requires a defined schedule, asset inventory, testing environment, and emergency patching process for critical vulnerabilities.",
+            "defense",
+            SeeAlso: new[] { "Zero-Day", "Vulnerability" }),
+    };
+}
