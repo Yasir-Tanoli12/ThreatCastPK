@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "+ZjpjoopmLA=",
+  "dgSpecHash": "NbQi8vkpfTA=",
   "success": true,
-  "projectFilePath": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj",
+  "projectFilePath": "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Lenovo\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.7\\microsoft.aspnetcore.app.internal.assets.10.0.7.nupkg.sha512"
+    "C:\\Users\\hp\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.3\\microsoft.aspnetcore.app.internal.assets.10.0.3.nupkg.sha512"
   ],
   "logs": []
 }

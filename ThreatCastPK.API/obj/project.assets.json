@@ -2984,23 +2984,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Lenovo\\.nuget\\packages\\": {},
+    "C:\\Users\\hp\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.API\\ThreatCastPK.API.csproj",
+      "projectUniqueName": "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.API\\ThreatCastPK.API.csproj",
       "projectName": "ThreatCastPK.API",
-      "projectPath": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.API\\ThreatCastPK.API.csproj",
-      "packagesPath": "C:\\Users\\Lenovo\\.nuget\\packages\\",
-      "outputPath": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.API\\obj\\",
+      "projectPath": "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.API\\ThreatCastPK.API.csproj",
+      "packagesPath": "C:\\Users\\hp\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.API\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Lenovo\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\hp\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -3013,11 +3013,10 @@
       },
       "frameworks": {
         "net10.0": {
-          "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.Database\\ThreatCastPK.Database.csproj": {
-              "projectPath": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.Database\\ThreatCastPK.Database.csproj"
+            "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.Database\\ThreatCastPK.Database.csproj": {
+              "projectPath": "C:\\Users\\hp\\Desktop\\University\\4th Semester\\Projects\\VP\\ThreatCastPK\\ThreatCastPK.Database\\ThreatCastPK.Database.csproj"
             }
           }
         }
@@ -3032,11 +3031,10 @@
         "auditLevel": "low",
         "auditMode": "all"
       },
-      "SdkAnalysisLevel": "10.0.200"
+      "SdkAnalysisLevel": "10.0.100"
     },
     "frameworks": {
       "net10.0": {
-        "framework": "net10.0",
         "targetAlias": "net10.0",
         "dependencies": {
           "BCrypt.Net-Next": {
@@ -3085,7 +3083,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",
