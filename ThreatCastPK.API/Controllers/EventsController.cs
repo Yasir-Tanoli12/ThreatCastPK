@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ThreatCastPK.Database.Context;
+using ThreatCastPK.Database.Enums;
 
 namespace ThreatCastPK.API.Controllers;
 
@@ -8,9 +9,9 @@ namespace ThreatCastPK.API.Controllers;
 [Route("api/[controller]")]
 public class EventsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly ThreatCastDbContext _context;
 
-    public EventsController(AppDbContext context)
+    public EventsController(ThreatCastDbContext context)
     {
         _context = context;
     }
@@ -32,33 +33,35 @@ public class EventsController : ControllerBase
         };
 
         var query = _context.AttackReports
-            .Where(r => r.CreatedAt >= cutoff && r.IsApproved);
+            .Where(r => r.SubmittedAt >= cutoff &&
+                        r.Status == ReportStatus.Approved);
 
         if (!string.IsNullOrEmpty(city))
             query = query.Where(r => r.City == city);
 
-        if (!string.IsNullOrEmpty(attackType))
-            query = query.Where(r => r.AttackType == attackType);
+        if (!string.IsNullOrEmpty(attackType) &&
+            Enum.TryParse<AttackType>(attackType, out var parsedAttackType))
+            query = query.Where(r => r.AttackType == parsedAttackType);
 
-        if (!string.IsNullOrEmpty(sector))
-            query = query.Where(r => r.Sector == sector);
+        if (!string.IsNullOrEmpty(sector) &&
+            Enum.TryParse<Sector>(sector, out var parsedSector))
+            query = query.Where(r => r.TargetSector == parsedSector);
 
         if (severity.HasValue)
-            query = query.Where(r => r.Severity == severity);
+            query = query.Where(r => r.Severity == severity.Value);
 
         var events = await query
-            .OrderByDescending(r => r.CreatedAt)
+            .OrderByDescending(r => r.SubmittedAt)
             .Select(r => new
             {
                 r.Id,
                 r.City,
-                r.Latitude,
-                r.Longitude,
+                r.LocationId,
                 r.AttackType,
-                r.Sector,
+                r.TargetSector,
                 r.Severity,
                 r.ConfidenceTier,
-                r.CreatedAt,
+                r.SubmittedAt,
                 r.Description
             })
             .ToListAsync();

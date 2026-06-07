@@ -3,10 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-<<<<<<< HEAD
-=======
 using ThreatCastPK.API.BackgroundServices;
->>>>>>> haadi-cyber
 using ThreatCastPK.API.DTOs;
 using ThreatCastPK.API.Hubs;
 using ThreatCastPK.API.Services;
@@ -25,28 +22,20 @@ namespace ThreatCastPK.API.Controllers
         private readonly AbuseIPDBService _abuseIPDB;
         private readonly GreyNoiseService _greyNoise;
         private readonly IHubContext<ThreatCastHub> _hubContext;
-<<<<<<< HEAD
+        private readonly NotificationChannel _notificationChannel;
 
         public ReportsController(
             ThreatCastDbContext context,
-            AbuseIPDBService abuseIPDB,
-            IHubContext<ThreatCastHub> hubContext)
-        {
-=======
-        private readonly NotificationChannel _notificationChannel;
-
-        public ReportsController(ThreatCastDbContext context,
             AbuseIPDBService abuseIPDB,
             GreyNoiseService greyNoise,
             IHubContext<ThreatCastHub> hubContext,
             NotificationChannel notificationChannel)
         {
-            _notificationChannel = notificationChannel;     
->>>>>>> haadi-cyber
             _context = context;
             _abuseIPDB = abuseIPDB;
             _greyNoise = greyNoise;
             _hubContext = hubContext;
+            _notificationChannel = notificationChannel;
         }
 
         // Submit Attack Report
@@ -63,20 +52,17 @@ namespace ThreatCastPK.API.Controllers
             if (reporter.IsSuspended)
                 return Unauthorized(new { message = "Your account is suspended." });
 
-<<<<<<< HEAD
-=======
-            // Rate limit: max 10 submissions per reporter per hour
-            var rateCutoff = DateTime.UtcNow.AddHours(-1);
+            // Rate limit: max 10 reports/hour
+            var cutoff = DateTime.UtcNow.AddHours(-1);
             var recentReportsCount = await _context.AttackReports
-                .CountAsync(r => r.ReporterId == reporterId
-                              && r.SubmittedAt >= rateCutoff
-                              && !r.IsDeleted);
+                .CountAsync(r => r.ReporterId == reporterId &&
+                                 r.SubmittedAt >= cutoff &&
+                                 !r.IsDeleted);
 
             if (recentReportsCount >= 10)
                 return StatusCode(StatusCodes.Status429TooManyRequests,
                     new { message = "Rate limit exceeded. Max 10 reports per hour." });
 
->>>>>>> haadi-cyber
             // Validate severity
             if (dto.Severity < 1 || dto.Severity > 5)
                 return BadRequest(new { message = "Severity must be between 1 and 5." });
@@ -89,42 +75,25 @@ namespace ThreatCastPK.API.Controllers
             if (!Enum.TryParse<Sector>(dto.TargetSector, true, out var sector))
                 return BadRequest(new { message = "Invalid target sector." });
 
-            // Check for duplicate within 24 hours
-            var cutoff = DateTime.UtcNow.AddHours(-24);
+            // Duplicate check (24h)
+            var duplicateCutoff = DateTime.UtcNow.AddHours(-24);
             var duplicate = await _context.AttackReports
-                .AnyAsync(r => r.City == dto.City
-                            && r.AttackType == attackType
-                            && r.SubmittedAt >= cutoff
-                            && !r.IsDeleted);
+                .AnyAsync(r => r.City == dto.City &&
+                               r.AttackType == attackType &&
+                               r.SubmittedAt >= duplicateCutoff &&
+                               !r.IsDeleted);
 
             if (duplicate)
                 return Conflict(new { message = "This attack has already been reported in the last 24 hours." });
 
-            // Find or create location
+            // Find location
             var location = await _context.Locations
-<<<<<<< HEAD
-                .FirstOrDefaultAsync(l => l.CityName == dto.City);
-
-            if (location == null)
-            {
-                location = new Location
-                {
-                    Id = Guid.NewGuid(),
-                    CityName = dto.City,
-                    Province = "Unknown",
-                    Latitude = 0,
-                    Longitude = 0
-                };
-                _context.Locations.Add(location);
-            }
-=======
                 .FirstOrDefaultAsync(l => EF.Functions.ILike(l.CityName, dto.City));
 
             if (location == null)
                 return BadRequest(new { message = "City not recognized. Please choose a supported city." });
->>>>>>> haadi-cyber
 
-            // Check IP reputation if source IP provided
+            // Threat intelligence
             int abuseScore = 0;
             bool greyNoiseNoise = false;
 
@@ -135,10 +104,10 @@ namespace ThreatCastPK.API.Controllers
                 greyNoiseNoise = gnResult.IsNoise;
             }
 
-            // Auto-approve: good reputation + high abuse score + not just background noise
-            bool autoApproved = reporter.ReputationScore >= 75
-                             && abuseScore >= 80
-                             && !greyNoiseNoise; ;
+            // Auto-approval logic
+            bool autoApproved = reporter.ReputationScore >= 75 &&
+                                abuseScore >= 80 &&
+                                !greyNoiseNoise;
 
             var report = new AttackReport
             {
@@ -160,7 +129,6 @@ namespace ThreatCastPK.API.Controllers
 
             if (autoApproved)
             {
-                // Create attack event immediately
                 var attackEvent = new AttackEvent
                 {
                     Id = Guid.NewGuid(),
@@ -173,14 +141,11 @@ namespace ThreatCastPK.API.Controllers
                     ConfidenceTier = ConfidenceTier.CommunityReported,
                     Source = EventSource.Community
                 };
+
                 _context.AttackEvents.Add(attackEvent);
 
-                // Increment reputation
                 reporter.ReputationScore += 10;
 
-<<<<<<< HEAD
-                await _context.SaveChangesAsync();
-=======
                 var notificationsToSend = await BuildNotificationsAsync(
                     attackEvent,
                     dto.City,
@@ -191,13 +156,16 @@ namespace ThreatCastPK.API.Controllers
                 _context.Notifications.AddRange(notificationsToSend.Select(n => n.Notification));
 
                 await _context.SaveChangesAsync();
-                await _notificationChannel.Writer.WriteAsync(new AttackEventNotificationPayload(
-    EventId: attackEvent.Id,
-    AttackType: attackEvent.AttackType.ToString(),
-    TargetSector: attackEvent.TargetSector.ToString(),
-    City: location.CityName,
-    Severity: attackEvent.Severity
-));
+
+                await _notificationChannel.Writer.WriteAsync(
+                    new AttackEventNotificationPayload(
+                        EventId: attackEvent.Id,
+                        AttackType: attackEvent.AttackType.ToString(),
+                        TargetSector: attackEvent.TargetSector.ToString(),
+                        City: location.CityName,
+                        Severity: attackEvent.Severity
+                    )
+                );
 
                 foreach (var notification in notificationsToSend)
                 {
@@ -210,84 +178,36 @@ namespace ThreatCastPK.API.Controllers
                             notificationType = notification.Notification.NotificationType
                         });
                 }
->>>>>>> haadi-cyber
 
-                // Broadcast to all connected clients
-                await _hubContext.Clients.Group("all_viewers").SendAsync("NewAttackEvent", new
+                await _hubContext.Clients.Group("all_viewers")
+                    .SendAsync("NewAttackEvent", new
+                    {
+                        id = attackEvent.Id,
+                        city = dto.City,
+                        attackType = attackType.ToString(),
+                        targetSector = sector.ToString(),
+                        severity = dto.Severity,
+                        occurredAt = attackEvent.OccurredAt,
+                        confidenceTier = "CommunityReported",
+                        source = "Community"
+                    });
+
+                return Ok(new
                 {
-                    id = attackEvent.Id,
-                    city = dto.City,
-                    attackType = attackType.ToString(),
-                    targetSector = sector.ToString(),
-                    severity = dto.Severity,
-                    occurredAt = attackEvent.OccurredAt,
-                    confidenceTier = "CommunityReported",
-                    source = "Community"
+                    message = "Report auto-approved and live on the map.",
+                    status = "Approved"
                 });
-
-                return Ok(new { message = "Report auto-approved and live on the map.", status = "Approved" });
             }
 
             await _context.SaveChangesAsync();
-            return Ok(new { message = "Report submitted and pending admin review.", status = "Pending" });
-        }
 
-<<<<<<< HEAD
-=======
-        private async Task<List<(Guid UserId, Notification Notification)>> BuildNotificationsAsync(
-            AttackEvent attackEvent,
-            string city,
-            AttackType attackType,
-            Sector sector,
-            int severity)
-        {
-            var subscriptions = await _context.AlertSubscriptions
-                .Where(s => s.IsActive && s.MinimumSeverity <= severity)
-                .ToListAsync();
-
-            var notifications = new List<(Guid UserId, Notification Notification)>();
-            var attackTypeValue = attackType.ToString();
-            var sectorValue = sector.ToString();
-
-            foreach (var subscription in subscriptions)
+            return Ok(new
             {
-                var attackTypes = ParseList(subscription.AttackTypes);
-                var cities = ParseList(subscription.Cities);
-                var sectors = ParseList(subscription.Sectors);
-
-                if (attackTypes.Count > 0 && !attackTypes.Contains(attackTypeValue))
-                    continue;
-
-                if (cities.Count > 0 && !cities.Contains(city))
-                    continue;
-
-                if (sectors.Count > 0 && !sectors.Contains(sectorValue))
-                    continue;
-
-                var notification = new Notification
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = subscription.UserId,
-                    SubscriptionId = subscription.Id,
-                    Message = $"New {attackTypeValue} attack in {city} targeting {sectorValue} (Severity {severity}).",
-                    NotificationType = "AttackEvent",
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                notifications.Add((subscription.UserId, notification));
-            }
-
-            return notifications;
+                message = "Report submitted and pending admin review.",
+                status = "Pending"
+            });
         }
 
-        private static HashSet<string> ParseList(string value)
-        {
-            return value
-                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        }
-
->>>>>>> haadi-cyber
         // Get my reports
         [HttpGet("my")]
         public async Task<IActionResult> GetMyReports([FromQuery] string? status)
@@ -297,8 +217,11 @@ namespace ThreatCastPK.API.Controllers
             var query = _context.AttackReports
                 .Where(r => r.ReporterId == reporterId);
 
-            if (!string.IsNullOrEmpty(status) && Enum.TryParse<ReportStatus>(status, true, out var reportStatus))
+            if (!string.IsNullOrEmpty(status) &&
+                Enum.TryParse<ReportStatus>(status, true, out var reportStatus))
+            {
                 query = query.Where(r => r.Status == reportStatus);
+            }
 
             var reports = await query
                 .OrderByDescending(r => r.SubmittedAt)
@@ -319,6 +242,56 @@ namespace ThreatCastPK.API.Controllers
                 .ToListAsync();
 
             return Ok(reports);
+        }
+
+        // Notification builder
+        private async Task<List<(Guid UserId, Notification Notification)>> BuildNotificationsAsync(
+            AttackEvent attackEvent,
+            string city,
+            AttackType attackType,
+            Sector sector,
+            int severity)
+        {
+            var subscriptions = await _context.AlertSubscriptions
+                .Where(s => s.IsActive && s.MinimumSeverity <= severity)
+                .ToListAsync();
+
+            var notifications = new List<(Guid, Notification)>();
+
+            var attackTypeValue = attackType.ToString();
+            var sectorValue = sector.ToString();
+
+            foreach (var sub in subscriptions)
+            {
+                var attackTypes = ParseList(sub.AttackTypes);
+                var cities = ParseList(sub.Cities);
+                var sectors = ParseList(sub.Sectors);
+
+                if (attackTypes.Count > 0 && !attackTypes.Contains(attackTypeValue)) continue;
+                if (cities.Count > 0 && !cities.Contains(city)) continue;
+                if (sectors.Count > 0 && !sectors.Contains(sectorValue)) continue;
+
+                var notification = new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = sub.UserId,
+                    SubscriptionId = sub.Id,
+                    Message = $"New {attackTypeValue} attack in {city} targeting {sectorValue} (Severity {severity}).",
+                    NotificationType = "AttackEvent",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                notifications.Add((sub.UserId, notification));
+            }
+
+            return notifications;
+        }
+
+        private static HashSet<string> ParseList(string value)
+        {
+            return value
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
     }
 }
