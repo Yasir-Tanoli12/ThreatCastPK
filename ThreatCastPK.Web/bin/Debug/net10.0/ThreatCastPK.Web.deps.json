@@ -7,11 +7,6 @@
   "targets": {
     ".NETCoreApp,Version=v10.0": {
       "ThreatCastPK.Web/1.0.0": {
-<<<<<<< HEAD
-        "runtime": {
-          "ThreatCastPK.Web.dll": {}
-        }
-=======
         "dependencies": {
           "Microsoft.AspNetCore.SignalR.Client": "10.0.0"
         },
@@ -46,7 +41,6 @@
             "fileVersion": "10.0.25.52411"
           }
         }
->>>>>>> haadi-cyber
       }
     }
   },
@@ -55,8 +49,6 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
-<<<<<<< HEAD
-=======
     },
     "Microsoft.AspNetCore.Http.Connections.Client/10.0.0": {
       "type": "package",
@@ -78,7 +70,6 @@
       "sha512": "sha512-MrXjT7YNV0e1Jb3Hai6kX/Ot7X2SlONHv5IC5XNGeycTTLu3qitJ7DXZUsPPZs6yanWIOsIKjPEY58ARHdRKGg==",
       "path": "microsoft.aspnetcore.signalr.client.core/10.0.0",
       "hashPath": "microsoft.aspnetcore.signalr.client.core.10.0.0.nupkg.sha512"
->>>>>>> haadi-cyber
     }
   }
 }
