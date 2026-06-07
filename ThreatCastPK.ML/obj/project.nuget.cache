@@ -1,0 +1,12 @@
+{
+  "version": 2,
+<<<<<<< HEAD
+  "dgSpecHash": "6rxkODmsi+E=",
+=======
+  "dgSpecHash": "WrUV7tdCoqs=",
+>>>>>>> haadi-cyber
+  "success": true,
+  "projectFilePath": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.ML\\ThreatCastPK.ML.csproj",
+  "expectedPackageFiles": [],
+  "logs": []
+}

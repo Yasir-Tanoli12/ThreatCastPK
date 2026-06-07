@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+<<<<<<< HEAD
+=======
 using ThreatCastPK.API.BackgroundServices;
+>>>>>>> haadi-cyber
 using ThreatCastPK.API.DTOs;
 using ThreatCastPK.API.Hubs;
 using ThreatCastPK.API.Services;
@@ -22,6 +25,14 @@ namespace ThreatCastPK.API.Controllers
         private readonly AbuseIPDBService _abuseIPDB;
         private readonly GreyNoiseService _greyNoise;
         private readonly IHubContext<ThreatCastHub> _hubContext;
+<<<<<<< HEAD
+
+        public ReportsController(
+            ThreatCastDbContext context,
+            AbuseIPDBService abuseIPDB,
+            IHubContext<ThreatCastHub> hubContext)
+        {
+=======
         private readonly NotificationChannel _notificationChannel;
 
         public ReportsController(ThreatCastDbContext context,
@@ -31,6 +42,7 @@ namespace ThreatCastPK.API.Controllers
             NotificationChannel notificationChannel)
         {
             _notificationChannel = notificationChannel;     
+>>>>>>> haadi-cyber
             _context = context;
             _abuseIPDB = abuseIPDB;
             _greyNoise = greyNoise;
@@ -51,6 +63,8 @@ namespace ThreatCastPK.API.Controllers
             if (reporter.IsSuspended)
                 return Unauthorized(new { message = "Your account is suspended." });
 
+<<<<<<< HEAD
+=======
             // Rate limit: max 10 submissions per reporter per hour
             var rateCutoff = DateTime.UtcNow.AddHours(-1);
             var recentReportsCount = await _context.AttackReports
@@ -62,6 +76,7 @@ namespace ThreatCastPK.API.Controllers
                 return StatusCode(StatusCodes.Status429TooManyRequests,
                     new { message = "Rate limit exceeded. Max 10 reports per hour." });
 
+>>>>>>> haadi-cyber
             // Validate severity
             if (dto.Severity < 1 || dto.Severity > 5)
                 return BadRequest(new { message = "Severity must be between 1 and 5." });
@@ -87,10 +102,27 @@ namespace ThreatCastPK.API.Controllers
 
             // Find or create location
             var location = await _context.Locations
+<<<<<<< HEAD
+                .FirstOrDefaultAsync(l => l.CityName == dto.City);
+
+            if (location == null)
+            {
+                location = new Location
+                {
+                    Id = Guid.NewGuid(),
+                    CityName = dto.City,
+                    Province = "Unknown",
+                    Latitude = 0,
+                    Longitude = 0
+                };
+                _context.Locations.Add(location);
+            }
+=======
                 .FirstOrDefaultAsync(l => EF.Functions.ILike(l.CityName, dto.City));
 
             if (location == null)
                 return BadRequest(new { message = "City not recognized. Please choose a supported city." });
+>>>>>>> haadi-cyber
 
             // Check IP reputation if source IP provided
             int abuseScore = 0;
@@ -146,6 +178,9 @@ namespace ThreatCastPK.API.Controllers
                 // Increment reputation
                 reporter.ReputationScore += 10;
 
+<<<<<<< HEAD
+                await _context.SaveChangesAsync();
+=======
                 var notificationsToSend = await BuildNotificationsAsync(
                     attackEvent,
                     dto.City,
@@ -175,6 +210,7 @@ namespace ThreatCastPK.API.Controllers
                             notificationType = notification.Notification.NotificationType
                         });
                 }
+>>>>>>> haadi-cyber
 
                 // Broadcast to all connected clients
                 await _hubContext.Clients.Group("all_viewers").SendAsync("NewAttackEvent", new
@@ -196,6 +232,8 @@ namespace ThreatCastPK.API.Controllers
             return Ok(new { message = "Report submitted and pending admin review.", status = "Pending" });
         }
 
+<<<<<<< HEAD
+=======
         private async Task<List<(Guid UserId, Notification Notification)>> BuildNotificationsAsync(
             AttackEvent attackEvent,
             string city,
@@ -249,6 +287,7 @@ namespace ThreatCastPK.API.Controllers
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
+>>>>>>> haadi-cyber
         // Get my reports
         [HttpGet("my")]
         public async Task<IActionResult> GetMyReports([FromQuery] string? status)

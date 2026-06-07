@@ -1,3 +1,11 @@
+<<<<<<< HEAD
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using ThreatCastPK.Database.Context;
+using ThreatCastPK.API.Hubs;
+=======
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
@@ -14,6 +22,7 @@ using ThreatCastPK.Database.Enums;
 using ThreatCastPK.Database.Models;
 
 
+>>>>>>> haadi-cyber
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +31,23 @@ builder.Services.AddDbContext<ThreatCastDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // JWT Authentication
+<<<<<<< HEAD
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+        };
+    });
+=======
 builder.Services.AddAuthentication(options =>
 {
     // Default scheme for API endpoints is still JWT
@@ -160,6 +186,7 @@ builder.Services.AddAuthentication(options =>
         return Task.CompletedTask;
     };
 });
+>>>>>>> haadi-cyber
 
 // Authorization
 builder.Services.AddAuthorization();
@@ -176,6 +203,17 @@ builder.Services.AddHttpClient<ThreatCastPK.API.Services.AbuseIPDBService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+<<<<<<< HEAD
+// CORS — must allow credentials for SignalR
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.WithOrigins("http://localhost:5000",
+                           "http://localhost:5001",
+                           "https://localhost:5001",
+                           "http://localhost:5262")
+=======
 // Persist DataProtection keys so OAuth state survives app restarts
 var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
 Directory.CreateDirectory(keysFolder);
@@ -203,18 +241,22 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", policy =>
     {
         policy.WithOrigins(allowedOrigins)
+>>>>>>> haadi-cyber
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
     });
 });
 
+<<<<<<< HEAD
+=======
 // Background services
 builder.Services.AddSingleton<NotificationChannel>();
 builder.Services.AddHostedService<NotificationDispatchService>();
 builder.Services.AddHostedService<SectorRiskScoringService>();
 builder.Services.AddHttpClient<GreyNoiseService>();
 
+>>>>>>> haadi-cyber
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -223,6 +265,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+<<<<<<< HEAD
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
+=======
 app.UseCookiePolicy(new CookiePolicyOptions
 {
     MinimumSameSitePolicy = SameSiteMode.None,
@@ -238,6 +285,7 @@ app.UseAuthorization();
 // so the OAuth middleware processes the state/cookie BEFORE this code runs
 
 
+>>>>>>> haadi-cyber
 app.MapControllers();
 app.MapHub<ThreatCastHub>("/hubs/threatcast");
 app.Run();

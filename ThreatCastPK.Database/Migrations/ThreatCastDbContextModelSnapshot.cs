@@ -22,6 +22,8 @@ namespace ThreatCastPK.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+<<<<<<< HEAD
+=======
             modelBuilder.Entity("SectorRiskScore", b =>
                 {
                     b.Property<Guid>("Id")
@@ -94,6 +96,7 @@ namespace ThreatCastPK.Database.Migrations
                     b.ToTable("ThreatAdvisories");
                 });
 
+>>>>>>> haadi-cyber
             modelBuilder.Entity("ThreatCastPK.Database.Models.AlertSubscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -280,19 +283,27 @@ namespace ThreatCastPK.Database.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+<<<<<<< HEAD
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+=======
                         .HasColumnType("uuid");
 
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasColumnType("text");
+>>>>>>> haadi-cyber
 
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("text");
 
+<<<<<<< HEAD
+=======
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+>>>>>>> haadi-cyber
                     b.Property<DateTime?>("EditedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -302,16 +313,27 @@ namespace ThreatCastPK.Database.Migrations
                     b.Property<bool>("IsEdited")
                         .HasColumnType("boolean");
 
+<<<<<<< HEAD
+                    b.Property<DateTime>("PostedAt")
+                        .HasColumnType("timestamp with time zone");
+=======
                     b.Property<Guid?>("ParentPostId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
+>>>>>>> haadi-cyber
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+<<<<<<< HEAD
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+=======
                     b.Property<Guid?>("UserId1")
                         .HasColumnType("uuid");
 
@@ -323,6 +345,7 @@ namespace ThreatCastPK.Database.Migrations
 
                     b.HasIndex("UserId1");
 
+>>>>>>> haadi-cyber
                     b.ToTable("DiscussionPosts");
                 });
 
@@ -350,6 +373,8 @@ namespace ThreatCastPK.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Locations");
+<<<<<<< HEAD
+=======
 
                     b.HasData(
                         new
@@ -448,6 +473,7 @@ namespace ThreatCastPK.Database.Migrations
                             Longitude = 73.211699999999993,
                             Province = "Khyber Pakhtunkhwa"
                         });
+>>>>>>> haadi-cyber
                 });
 
             modelBuilder.Entity("ThreatCastPK.Database.Models.Notification", b =>
@@ -486,6 +512,77 @@ namespace ThreatCastPK.Database.Migrations
                     b.ToTable("Notifications");
                 });
 
+<<<<<<< HEAD
+            modelBuilder.Entity("ThreatCastPK.Database.Models.SectorRiskScore", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("EventCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RiskLevel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SectorName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SectorName")
+                        .IsUnique();
+
+                    b.ToTable("SectorRiskScores");
+                });
+
+            modelBuilder.Entity("ThreatCastPK.Database.Models.ThreatAdvisory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AffectedSectors")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SeverityTag")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminId");
+
+                    b.ToTable("ThreatAdvisories");
+                });
+
+=======
+>>>>>>> haadi-cyber
             modelBuilder.Entity("ThreatCastPK.Database.Models.ThreatCampaign", b =>
                 {
                     b.Property<Guid>("Id")
@@ -568,6 +665,8 @@ namespace ThreatCastPK.Database.Migrations
                     b.ToTable("Users");
                 });
 
+<<<<<<< HEAD
+=======
             modelBuilder.Entity("ThreatAdvisory", b =>
                 {
                     b.HasOne("ThreatCastPK.Database.Models.User", "Admin")
@@ -579,6 +678,7 @@ namespace ThreatCastPK.Database.Migrations
                     b.Navigation("Admin");
                 });
 
+>>>>>>> haadi-cyber
             modelBuilder.Entity("ThreatCastPK.Database.Models.AlertSubscription", b =>
                 {
                     b.HasOne("ThreatCastPK.Database.Models.User", "User")
@@ -647,6 +747,14 @@ namespace ThreatCastPK.Database.Migrations
 
             modelBuilder.Entity("ThreatCastPK.Database.Models.DiscussionPost", b =>
                 {
+<<<<<<< HEAD
+                    b.HasOne("ThreatCastPK.Database.Models.User", "User")
+                        .WithMany("DiscussionPosts")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+=======
                     b.HasOne("ThreatCastPK.Database.Models.DiscussionPost", "ParentPost")
                         .WithMany()
                         .HasForeignKey("ParentPostId")
@@ -664,6 +772,7 @@ namespace ThreatCastPK.Database.Migrations
 
                     b.Navigation("ParentPost");
 
+>>>>>>> haadi-cyber
                     b.Navigation("User");
                 });
 
@@ -686,6 +795,20 @@ namespace ThreatCastPK.Database.Migrations
                     b.Navigation("User");
                 });
 
+<<<<<<< HEAD
+            modelBuilder.Entity("ThreatCastPK.Database.Models.ThreatAdvisory", b =>
+                {
+                    b.HasOne("ThreatCastPK.Database.Models.User", "Admin")
+                        .WithMany("ThreatAdvisories")
+                        .HasForeignKey("AdminId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Admin");
+                });
+
+=======
+>>>>>>> haadi-cyber
             modelBuilder.Entity("ThreatCastPK.Database.Models.AlertSubscription", b =>
                 {
                     b.Navigation("Notifications");

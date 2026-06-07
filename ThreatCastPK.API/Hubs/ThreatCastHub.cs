@@ -4,12 +4,15 @@ namespace ThreatCastPK.API.Hubs
 {
     public class ThreatCastHub : Hub
     {
+<<<<<<< HEAD
+=======
         public async Task JoinUserGroup(string userId)
         {
             if (!string.IsNullOrEmpty(userId))
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
         }
 
+>>>>>>> haadi-cyber
         public async Task JoinCityGroup(string city)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, $"city_{city}");

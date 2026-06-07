@@ -1,3 +1,7 @@
 <Solution>
+<<<<<<< HEAD
+  <Project Path="../ThreatCastPK.API/ThreatCastPK.API.csproj" Id="6d7be337-d1d0-474b-a799-1bdb88aa244a" />
+=======
+>>>>>>> haadi-cyber
   <Project Path="ThreatCastPK.Web.csproj" />
 </Solution>

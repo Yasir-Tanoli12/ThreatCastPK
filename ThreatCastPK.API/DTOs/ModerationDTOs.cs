@@ -19,5 +19,8 @@
         public string Status { get; set; } = string.Empty;
         public string ConfidenceTier { get; set; } = string.Empty;
     }
+<<<<<<< HEAD
+=======
 
+>>>>>>> haadi-cyber
 }

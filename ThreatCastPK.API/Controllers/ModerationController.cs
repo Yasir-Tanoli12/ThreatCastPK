@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+<<<<<<< HEAD
+=======
 using ThreatCastPK.API.BackgroundServices;
+>>>>>>> haadi-cyber
 using ThreatCastPK.API.DTOs;
 using ThreatCastPK.API.Hubs;
 using ThreatCastPK.Database.Context;
@@ -19,11 +22,17 @@ namespace ThreatCastPK.API.Controllers
     {
         private readonly ThreatCastDbContext _context;
         private readonly IHubContext<ThreatCastHub> _hubContext;
+<<<<<<< HEAD
+
+        public ModerationController(ThreatCastDbContext context, IHubContext<ThreatCastHub> hubContext)
+        {
+=======
         private readonly NotificationChannel _notificationChannel;
 
         public ModerationController(ThreatCastDbContext context, IHubContext<ThreatCastHub> hubContext, NotificationChannel notificationChannel)
         {
             _notificationChannel = notificationChannel;
+>>>>>>> haadi-cyber
             _context = context;
             _hubContext = hubContext;
         }
@@ -73,10 +82,27 @@ namespace ThreatCastPK.API.Controllers
 
             // Find location or create one
             var location = await _context.Locations
+<<<<<<< HEAD
+                .FirstOrDefaultAsync(l => l.CityName == report.City);
+
+            if (location == null)
+            {
+                location = new Location
+                {
+                    Id = Guid.NewGuid(),
+                    CityName = report.City,
+                    Province = "Unknown",
+                    Latitude = 0,
+                    Longitude = 0
+                };
+                _context.Locations.Add(location);
+            }
+=======
                 .FirstOrDefaultAsync(l => EF.Functions.ILike(l.CityName, report.City));
 
             if (location == null)
                 return BadRequest(new { message = "City not recognized. Please seed locations before approving." });
+>>>>>>> haadi-cyber
 
             // Update report status
             report.Status = ReportStatus.Approved;
@@ -100,6 +126,8 @@ namespace ThreatCastPK.API.Controllers
             // Update reporter reputation
             report.Reporter.ReputationScore += 10;
 
+<<<<<<< HEAD
+=======
             var notificationsToSend = await BuildNotificationsAsync(
                 attackEvent,
                 report.City,
@@ -109,6 +137,7 @@ namespace ThreatCastPK.API.Controllers
 
             _context.Notifications.AddRange(notificationsToSend.Select(n => n.Notification));
 
+>>>>>>> haadi-cyber
             // Write audit log
             var auditLog = new AuditLog
             {
@@ -123,6 +152,8 @@ namespace ThreatCastPK.API.Controllers
             _context.AuditLogs.Add(auditLog);
 
             await _context.SaveChangesAsync();
+<<<<<<< HEAD
+=======
             await _notificationChannel.Writer.WriteAsync(new AttackEventNotificationPayload(
      EventId: attackEvent.Id,
      AttackType: attackEvent.AttackType.ToString(),
@@ -142,6 +173,7 @@ namespace ThreatCastPK.API.Controllers
                         notificationType = notification.Notification.NotificationType
                     });
             }
+>>>>>>> haadi-cyber
 
             // Broadcast new event to all connected clients via SignalR
             await _hubContext.Clients.Group("all_viewers").SendAsync("NewAttackEvent", new
@@ -159,6 +191,8 @@ namespace ThreatCastPK.API.Controllers
             return Ok(new { message = "Report approved. Attack event created and broadcast to map." });
         }
 
+<<<<<<< HEAD
+=======
         private async Task<List<(Guid UserId, Notification Notification)>> BuildNotificationsAsync(
             AttackEvent attackEvent,
             string city,
@@ -212,6 +246,7 @@ namespace ThreatCastPK.API.Controllers
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
 
+>>>>>>> haadi-cyber
         // CRUD 3 — Reject Report
         [HttpPut("{id}/reject")]
         public async Task<IActionResult> RejectReport(Guid id, [FromBody] RejectReportDTO dto)

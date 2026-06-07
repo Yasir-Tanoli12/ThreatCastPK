@@ -40,6 +40,8 @@ namespace ThreatCastPK.Database.Context
                 entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
             });
 
+<<<<<<< HEAD
+=======
             modelBuilder.Entity<Location>().HasData(
                 new Location
                 {
@@ -139,6 +141,7 @@ namespace ThreatCastPK.Database.Context
                 }
             );
 
+>>>>>>> haadi-cyber
             // AttackReport
             modelBuilder.Entity<AttackReport>(entity =>
             {
@@ -218,6 +221,13 @@ namespace ThreatCastPK.Database.Context
             // DiscussionPost
             modelBuilder.Entity<DiscussionPost>(entity =>
             {
+<<<<<<< HEAD
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasDefaultValueSql("gen_random_uuid()");
+                entity.HasOne(e => e.User)
+                      .WithMany(u => u.DiscussionPosts)
+                      .HasForeignKey(e => e.UserId)
+=======
                 entity.HasKey(p => p.Id);
 
                 entity.HasOne(p => p.User)
@@ -229,6 +239,7 @@ namespace ThreatCastPK.Database.Context
                       .WithMany()
                       .HasForeignKey(p => p.ParentPostId)
                       .IsRequired(false)
+>>>>>>> haadi-cyber
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -262,7 +273,10 @@ namespace ThreatCastPK.Database.Context
                 entity.Property(e => e.RiskLevel).HasConversion<string>();
                 entity.HasIndex(e => e.SectorName).IsUnique();
             });
+<<<<<<< HEAD
+=======
             
+>>>>>>> haadi-cyber
         }
     }
 }

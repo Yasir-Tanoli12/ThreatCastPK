@@ -1,0 +1,21 @@
+{
+  "version": 2,
+<<<<<<< HEAD
+  "dgSpecHash": "+ZjpjoopmLA=",
+  "success": true,
+  "projectFilePath": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Lenovo\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.7\\microsoft.aspnetcore.app.internal.assets.10.0.7.nupkg.sha512"
+=======
+  "dgSpecHash": "0kx/AtBSohU=",
+  "success": true,
+  "projectFilePath": "D:\\CODING\\Blazor\\ThreatCast\\ThreatCastPK.Web\\ThreatCastPK.Web.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Lenovo\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.7\\microsoft.aspnetcore.app.internal.assets.10.0.7.nupkg.sha512",
+    "C:\\Users\\Lenovo\\.nuget\\packages\\microsoft.aspnetcore.http.connections.client\\10.0.0\\microsoft.aspnetcore.http.connections.client.10.0.0.nupkg.sha512",
+    "C:\\Users\\Lenovo\\.nuget\\packages\\microsoft.aspnetcore.signalr.client\\10.0.0\\microsoft.aspnetcore.signalr.client.10.0.0.nupkg.sha512",
+    "C:\\Users\\Lenovo\\.nuget\\packages\\microsoft.aspnetcore.signalr.client.core\\10.0.0\\microsoft.aspnetcore.signalr.client.core.10.0.0.nupkg.sha512"
+>>>>>>> haadi-cyber
+  ],
+  "logs": []
+}

@@ -1,6 +1,10 @@
+<<<<<<< HEAD
+using ThreatCastPK.Web.Components;
+=======
 using Microsoft.AspNetCore.Components.Authorization;
 using ThreatCastPK.Web.Components;
 using ThreatCastPK.Web.Services;
+>>>>>>> haadi-cyber
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+<<<<<<< HEAD
+=======
 builder.Services.AddHttpContextAccessor();
 
 
@@ -28,6 +34,7 @@ builder.Services.AddScoped<SignalRService>();
 builder.Services.AddScoped<AuthenticationStateProvider, ThreatCastAuthStateProvider>();
 builder.Services.AddAuthorizationCore();
 
+>>>>>>> haadi-cyber
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -45,6 +52,9 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+<<<<<<< HEAD
+
+=======
 // Proxy Google OAuth initiation to the API
 // This keeps everything on the same origin (localhost:5000)
 app.MapGet("/auth/google-initiate", (HttpContext ctx) =>
@@ -52,4 +62,5 @@ app.MapGet("/auth/google-initiate", (HttpContext ctx) =>
     ctx.Response.Redirect("http://localhost:5262/api/auth/google-login");
     return Task.CompletedTask;
 });
+>>>>>>> haadi-cyber
 app.Run();
