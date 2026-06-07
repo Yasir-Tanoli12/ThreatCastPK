@@ -32,8 +32,8 @@ public class SignalRService : IAsyncDisposable
     public event Func<AttackEventPayload, Task>? OnNewAttackEvent;
 
     // Pages subscribe to this to receive raw notification strings
-    public event Func<string, Task>? OnNewNotification;
-
+    public event Func<NotificationPayload, Task>? OnNewNotification;
+    
     public bool IsConnected =>
         _connection?.State == HubConnectionState.Connected;
 
@@ -52,14 +52,20 @@ public class SignalRService : IAsyncDisposable
                      ?? "http://localhost:5262/hubs/threatcast";
 
         _connection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                // Attach JWT so the hub can identify the user
-                options.AccessTokenProvider = async () =>
-                    await _auth.GetTokenAsync();
-            })
-            .WithAutomaticReconnect() // retries: 0s, 2s, 10s, 30s
-            .Build();
+    .WithUrl(hubUrl, options =>
+    {
+        options.AccessTokenProvider = async () =>
+            await _auth.GetTokenAsync();
+        options.HttpMessageHandlerFactory = handler =>
+        {
+            if (handler is HttpClientHandler clientHandler)
+                clientHandler.ServerCertificateCustomValidationCallback =
+                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+            return handler;
+        };
+    })
+    .WithAutomaticReconnect()
+    .Build();
 
         // Wire up incoming server events
         _connection.On<AttackEventPayload>("NewAttackEvent", async payload =>
@@ -68,10 +74,13 @@ public class SignalRService : IAsyncDisposable
                 await OnNewAttackEvent.Invoke(payload);
         });
 
-        _connection.On<string>("NewNotification", async message =>
+        _connection.On<NotificationPayload>("NewNotification", async payload =>
         {
+            Console.WriteLine($"[SignalR] NewNotification received: {payload.Message}");
             if (OnNewNotification != null)
-                await OnNewNotification.Invoke(message);
+                await OnNewNotification.Invoke(payload);
+            else
+                Console.WriteLine("[SignalR] OnNewNotification has no subscribers!");
         });
 
         // Log reconnection state changes (useful during dev)
@@ -92,15 +101,21 @@ public class SignalRService : IAsyncDisposable
             await _connection.StartAsync();
             Console.WriteLine("[SignalR] Connected.");
 
-            // If user is logged in, join their personal notification group
             if (_auth.IsLoggedIn)
+            {
+                Console.WriteLine($"[SignalR] Joining user group: user_{_auth.UserId}");
                 await JoinUserGroupAsync(_auth.UserId);
+                Console.WriteLine($"[SignalR] Joined user group successfully.");
+            }
+            else
+            {
+                Console.WriteLine("[SignalR] Not logged in — skipping user group join.");
+            }
         }
         catch (Exception ex)
         {
-            // Connection failure is non-fatal — map still works,
-            // just won't get real-time updates
             Console.WriteLine($"[SignalR] Failed to connect: {ex.Message}");
+            Console.WriteLine($"[SignalR] Full error: {ex}");
         }
     }
 
@@ -152,4 +167,5 @@ public class SignalRService : IAsyncDisposable
             _connection = null;
         }
     }
+
 }

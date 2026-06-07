@@ -286,6 +286,9 @@ public class ApiService
     public Task<string?> UnsuspendUserAsync(Guid id)
         => PutAsync($"/api/moderation/users/{id}/unsuspend");
 
+    public Task<(List<NotificationResponseDTO>? Data, string? Error)> GetNotificationsAsync()
+        => GetAsync<List<NotificationResponseDTO>>("/api/notifications");
+
     // ----------------------------------------------------------------
     // Private helper — reads error message from response body
     // ----------------------------------------------------------------
@@ -472,3 +475,12 @@ public class MapEventResponse
     public double Longitude { get; set; }
     public string Source { get; set; } = string.Empty;
 }
+public class NotificationResponseDTO
+{
+    public Guid Id { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
+    public bool IsRead { get; set; }
+    public string NotificationType { get; set; } = string.Empty;
+}
+

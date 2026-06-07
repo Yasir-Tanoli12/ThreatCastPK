@@ -3,43 +3,14 @@
 @inject SignalRService SignalRService
 @inject NotificationService NotificationService
 @inject NavigationManager Navigation
-@implements IAsyncDisposable
 
 <CascadingAuthenticationState>
     <NavBar />
+    <SignalRConnector />
     <main style="padding-top: 56px;">
         @Body
     </main>
 </CascadingAuthenticationState>
 
 @code {
-    private bool _initialized = false;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && !_initialized)
-        {
-            _initialized = true;
-
-            // Step 1 — restore auth state from localStorage
-            await AuthService.InitializeAsync();
-
-            // Step 2 — start SignalR (uses auth token if logged in)
-            await SignalRService.StartAsync();
-
-            // Step 3 — pipe SignalR notifications into NotificationService
-            SignalRService.OnNewNotification += async message =>
-            {
-                NotificationService.AddNotification(message);
-                await Task.CompletedTask;
-            };
-
-            StateHasChanged();
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await SignalRService.DisposeAsync();
-    }
 }

@@ -2,8 +2,10 @@
 @page "/notifications"
 @rendermode InteractiveServer
 @inject AuthService AuthService
+@using ThreatCastPK.Web.Services
 @inject NotificationService NotificationService
 @inject NavigationManager Navigation
+@inject ApiService ApiService
 @implements IDisposable
 
 <PageTitle>Notifications — ThreatCast PK</PageTitle>
@@ -516,9 +518,30 @@
     private string _filter = "all";
 
     protected override void OnInitialized()
+{
+    NotificationService.OnChange += OnNotificationsChanged;
+}
+
+protected override async Task OnAfterRenderAsync(bool firstRender)
+{
+    if (!firstRender) return;
+    await AuthService.InitializeAsync();
+    var (data, _) = await ApiService.GetNotificationsAsync();
+    if (data != null)
     {
-        NotificationService.OnChange += OnNotificationsChanged;
+        foreach (var n in data)
+        {
+            NotificationService.AddNotification(new NotificationPayload
+            {
+                Id       = n.Id,
+                Message  = n.Message,
+                CreatedAt = n.CreatedAt,
+                NotificationType = n.NotificationType
+            });
+        }
     }
+    StateHasChanged();
+}
 
     private void MarkRead(Guid id) => NotificationService.MarkAsRead(id);
 

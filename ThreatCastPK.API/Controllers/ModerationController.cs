@@ -124,12 +124,12 @@ namespace ThreatCastPK.API.Controllers
 
             await _context.SaveChangesAsync();
             await _notificationChannel.Writer.WriteAsync(new AttackEventNotificationPayload(
-    EventId: attackEvent.Id,
-    AttackType: attackEvent.AttackType.ToString(),
-    TargetSector: attackEvent.TargetSector.ToString(),
-    City: location.CityName,
-    Severity: attackEvent.Severity
-));
+     EventId: attackEvent.Id,
+     AttackType: attackEvent.AttackType.ToString(),
+     TargetSector: attackEvent.TargetSector.ToString(),
+     City: location.CityName,
+     Severity: attackEvent.Severity
+ ));
 
             foreach (var notification in notificationsToSend)
             {

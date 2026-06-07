@@ -33,6 +33,7 @@
             await JS.InvokeVoidAsync("tcpkAuth.setUserInfo",
                 userId.ToString(), username.ToString(), role.ToString());
             await AuthService.InitializeAsync();
+            AuthService.NotifyAuthStateChanged();
             Navigation.NavigateTo("/");
         }
         else

@@ -6,7 +6,8 @@ namespace ThreatCastPK.API.Hubs
     {
         public async Task JoinUserGroup(string userId)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
+            if (!string.IsNullOrEmpty(userId))
+                await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
         }
 
         public async Task JoinCityGroup(string city)

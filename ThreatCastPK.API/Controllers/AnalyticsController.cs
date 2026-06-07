@@ -195,4 +195,36 @@ public class AnalyticsController : ControllerBase
 
         return Ok(result);
     }
+    [HttpGet("events")]
+    public async Task<IActionResult> GetEvents([FromQuery] string timeFilter = "24h")
+    {
+        var cutoff = timeFilter switch
+        {
+            "1h" => DateTime.UtcNow.AddHours(-1),
+            "6h" => DateTime.UtcNow.AddHours(-6),
+            "7d" => DateTime.UtcNow.AddDays(-7),
+            _ => DateTime.UtcNow.AddHours(-24)
+        };
+
+        var events = await _context.AttackEvents
+            .Include(e => e.Location)
+            .Where(e => e.OccurredAt >= cutoff)
+            .OrderByDescending(e => e.OccurredAt)
+            .Take(200)
+            .Select(e => new
+            {
+                id = e.Id,
+                attackType = e.AttackType.ToString(),
+                city = e.Location != null ? e.Location.CityName : "Unknown",
+                targetSector = e.TargetSector.ToString(),
+                severity = e.Severity,
+                occurredAt = e.OccurredAt,
+                latitude = e.Location != null ? e.Location.Latitude : 0.0,
+                longitude = e.Location != null ? e.Location.Longitude : 0.0,
+                source = e.Source.ToString()
+            })
+            .ToListAsync();
+
+        return Ok(events);
+    }
 }

@@ -3,6 +3,8 @@
 // NavBar subscribes to OnChange to update the bell badge count.
 // The Notifications page subscribes to OnChange to update its list.
 
+using static ThreatCastPK.Web.Services.SignalRService;
+
 namespace ThreatCastPK.Web.Services;
 
 public class InAppNotification
@@ -28,12 +30,16 @@ public class NotificationService
         _notifications.OrderByDescending(n => n.ReceivedAt).ToList();
 
     // Called by SignalRService when "NewNotification" fires
-    public void AddNotification(string message)
+    public void AddNotification(NotificationPayload payload)
     {
+        if (_notifications.Any(n => n.Id == payload.Id))
+            return;
+
         _notifications.Add(new InAppNotification
         {
-            Message = message,
-            ReceivedAt = DateTime.UtcNow,
+            Id = payload.Id,
+            Message = payload.Message,
+            ReceivedAt = payload.CreatedAt,
             IsRead = false
         });
 
