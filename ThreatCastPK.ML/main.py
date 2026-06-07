@@ -1,12 +1,31 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from sklearn.ensemble import IsolationForest
+import joblib
 import numpy as np
 import os
 import psycopg2
 from typing import List
 
 app = FastAPI(title="ThreatCast PK ML Service")
+
+# Load pre-trained model and label encoders
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "threat_model.pkl")
+LE_ATTACK_PATH = os.path.join(BASE_DIR, "le_attack.pkl")
+LE_PROTO_PATH = os.path.join(BASE_DIR, "le_proto.pkl")
+LE_GEO_PATH = os.path.join(BASE_DIR, "le_geo.pkl")
+LE_SEG_PATH = os.path.join(BASE_DIR, "le_seg.pkl")
+
+try:
+    model = joblib.load(MODEL_PATH)
+    le_attack = joblib.load(LE_ATTACK_PATH)
+    le_proto = joblib.load(LE_PROTO_PATH)
+    le_geo = joblib.load(LE_GEO_PATH)
+    le_seg = joblib.load(LE_SEG_PATH)
+    print("[ML] Trained model and encoders loaded successfully.")
+except Exception as e:
+    model = None
+    print(f"[ML] Error loading model files: {e}")
 
 DB_URL = os.getenv("DATABASE_URL", "")
 
@@ -18,14 +37,16 @@ def get_db_connection():
     except Exception:
         return None
 
-class AttackEvent(BaseModel):
-    ip_count: float
-    attack_frequency: float
-    severity: float
-    duration_hours: float
+class AttackEventInput(BaseModel):
+    attack_type: str
+    anomaly_score: float
+    packet_length: float
+    protocol: str
+    geo_location: str
+    network_segment: str
 
 class CampaignRequest(BaseModel):
-    events: List[AttackEvent]
+    events: List[AttackEventInput]
 
 @app.get("/")
 def root():
@@ -33,34 +54,55 @@ def root():
 
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    return {"status": "healthy", "model_loaded": model is not None}
 
 @app.post("/detect-campaign")
 def detect_campaign(request: CampaignRequest):
+    if not model:
+        return {"error": "ML model not loaded on server."}
     if not request.events:
         return {"is_campaign": False, "alert_level": "NORMAL", "message": "No events provided"}
 
-    features = np.array([
-        [e.ip_count, e.attack_frequency, e.severity, e.duration_hours]
-        for e in request.events
-    ])
+    processed_features = []
+    for e in request.events:
+        try:
+            attack_enc = le_attack.transform([e.attack_type])[0]
+        except Exception:
+            attack_enc = 0
+            
+        try:
+            proto_enc = le_proto.transform([e.protocol])[0]
+        except Exception:
+            proto_enc = 0
+            
+        try:
+            geo_enc = le_geo.transform([e.geo_location])[0]
+        except Exception:
+            geo_enc = 0
+            
+        try:
+            seg_enc = le_seg.transform([e.network_segment])[0]
+        except Exception:
+            seg_enc = 0
 
-    sample = np.array([
-        [10, 5, 3, 2], [50, 20, 4, 6], [5, 2, 1, 1],
-        [100, 50, 5, 12], [3, 1, 2, 0.5], [80, 40, 5, 8],
-        [15, 8, 2, 3], [60, 30, 5, 10], [7, 3, 1, 1.5]
-    ])
+        processed_features.append([
+            attack_enc,
+            e.anomaly_score,
+            e.packet_length,
+            proto_enc,
+            geo_enc,
+            seg_enc
+        ])
 
-    model = IsolationForest(contamination=0.2, random_state=42)
-    model.fit(sample)
-
+    features = np.array(processed_features)
     predictions = model.predict(features)
+    
     anomaly_count = int(np.sum(predictions == -1))
-    is_campaign = anomaly_count > len(predictions) * 0.4
+    is_campaign = anomaly_count > len(predictions) * 0.3
 
     return {
         "is_campaign": is_campaign,
-        "alert_level": "HIGH" if is_campaign else "NORMAL",
+        "alert_level": "CRITICAL" if is_campaign else "NORMAL",
         "anomaly_count": anomaly_count,
         "total_events": len(predictions),
         "message": "Coordinated campaign detected!" if is_campaign else "Normal activity"
