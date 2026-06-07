@@ -1,0 +1,44 @@
+﻿@page "/oauth-callback"
+@rendermode InteractiveServer
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<div style="min-height:100vh;background:#0d1117;display:flex;
+    align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;
+    color:#9fef00;font-size:13px;letter-spacing:2px;">
+    AUTHENTICATING VIA GOOGLE...
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+        if (query.TryGetValue("error", out var err))
+        {
+            Navigation.NavigateTo($"/login?error={err}");
+            return;
+        }
+
+        if (query.TryGetValue("token", out var token) &&
+            query.TryGetValue("userId", out var userId) &&
+            query.TryGetValue("username", out var username) &&
+            query.TryGetValue("role", out var role))
+        {
+            await JS.InvokeVoidAsync("tcpkAuth.setToken", token.ToString());
+            await JS.InvokeVoidAsync("tcpkAuth.setUserInfo",
+                userId.ToString(), username.ToString(), role.ToString());
+            await AuthService.InitializeAsync();
+            AuthService.NotifyAuthStateChanged();
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            Navigation.NavigateTo("/login?error=google_failed");
+        }
+    }
+}

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ThreatCastPK.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3ecc12a0dacb2ba9ca93c33719efb929558993f4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a7af792e526d0732744ad58719eb2812aabb93f4")]
 [assembly: System.Reflection.AssemblyProductAttribute("ThreatCastPK.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ThreatCastPK.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

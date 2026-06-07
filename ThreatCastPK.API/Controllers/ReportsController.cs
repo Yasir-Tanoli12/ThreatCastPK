@@ -23,6 +23,7 @@ namespace ThreatCastPK.API.Controllers
     {
         private readonly ThreatCastDbContext _context;
         private readonly AbuseIPDBService _abuseIPDB;
+        private readonly GreyNoiseService _greyNoise;
         private readonly IHubContext<ThreatCastHub> _hubContext;
 <<<<<<< HEAD
 
@@ -36,6 +37,7 @@ namespace ThreatCastPK.API.Controllers
 
         public ReportsController(ThreatCastDbContext context,
             AbuseIPDBService abuseIPDB,
+            GreyNoiseService greyNoise,
             IHubContext<ThreatCastHub> hubContext,
             NotificationChannel notificationChannel)
         {
@@ -43,6 +45,7 @@ namespace ThreatCastPK.API.Controllers
 >>>>>>> haadi-cyber
             _context = context;
             _abuseIPDB = abuseIPDB;
+            _greyNoise = greyNoise;
             _hubContext = hubContext;
         }
 
@@ -123,11 +126,19 @@ namespace ThreatCastPK.API.Controllers
 
             // Check IP reputation if source IP provided
             int abuseScore = 0;
-            if (!string.IsNullOrEmpty(dto.SourceIP))
-                abuseScore = await _abuseIPDB.GetAbuseConfidenceScore(dto.SourceIP);
+            bool greyNoiseNoise = false;
 
-            // Determine auto-approval
-            bool autoApproved = reporter.ReputationScore >= 75 && abuseScore >= 80;
+            if (!string.IsNullOrEmpty(dto.SourceIP))
+            {
+                abuseScore = await _abuseIPDB.GetAbuseConfidenceScore(dto.SourceIP);
+                var gnResult = await _greyNoise.ClassifyAsync(dto.SourceIP);
+                greyNoiseNoise = gnResult.IsNoise;
+            }
+
+            // Auto-approve: good reputation + high abuse score + not just background noise
+            bool autoApproved = reporter.ReputationScore >= 75
+                             && abuseScore >= 80
+                             && !greyNoiseNoise; ;
 
             var report = new AttackReport
             {

@@ -1,0 +1,47 @@
+﻿@rendermode InteractiveServer
+@inject AuthService AuthService
+@inject SignalRService SignalRService
+@inject NotificationService NotificationService
+@implements IAsyncDisposable
+
+@* Invisible component — just handles SignalR connection *@
+
+@code {
+    private bool _initialized = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+
+            await AuthService.InitializeAsync();
+            await SignalRService.StartAsync();
+
+            if (AuthService.IsLoggedIn)
+            {
+                Console.WriteLine($"[SignalR] Joining user group: user_{AuthService.UserId}");
+                await SignalRService.JoinUserGroupAsync(AuthService.UserId);
+                Console.WriteLine("[SignalR] Joined user group successfully.");
+            }
+            else
+            {
+                Console.WriteLine("[SignalR] Not logged in — skipping user group join.");
+            }
+
+            SignalRService.OnNewNotification += async payload =>
+            {
+                Console.WriteLine($"[SignalR] NewNotification received: {payload.Message}");
+                NotificationService.AddNotification(payload);
+                await InvokeAsync(StateHasChanged);
+            };
+
+            StateHasChanged();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await SignalRService.DisposeAsync();
+    }
+}

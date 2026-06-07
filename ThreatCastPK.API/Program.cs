@@ -16,6 +16,7 @@ using System.Security.Claims;
 using System.Text;
 using ThreatCastPK.API.BackgroundServices;
 using ThreatCastPK.API.Hubs;
+using ThreatCastPK.API.Services;
 using ThreatCastPK.Database.Context;
 using ThreatCastPK.Database.Enums;
 using ThreatCastPK.Database.Models;
@@ -253,6 +254,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<NotificationChannel>();
 builder.Services.AddHostedService<NotificationDispatchService>();
 builder.Services.AddHostedService<SectorRiskScoringService>();
+builder.Services.AddHttpClient<GreyNoiseService>();
 
 >>>>>>> haadi-cyber
 var app = builder.Build();

@@ -32,6 +32,8 @@ public class AuthService
     // to re-render without a full page refresh
     public event Action? OnAuthStateChanged;
 
+    public void NotifyAuthStateChanged() => OnAuthStateChanged?.Invoke();
+
     // Cached in memory so we don't hit JS interop on every render
     private UserInfo _currentUser = new();
 

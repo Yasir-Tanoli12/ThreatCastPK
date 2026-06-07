@@ -1,70 +1,16 @@
 ﻿@inherits LayoutComponentBase
-<<<<<<< HEAD
-
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
-
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
-=======
 @inject AuthService AuthService
 @inject SignalRService SignalRService
 @inject NotificationService NotificationService
 @inject NavigationManager Navigation
-@implements IAsyncDisposable
 
 <CascadingAuthenticationState>
     <NavBar />
+    <SignalRConnector />
     <main style="padding-top: 56px;">
         @Body
     </main>
 </CascadingAuthenticationState>
 
 @code {
-    private bool _initialized = false;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && !_initialized)
-        {
-            _initialized = true;
-
-            // Step 1 — restore auth state from localStorage
-            await AuthService.InitializeAsync();
-
-            // Step 2 — start SignalR (uses auth token if logged in)
-            await SignalRService.StartAsync();
-
-            // Step 3 — pipe SignalR notifications into NotificationService
-            SignalRService.OnNewNotification += async message =>
-            {
-                NotificationService.AddNotification(message);
-                await Task.CompletedTask;
-            };
-
-            StateHasChanged();
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await SignalRService.DisposeAsync();
-    }
 }
->>>>>>> haadi-cyber

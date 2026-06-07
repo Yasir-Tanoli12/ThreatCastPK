@@ -7,5 +7,9 @@
 **/obj/
 =======
 DataProtection-Keys/
+<<<<<<< HEAD
+appsettings.Development.json
+=======
 ThreatCastPK.Web/
 >>>>>>> haadi-cyber
+>>>>>>> 544bfaa06845c5a4686551c74c174b1a79d43348
