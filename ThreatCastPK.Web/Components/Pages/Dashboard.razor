@@ -1,0 +1,1280 @@
+﻿@* ThreatCastPK.Web/Components/Pages/Dashboard.razor *@
+@page "/"
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+@inject SignalRService SignalRService
+@inject ApiService ApiService
+@inject AuthService AuthService
+@implements IAsyncDisposable
+
+<PageTitle>Live Threat Map — ThreatCast PK</PageTitle>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+@* Leaflet CSS *@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="dash-root">
+
+    @* ── Left sidebar — live ticker ── *@
+    <aside class="dash-sidebar">
+
+        <div class="sidebar-header">
+            <div class="sh-brand">
+                <span class="sh-hex">◈</span>
+                <span class="sh-name">ThreatCast<span class="sh-pk">PK</span></span>
+            </div>
+            <div class="sh-live">
+                <span class="live-dot"></span>
+                <span class="live-label">LIVE</span>
+            </div>
+        </div>
+
+        @* Stats strip *@
+        <div class="sidebar-stats">
+            <div class="stat-mini">
+                <span class="sm-val green">@_totalEvents</span>
+                <span class="sm-label">TODAY</span>
+            </div>
+            <div class="stat-mini-div"></div>
+            <div class="stat-mini">
+                <span class="sm-val blue">@_activeNow</span>
+                <span class="sm-label">ACTIVE</span>
+            </div>
+            <div class="stat-mini-div"></div>
+            <div class="stat-mini">
+                <span class="sm-val orange">@_cities</span>
+                <span class="sm-label">CITIES</span>
+            </div>
+        </div>
+
+        @* Live ticker *@
+        <div class="ticker-section">
+            <div class="ts-header">
+                <span class="ts-label">LIVE FEED</span>
+                <span class="ts-count">@_tickerItems.Count events</span>
+            </div>
+
+            @if (_tickerItems.Count == 0)
+            {
+                <div class="ticker-empty">
+                    <div class="te-dot"></div>
+                    <span>Monitoring for threats...</span>
+                </div>
+            }
+            else
+            {
+                <div class="ticker-list">
+                    @foreach (var item in _tickerItems.Take(30))
+                    {
+                        <div class="ticker-item @(item.IsNew ? "ti-new" : "")">
+                            <div class="ti-left">
+                                <div class="ti-bar sev-bar-@item.Severity"></div>
+                                <div class="ti-info">
+                                    <div class="ti-type-row">
+                                        <span class="ti-type chip-@item.AttackType.ToLower().Replace(" ", "")">
+                                            @GetAttackIcon(item.AttackType) @item.AttackType
+                                        </span>
+                                    </div>
+                                    <div class="ti-meta-row">
+                                        <span class="ti-city">@item.City</span>
+                                        <span class="ti-dot-sep">·</span>
+                                        <span class="ti-sector">@item.Sector</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ti-right">
+                                <span class="ti-sev sev-@item.Severity">@item.Severity</span>
+                                <span class="ti-time">@GetRelativeTime(item.OccurredAt)</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        @* Sector risk *@
+        <div class="sector-section">
+            <div class="ss-header">SECTOR RISK</div>
+            <div class="sector-list">
+                @foreach (var sector in _sectorRisks)
+                {
+                    <div class="sector-row">
+                        <span class="sr-icon">@sector.Icon</span>
+                        <span class="sr-name">@sector.Name</span>
+                        <span class="sr-badge risk-@sector.Risk.ToLower()">@sector.Risk.ToUpper()</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @* Auth CTA if not logged in *@
+        @if (!AuthService.IsLoggedIn)
+        {
+            <div class="auth-cta">
+                <div class="ac-text">Sign in to submit reports and set alerts</div>
+                <div class="ac-btns">
+                    <a href="/login" class="ac-login">Login</a>
+                    <a href="/register" class="ac-register">Register</a>
+                </div>
+            </div>
+        }
+
+    </aside>
+
+    @* ── Map area ── *@
+    <div class="map-area">
+
+        @* Map controls bar *@
+        <div class="map-controls">
+            <div class="mc-left">
+                <div class="map-title">
+                    <span class="mt-label">// PAKISTAN CYBER THREAT MAP</span>
+                </div>
+                <div class="map-filters">
+                    <button class="mf-btn @(_timeFilter == "1h" ? "mf-active" : "")"
+                            @onclick='() => SetTimeFilter("1h")'>
+                        1H
+                    </button>
+                    <button class="mf-btn @(_timeFilter == "6h" ? "mf-active" : "")"
+                            @onclick='() => SetTimeFilter("6h")'>
+                        6H
+                    </button>
+                    <button class="mf-btn @(_timeFilter == "24h" ? "mf-active" : "")"
+                            @onclick='() => SetTimeFilter("24h")'>
+                        24H
+                    </button>
+                    <button class="mf-btn @(_timeFilter == "7d" ? "mf-active" : "")"
+                            @onclick='() => SetTimeFilter("7d")'>
+                        7D
+                    </button>
+                </div>
+            </div>
+            <div class="mc-right">
+                <div class="mc-legend">
+                    <span class="legend-item"><span class="leg-dot sev-1"></span> Low</span>
+                    <span class="legend-item"><span class="leg-dot sev-3"></span> High</span>
+                    <span class="legend-item"><span class="leg-dot sev-5"></span> Critical</span>
+                </div>
+                @if (AuthService.IsReporter)
+                {
+                    <a href="/submit-report" class="report-btn">
+                        + REPORT THREAT
+                    </a>
+                }
+            </div>
+        </div>
+
+        @* Leaflet map container *@
+        <div id="threatmap" class="leaflet-map"></div>
+
+        @* Dynamic Coordinated Campaign Alert Banners *@
+        @if (_activeCampaigns.Count > 0)
+        {
+            <div class="campaign-banners-container">
+                @foreach (var campaign in _activeCampaigns.Take(3))
+                {
+                    <div class="campaign-alert alert-@campaign.AlertLevel.ToLower()">
+                        <div class="ca-header">
+                            <span class="ca-blink">🚨</span>
+                            <span class="ca-title">COORDINATED ATTACK CAMPAIGN DETECTED (Alert Level: @campaign.AlertLevel.ToUpper())</span>
+                        </div>
+                        <div class="ca-details">
+                            ML engine isolated anomaly patterns originating from IP block <strong>@campaign.IpRange</strong>.
+                            Targeting sectors: <strong>@campaign.AffectedSectors</strong> in cities: <strong>@campaign.AffectedCities</strong>.
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        @* Map overlay — loading *@
+        @if (_mapLoading)
+        {
+            <div class="map-overlay">
+                <div class="mo-spinner"></div>
+                <div class="mo-text">INITIALIZING THREAT MAP...</div>
+            </div>
+        }
+
+        @* Floating event counter *@
+        <div class="map-event-counter">
+            <span class="mec-dot"></span>
+            <span class="mec-text">
+                <span class="mec-num">@_tickerItems.Count</span> events on map
+            </span>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    .dash-root {
+        display: flex;
+        height: 100vh;
+        padding-top: 56px; /* navbar height */
+        background: #0d1117;
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .dash-sidebar {
+        width: 280px;
+        flex-shrink: 0;
+        background: #0d1117;
+        border-right: 1px solid #21262d;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+        .dash-sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .dash-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .dash-sidebar::-webkit-scrollbar-thumb {
+            background: #21262d;
+            border-radius: 2px;
+        }
+
+    /* ── Sidebar header ── */
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 16px 12px;
+        border-bottom: 1px solid #21262d;
+        flex-shrink: 0;
+    }
+
+    .sh-brand {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .sh-hex {
+        font-size: 16px;
+        color: #9fef00;
+        filter: drop-shadow(0 0 6px rgba(159,239,0,0.5));
+    }
+
+    .sh-name {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+        font-weight: 600;
+        color: #c9d1d9;
+        letter-spacing: 0.5px;
+    }
+
+    .sh-pk {
+        color: #9fef00;
+    }
+
+    .sh-live {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #9fef00;
+        letter-spacing: 2px;
+        background: rgba(159,239,0,0.06);
+        border: 1px solid rgba(159,239,0,0.2);
+        padding: 3px 8px;
+        border-radius: 3px;
+    }
+
+    .live-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #9fef00;
+        animation: blink 1.2s ease-in-out infinite;
+        box-shadow: 0 0 6px rgba(159,239,0,0.6);
+    }
+
+    .live-label {
+        font-size: 9px;
+        letter-spacing: 2px;
+    }
+
+    /* ── Sidebar stats ── */
+    .sidebar-stats {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 12px 16px;
+        border-bottom: 1px solid #21262d;
+        flex-shrink: 0;
+    }
+
+    .stat-mini {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .sm-val {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+        .sm-val.green {
+            color: #9fef00;
+        }
+
+        .sm-val.blue {
+            color: #00c8ff;
+        }
+
+        .sm-val.orange {
+            color: #ffa500;
+        }
+
+    .sm-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 8px;
+        color: #4a5160;
+        letter-spacing: 2px;
+    }
+
+    .stat-mini-div {
+        width: 1px;
+        height: 24px;
+        background: #21262d;
+    }
+
+    /* ── Ticker ── */
+    .ticker-section {
+        flex-shrink: 0;
+    }
+
+    .ts-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: #161b22;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .ts-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #9fef00;
+        letter-spacing: 2px;
+        opacity: 0.8;
+    }
+
+    .ts-count {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #4a5160;
+    }
+
+    .ticker-empty {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 16px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #4a5160;
+    }
+
+    .te-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #4a5160;
+        animation: blink 2s ease-in-out infinite;
+        flex-shrink: 0;
+    }
+
+    .ticker-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ticker-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 12px;
+        border-bottom: 1px solid #161b22;
+        transition: background 0.1s;
+    }
+
+        .ticker-item:hover {
+            background: rgba(159,239,0,0.02);
+        }
+
+    .ti-new {
+        animation: tickerSlide 0.4s ease both;
+        background: rgba(159,239,0,0.03) !important;
+    }
+
+    .ti-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ti-bar {
+        width: 3px;
+        height: 36px;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+
+    .sev-bar-1 {
+        background: #9fef00;
+    }
+
+    .sev-bar-2 {
+        background: #7dc700;
+    }
+
+    .sev-bar-3 {
+        background: #ffa500;
+    }
+
+    .sev-bar-4 {
+        background: #ff6b35;
+    }
+
+    .sev-bar-5 {
+        background: #ff3e3e;
+    }
+
+    .ti-info {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+    }
+
+    .ti-type {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 2px;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        white-space: nowrap;
+    }
+
+    .chip-ransomware {
+        background: rgba(255,62,62,0.1);
+        color: #ff3e3e;
+    }
+
+    .chip-phishing {
+        background: rgba(255,165,0,0.1);
+        color: #ffa500;
+    }
+
+    .chip-ddos {
+        background: rgba(0,200,255,0.1);
+        color: #00c8ff;
+    }
+
+    .chip-malware {
+        background: rgba(191,64,191,0.1);
+        color: #bf40bf;
+    }
+
+    .chip-identitytheft {
+        background: rgba(255,165,0,0.1);
+        color: #ffa500;
+    }
+
+    .chip-other {
+        background: rgba(110,118,129,0.1);
+        color: #6e7681;
+    }
+
+    .ti-meta-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        overflow: hidden;
+    }
+
+    .ti-city {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #c9d1d9;
+        white-space: nowrap;
+    }
+
+    .ti-dot-sep {
+        font-size: 8px;
+        color: #4a5160;
+    }
+
+    .ti-sector {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ti-right {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        flex-shrink: 0;
+        margin-left: 8px;
+    }
+
+    .ti-sev {
+        width: 22px;
+        height: 22px;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .sev-1 {
+        background: rgba(159,239,0,0.12);
+        color: #9fef00;
+    }
+
+    .sev-2 {
+        background: rgba(125,199,0,0.12);
+        color: #7dc700;
+    }
+
+    .sev-3 {
+        background: rgba(255,165,0,0.12);
+        color: #ffa500;
+    }
+
+    .sev-4 {
+        background: rgba(255,107,53,0.12);
+        color: #ff6b35;
+    }
+
+    .sev-5 {
+        background: rgba(255,62,62,0.12);
+        color: #ff3e3e;
+    }
+
+    .ti-time {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #4a5160;
+    }
+
+    /* ── Sector risk ── */
+    .sector-section {
+        border-top: 1px solid #21262d;
+        flex-shrink: 0;
+    }
+
+    .ss-header {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #4a5160;
+        letter-spacing: 2px;
+        padding: 10px 16px;
+        background: #161b22;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .sector-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sector-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-bottom: 1px solid #161b22;
+        transition: background 0.1s;
+    }
+
+        .sector-row:last-child {
+            border-bottom: none;
+        }
+
+        .sector-row:hover {
+            background: rgba(159,239,0,0.015);
+        }
+
+    .sr-icon {
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    .sr-name {
+        font-size: 12px;
+        color: #c9d1d9;
+        flex: 1;
+    }
+
+    .sr-badge {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 8px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 2px;
+        letter-spacing: 1px;
+        flex-shrink: 0;
+    }
+
+    .risk-low {
+        background: rgba(159,239,0,0.1);
+        color: #9fef00;
+    }
+
+    .risk-medium {
+        background: rgba(255,165,0,0.1);
+        color: #ffa500;
+    }
+
+    .risk-high {
+        background: rgba(255,107,53,0.1);
+        color: #ff6b35;
+    }
+
+    .risk-critical {
+        background: rgba(255,62,62,0.1);
+        color: #ff3e3e;
+    }
+
+    /* ── Auth CTA ── */
+    .auth-cta {
+        margin: 12px;
+        padding: 14px;
+        background: rgba(159,239,0,0.04);
+        border: 1px solid rgba(159,239,0,0.15);
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .ac-text {
+        font-size: 12px;
+        color: #6e7681;
+        line-height: 1.5;
+    }
+
+    .ac-btns {
+        display: flex;
+        gap: 8px;
+    }
+
+    .ac-login {
+        flex: 1;
+        padding: 7px;
+        text-align: center;
+        border: 1px solid #21262d;
+        border-radius: 3px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #c9d1d9;
+        text-decoration: none;
+        transition: border-color 0.15s;
+    }
+
+        .ac-login:hover {
+            border-color: #6e7681;
+        }
+
+    .ac-register {
+        flex: 1;
+        padding: 7px;
+        text-align: center;
+        background: #9fef00;
+        border-radius: 3px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        color: #0d1117;
+        text-decoration: none;
+        transition: opacity 0.15s;
+    }
+
+        .ac-register:hover {
+            opacity: 0.88;
+        }
+
+    /* ── Map area ── */
+    .map-area {
+        flex: 1;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .map-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 20px;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+        flex-shrink: 0;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .mc-left {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .mt-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #9fef00;
+        letter-spacing: 2px;
+        opacity: 0.7;
+    }
+
+    .map-filters {
+        display: flex;
+        gap: 4px;
+    }
+
+    .mf-btn {
+        padding: 5px 12px;
+        background: transparent;
+        border: 1px solid #21262d;
+        border-radius: 3px;
+        cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        letter-spacing: 1px;
+        transition: all 0.15s;
+    }
+
+        .mf-btn:hover {
+            border-color: #30363d;
+            color: #c9d1d9;
+        }
+
+    .mf-active {
+        background: rgba(159,239,0,0.08) !important;
+        border-color: rgba(159,239,0,0.4) !important;
+        color: #9fef00 !important;
+    }
+
+    .mc-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .mc-legend {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+    }
+
+    .leg-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+        .leg-dot.sev-1 {
+            background: #9fef00;
+            box-shadow: 0 0 6px rgba(159,239,0,0.5);
+        }
+
+        .leg-dot.sev-3 {
+            background: #ffa500;
+            box-shadow: 0 0 6px rgba(255,165,0,0.5);
+        }
+
+        .leg-dot.sev-5 {
+            background: #ff3e3e;
+            box-shadow: 0 0 6px rgba(255,62,62,0.5);
+        }
+
+    .report-btn {
+        padding: 7px 14px;
+        background: #9fef00;
+        border-radius: 3px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        font-weight: 700;
+        color: #0d1117;
+        text-decoration: none;
+        letter-spacing: 1px;
+        white-space: nowrap;
+        transition: opacity 0.15s, box-shadow 0.15s;
+    }
+
+        .report-btn:hover {
+            opacity: 0.9;
+            box-shadow: 0 3px 12px rgba(159,239,0,0.2);
+        }
+
+    .leaflet-map {
+        flex: 1;
+        width: 100%;
+        min-height: 0;
+        background: #0d1117;
+    }
+
+    :global(.leaflet-container) {
+        background: #0d1117 !important;
+    }
+
+    :global(.leaflet-popup-content-wrapper) {
+        background: #161b22 !important;
+        border: 1px solid #21262d !important;
+        border-radius: 6px !important;
+        color: #c9d1d9 !important;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+    }
+
+    :global(.leaflet-popup-tip) {
+        background: #161b22 !important;
+    }
+
+    :global(.leaflet-popup-close-button) {
+        color: #6e7681 !important;
+    }
+
+    :global(.leaflet-control-zoom a) {
+        background: #161b22 !important;
+        border-color: #21262d !important;
+        color: #c9d1d9 !important;
+    }
+
+    :global(.leaflet-control-attribution) {
+        background: rgba(13,17,23,0.8) !important;
+        color: #4a5160 !important;
+    }
+
+    .map-overlay {
+        position: absolute;
+        inset: 48px 0 0 0;
+        background: rgba(13,17,23,0.85);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 500;
+    }
+
+    .mo-spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid #21262d;
+        border-top-color: #9fef00;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    .mo-text {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #6e7681;
+        letter-spacing: 2px;
+    }
+
+    .map-event-counter {
+        position: absolute;
+        bottom: 16px;
+        right: 16px;
+        z-index: 400;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 14px;
+        background: rgba(13,17,23,0.85);
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        backdrop-filter: blur(4px);
+    }
+
+    .mec-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #9fef00;
+        animation: blink 1.5s ease-in-out infinite;
+        box-shadow: 0 0 6px rgba(159,239,0,0.5);
+    }
+
+    .mec-text {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #6e7681;
+    }
+
+    .mec-num {
+        color: #9fef00;
+        font-weight: 600;
+    }
+
+    .campaign-banners-container {
+        position: absolute;
+        top: 60px;
+        left: 20px;
+        right: 20px;
+        z-index: 450;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .campaign-alert.alert-medium {
+        background: rgba(255, 165, 0, 0.9);
+        color: #0d1117;
+        border-left: 5px solid #ffa500;
+        padding: 10px 16px;
+        border-radius: 4px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .campaign-alert.alert-high {
+        background: rgba(255, 107, 53, 0.92);
+        color: white;
+        border-left: 5px solid #ff6b35;
+        padding: 10px 16px;
+        border-radius: 4px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .campaign-alert.alert-critical {
+        background: rgba(255, 62, 62, 0.95);
+        color: white;
+        border-left: 5px solid #ff3e3e;
+        padding: 10px 16px;
+        border-radius: 4px;
+        backdrop-filter: blur(8px);
+        animation: pulseBorder 2s infinite;
+        box-shadow: 0 0 15px rgba(255,62,62,0.4);
+    }
+
+    .ca-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-weight: 700;
+        font-size: 11px;
+        margin-bottom: 4px;
+        letter-spacing: 1px;
+    }
+
+    .ca-blink {
+        animation: blink 1s infinite;
+    }
+
+    .ca-details {
+        font-size: 11px;
+        line-height: 1.4;
+    }
+
+    @@keyframes pulseBorder {
+        0%, 100% {
+            border-left-color: #ff3e3e;
+        }
+
+        50% {
+            border-left-color: #ffa500;
+        }
+    }
+
+    @@keyframes blink {
+        0%, 100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.2;
+        }
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes tickerSlide {
+        from {
+            opacity: 0;
+            transform: translateX(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .dash-sidebar {
+            display: none;
+        }
+    }
+</style>
+
+@code {
+    private record TickerItem(
+        Guid Id, string AttackType, string City, string Sector,
+        int Severity, DateTime OccurredAt, bool IsNew = false);
+
+    private record SectorRiskItem(string Name, string Icon, string Risk);
+
+    private List<TickerItem> _tickerItems = new();
+    private bool _mapLoading = true;
+    private string _timeFilter = "24h";
+    private int _totalEvents = 0;
+    private int _activeNow = 0;
+    private int _cities = 0;
+    private bool _initialized = false;
+    private List<ThreatCampaignPayload> _activeCampaigns = new();
+
+    private List<SectorRiskItem> _sectorRisks = new()
+    {
+        new("Banking",    "🏦", "Low"),
+        new("Telecom",    "📡", "Low"),
+        new("Healthcare", "🏥", "Low"),
+        new("Education",  "🎓", "Low"),
+        new("Government", "🏛", "Low"),
+        new("Energy",     "⚡", "Low"),
+        new("Other",      "◈", "Low"),
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _initialized) return;
+        _initialized = true;
+
+        await AuthService.InitializeAsync();
+
+        SignalRService.OnNewAttackEvent += OnNewAttackEvent;
+        SignalRService.OnNewThreatCampaign += OnNewThreatCampaign;
+
+        await InitializeMapAsync();
+        await LoadInitialDataAsync();
+
+        StateHasChanged();
+    }
+
+    private async Task InitializeMapAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("tcpkMap.init", "threatmap");
+            _mapLoading = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Map] Init failed: {ex.Message}");
+            _mapLoading = false;
+        }
+    }
+
+    private async Task LoadInitialDataAsync()
+    {
+        try
+        {
+            var (events, _) = await ApiService.GetEventsAsync(_timeFilter);
+
+            if (events != null && events.Count > 0)
+            {
+                _tickerItems = events
+                    .OrderByDescending(e => e.OccurredAt)
+                    .Select(e => new TickerItem(
+                        e.Id, e.AttackType, e.City, e.TargetSector,
+                        e.Severity, e.OccurredAt))
+                    .ToList();
+
+                _totalEvents = events.Count(e => e.OccurredAt.Date == DateTime.UtcNow.Date);
+                _activeNow = events.Count(e => e.OccurredAt >= DateTime.UtcNow.AddHours(-1));
+                _cities = events.Select(e => e.City).Distinct().Count();
+
+                var heatPoints = events.Select(e => new
+                {
+                    lat = e.Latitude,
+                    lng = e.Longitude,
+                    severity = e.Severity,
+                    attackType = e.AttackType,
+                    city = e.City,
+                    targetSector = e.TargetSector,
+                    occurredAt = e.OccurredAt
+                }).ToList();
+
+                await JS.InvokeVoidAsync("tcpkMap.setHeatmapData", heatPoints);
+            }
+
+            var (campaigns, _) = await ApiService.GetActiveCampaignsAsync();
+            if (campaigns != null)
+            {
+                _activeCampaigns = campaigns.Select(c => new ThreatCampaignPayload
+                {
+                    Id = c.Id,
+                    IpRange = c.IpRange,
+                    DetectedAt = c.DetectedAt,
+                    AffectedCities = c.AffectedCities,
+                    AffectedSectors = c.AffectedSectors,
+                    ReportCount = c.ReportCount,
+                    AlertLevel = c.AlertLevel
+                }).ToList();
+            }
+
+            var (sectorData, _) = await ApiService.GetSectorRiskAsync();
+            if (sectorData != null)
+            {
+                var iconMap = new Dictionary<string, string>
+                {
+                    ["Banking"] = "🏦",
+                    ["Telecom"] = "📡",
+                    ["Healthcare"] = "🏥",
+                    ["Education"] = "🎓",
+                    ["Government"] = "🏛",
+                    ["Energy"] = "⚡",
+                    ["Other"] = "◈"
+                };
+
+                _sectorRisks = sectorData.Select(s => new SectorRiskItem(
+                    s.Sector,
+                    iconMap.GetValueOrDefault(s.Sector, "◈"),
+                    s.RiskLevel
+                )).ToList();
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Dashboard] Load failed: {ex.Message}");
+        }
+    }
+
+    private async Task SetTimeFilter(string filter)
+    {
+        _timeFilter = filter;
+        _mapLoading = true;
+        StateHasChanged();
+
+        await JS.InvokeVoidAsync("tcpkMap.clearHeatmap");
+        await LoadInitialDataAsync();
+
+        _mapLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task OnNewAttackEvent(AttackEventPayload payload)
+    {
+        var newItem = new TickerItem(
+            payload.Id, payload.AttackType, payload.City,
+            payload.TargetSector, payload.Severity,
+            payload.OccurredAt, IsNew: true);
+
+        _tickerItems.Insert(0, newItem);
+
+        if (_tickerItems.Count > 50)
+            _tickerItems.RemoveAt(_tickerItems.Count - 1);
+
+        _totalEvents++;
+        _activeNow++;
+
+        try
+        {
+            await JS.InvokeVoidAsync("tcpkMap.addHeatPoint",
+                payload.Latitude, payload.Longitude, payload.Severity, payload.AttackType);
+        }
+        catch { }
+
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(2000);
+        var idx = _tickerItems.FindIndex(t => t.Id == newItem.Id);
+        if (idx >= 0)
+            _tickerItems[idx] = newItem with { IsNew = false };
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnNewThreatCampaign(ThreatCampaignPayload payload)
+    {
+        _activeCampaigns.Insert(0, payload);
+        if (_activeCampaigns.Count > 5)
+            _activeCampaigns.RemoveAt(_activeCampaigns.Count - 1);
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static string GetAttackIcon(string type) => type switch
+    {
+        "Ransomware" => "🔐",
+        "Phishing" => "🎣",
+        "DDoS" => "🌊",
+        "IdentityTheft" => "👤",
+        "Malware" => "🦠",
+        _ => "⚠"
+    };
+
+    private static string GetRelativeTime(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - dt;
+        if (diff.TotalSeconds < 60) return $"{(int)diff.TotalSeconds}s";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h";
+        return $"{(int)diff.TotalDays}d";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        SignalRService.OnNewAttackEvent -= OnNewAttackEvent;
+        SignalRService.OnNewThreatCampaign -= OnNewThreatCampaign;
+    }
+}

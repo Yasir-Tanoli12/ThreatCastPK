@@ -1,0 +1,1420 @@
+@* ThreatCastPK.Web/Components/Pages/Subscriptions.razor *@
+@page "/subscriptions"
+@rendermode InteractiveServer
+@inject AuthService AuthService
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Alert Subscriptions — ThreatCast PK</PageTitle>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<AuthGuard>
+<div class="sub-root">
+    <div class="bg-grid"></div>
+    <div class="scan-line"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="sub-layout">
+
+        @* ── Left column — subscriptions ── *@
+        <div class="sub-main">
+
+            @* Header *@
+            <div class="page-header">
+                <div class="ph-left">
+                    <div class="ph-label">// ALERT CONFIGURATION</div>
+                    <h1 class="ph-title">
+                        Alert <span class="ph-accent">Subscriptions</span>
+                    </h1>
+                    <p class="ph-sub">
+                        Define threat filters and receive real-time notifications
+                        when matching attacks are detected across Pakistan.
+                    </p>
+                </div>
+                <div class="ph-right">
+                    @if (_subscriptions != null)
+                    {
+                        <div class="slot-counter">
+                            <div class="sc-dots">
+                                @for (int i = 0; i < 3; i++)
+                                {
+                                    var idx = i;
+                                    <div class="sc-dot @(idx < _subscriptions.Count ? "dot-used" : "dot-free")"></div>
+                                }
+                            </div>
+                            <div class="sc-label">
+                                <span class="sc-used">@_subscriptions.Count</span>
+                                <span class="sc-sep">/</span>
+                                <span class="sc-total">3</span>
+                                <span class="sc-text">SLOTS USED</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* Toast *@
+            @if (!string.IsNullOrEmpty(_toastMessage))
+            {
+                <div class="toast @_toastType @(_toastVisible ? "toast-show" : "toast-hide")">
+                    <span class="toast-icon">@(_toastType == "toast-success" ? "✓" : "⚠")</span>
+                    <span>@_toastMessage</span>
+                </div>
+            }
+
+            @* Loading *@
+            @if (_loading)
+            {
+                <div class="subs-list">
+                    @for (int i = 0; i < 2; i++)
+                    {
+                        <div class="skeleton-sub">
+                            <div class="sk-header">
+                                <div class="sk-line sk-name"></div>
+                                <div class="sk-toggle"></div>
+                            </div>
+                            <div class="sk-body">
+                                <div class="sk-line sk-tags"></div>
+                                <div class="sk-line sk-tags sk-tags-sm"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else if (_loadError != null)
+            {
+                <div class="state-box">
+                    <div class="sb-icon">⚠</div>
+                    <div class="sb-title">FAILED TO LOAD</div>
+                    <div class="sb-sub">@_loadError</div>
+                    <button class="sb-btn" @onclick="LoadSubscriptions">↺ Retry</button>
+                </div>
+            }
+            else
+            {
+                <div class="subs-list">
+
+                    @* Existing subscriptions *@
+                    @foreach (var sub in _subscriptions!)
+                    {
+                        <div class="sub-card @(!sub.IsActive ? "sub-inactive" : "") @(_editingId == sub.Id ? "sub-editing" : "")">
+
+                            @* Card header *@
+                            <div class="sc-top">
+                                <div class="sc-name-row">
+                                    <div class="sc-icon-wrap">
+                                        <span class="sc-icon">⚡</span>
+                                    </div>
+                                    <div class="sc-name-info">
+                                        <span class="sc-name">@sub.Name</span>
+                                        <span class="sc-created">
+                                            Created @GetRelativeTime(sub.CreatedAt)
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="sc-controls">
+                                    @* Toggle *@
+                                    <button class="toggle-btn @(sub.IsActive ? "toggle-on" : "toggle-off")"
+                                            @onclick="() => ToggleSubscription(sub.Id)"
+                                            disabled="@(_actioningId == sub.Id)"
+                                            title="@(sub.IsActive ? "Deactivate" : "Activate")">
+                                        <span class="toggle-track">
+                                            <span class="toggle-thumb"></span>
+                                        </span>
+                                        <span class="toggle-label">
+                                            @(sub.IsActive ? "ON" : "OFF")
+                                        </span>
+                                    </button>
+                                    @* Edit *@
+                                    <button class="icon-btn"
+                                            title="Edit subscription"
+                                            @onclick="() => StartEdit(sub)">
+                                        ✎
+                                    </button>
+                                    @* Delete *@
+                                    <button class="icon-btn icon-btn-danger"
+                                            title="Delete subscription"
+                                            @onclick="() => StartDelete(sub.Id)">
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+
+                            @* Filter summary *@
+                            <div class="sc-filters">
+
+                                <div class="filter-row">
+                                    <span class="fr-label">ATTACK TYPES</span>
+                                    <div class="fr-tags">
+                                        @if (string.IsNullOrWhiteSpace(sub.AttackTypes) || sub.AttackTypes == "All")
+                                        {
+                                            <span class="tag tag-all">ALL TYPES</span>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var t in sub.AttackTypes.Split(',').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)))
+                                            {
+                                                <span class="tag tag-type chip-@t.ToLower().Replace(" ","")">
+                                                    @GetAttackIcon(t) @t
+                                                </span>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="filter-row">
+                                    <span class="fr-label">CITIES</span>
+                                    <div class="fr-tags">
+                                        @if (string.IsNullOrWhiteSpace(sub.Cities))
+                                        {
+                                            <span class="tag tag-all">ALL CITIES</span>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var c in sub.Cities.Split(',').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)).Take(5))
+                                            {
+                                                <span class="tag tag-city">📍 @c</span>
+                                            }
+                                            @if (sub.Cities.Split(',').Length > 5)
+                                            {
+                                                <span class="tag tag-more">+@(sub.Cities.Split(',').Length - 5)</span>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="filter-row">
+                                    <span class="fr-label">SECTORS</span>
+                                    <div class="fr-tags">
+                                        @if (string.IsNullOrWhiteSpace(sub.Sectors))
+                                        {
+                                            <span class="tag tag-all">ALL SECTORS</span>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var s in sub.Sectors.Split(',').Select(x => x.Trim()).Where(x => !string.IsNullOrEmpty(x)))
+                                            {
+                                                <span class="tag tag-sector">@s</span>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="filter-row">
+                                    <span class="fr-label">MIN SEVERITY</span>
+                                    <div class="fr-tags">
+                                        <span class="tag sev-tag sev-@sub.MinimumSeverity">
+                                            @sub.MinimumSeverity+ — @GetSeverityLabel(sub.MinimumSeverity) and above
+                                        </span>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            @* Inactive overlay *@
+                            @if (!sub.IsActive)
+                            {
+                                <div class="inactive-notice">
+                                    <span>⏸ Subscription paused — no alerts will be sent</span>
+                                </div>
+                            }
+
+                        </div>
+
+                        @* Delete confirm *@
+                        @if (_deleteConfirmId == sub.Id)
+                        {
+                            <div class="confirm-row">
+                                <span class="cr-icon">⚠</span>
+                                <span class="cr-text">
+                                    Delete <strong>@sub.Name</strong>? This cannot be undone.
+                                </span>
+                                <div class="cr-actions">
+                                    <button class="cr-cancel" @onclick="CancelDelete">CANCEL</button>
+                                    <button class="cr-confirm @(_actioningId == sub.Id ? "loading" : "")"
+                                            @onclick="() => ConfirmDelete(sub.Id)"
+                                            disabled="@(_actioningId == sub.Id)">
+                                        @if (_actioningId == sub.Id)
+                                        {
+                                            <span class="btn-spinner-sm"></span>
+                                            <span>DELETING...</span>
+                                        }
+                                        else
+                                        {
+                                            <span>✕ DELETE</span>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    @* Add new slot *@
+                    @if (_subscriptions.Count < 3)
+                    {
+                        @if (_showForm && _editingId == null)
+                        {
+                            @* New subscription form *@
+                            <div class="sub-form-card">
+                                <div class="sfc-header">
+                                    <div class="sfc-title-row">
+                                        <span class="sfc-prompt">$</span>
+                                        <span class="sfc-title">subscription.new</span>
+                                        <span class="sfc-cursor">_</span>
+                                    </div>
+                                </div>
+                                <div class="sfc-body">
+                                    @RenderSubscriptionForm(false)
+                                </div>
+                            </div>
+                        }
+                        else if (!_showForm)
+                        {
+                            <button class="add-slot-btn" @onclick="OpenNewForm">
+                                <span class="asb-icon">+</span>
+                                <div class="asb-text">
+                                    <span class="asb-primary">CREATE NEW SUBSCRIPTION</span>
+                                    <span class="asb-secondary">
+                                        @(3 - _subscriptions.Count) slot@(3 - _subscriptions.Count == 1 ? "" : "s") remaining
+                                    </span>
+                                </div>
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        <div class="slots-full">
+                            <span class="sf-icon">◈</span>
+                            <div class="sf-text">
+                                <span class="sf-title">MAXIMUM SUBSCRIPTIONS REACHED</span>
+                                <span class="sf-sub">Delete an existing subscription to create a new one.</span>
+                            </div>
+                        </div>
+                    }
+
+                </div>
+            }
+
+        </div>
+
+        @* ── Right column — info + edit form ── *@
+        <div class="sub-side">
+
+            @* Edit form overlay *@
+            @if (_editingId != null && _subscriptions != null)
+            {
+                var editSub = _subscriptions.FirstOrDefault(s => s.Id == _editingId);
+                @if (editSub != null)
+                {
+                    <div class="edit-panel">
+                        <div class="ep-header">
+                            <div class="ep-title-row">
+                                <span class="ep-prompt">$</span>
+                                <span class="ep-title">subscription.edit</span>
+                                <span class="ep-cursor">_</span>
+                            </div>
+                            <button class="ep-close" @onclick="CancelEdit">✕</button>
+                        </div>
+                        <div class="ep-body">
+                            @RenderSubscriptionForm(true)
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                @* How it works card *@
+                <div class="info-card">
+                    <div class="ic-header">
+                        <span class="ic-icon">◈</span>
+                        <span class="ic-title">HOW ALERTS WORK</span>
+                    </div>
+                    <div class="ic-body">
+                        <div class="how-step">
+                            <div class="hs-num">01</div>
+                            <div class="hs-info">
+                                <div class="hs-title">Define your filters</div>
+                                <div class="hs-desc">Select attack types, cities, sectors, and minimum severity level.</div>
+                            </div>
+                        </div>
+                        <div class="how-step">
+                            <div class="hs-num">02</div>
+                            <div class="hs-info">
+                                <div class="hs-title">Stay connected</div>
+                                <div class="hs-desc">Alerts are delivered in real-time via SignalR when matching events are approved.</div>
+                            </div>
+                        </div>
+                        <div class="how-step">
+                            <div class="hs-num">03</div>
+                            <div class="hs-info">
+                                <div class="hs-title">Review in notifications</div>
+                                <div class="hs-desc">All matched alerts appear in your Notifications page with full event details.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Limits card *@
+                <div class="info-card">
+                    <div class="ic-header">
+                        <span class="ic-icon">⚡</span>
+                        <span class="ic-title">SUBSCRIPTION LIMITS</span>
+                    </div>
+                    <div class="ic-body">
+                        <div class="limit-row">
+                            <span class="lr-key">MAX SUBSCRIPTIONS</span>
+                            <span class="lr-val">3 per account</span>
+                        </div>
+                        <div class="limit-row">
+                            <span class="lr-key">DELIVERY METHOD</span>
+                            <span class="lr-val">In-app + SignalR</span>
+                        </div>
+                        <div class="limit-row">
+                            <span class="lr-key">EMPTY FILTER = </span>
+                            <span class="lr-val green">Match all values</span>
+                        </div>
+                        <div class="limit-row">
+                            <span class="lr-key">ALL FILTERS = AND</span>
+                            <span class="lr-val">All must match</span>
+                        </div>
+                    </div>
+                </div>
+
+                @* Quick severity reference *@
+                <div class="info-card">
+                    <div class="ic-header">
+                        <span class="ic-icon">🎯</span>
+                        <span class="ic-title">SEVERITY REFERENCE</span>
+                    </div>
+                    <div class="ic-body sev-ref">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            var level = i;
+                            <div class="sev-ref-row">
+                                <span class="sev-badge sev-@level">@level</span>
+                                <span class="sev-ref-label">@GetSeverityLabel(level)</span>
+                                <span class="sev-ref-desc">@GetSeverityDesc(level)</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
+</AuthGuard>
+
+@* ── Subscription form (shared between new + edit) ── *@
+@code {
+    private RenderFragment RenderSubscriptionForm(bool isEdit) =>
+        @<div class="form-fields">
+
+            <div class="field-group">
+                <label class="field-label">
+                    <span class="fl-idx">01</span> SUBSCRIPTION NAME
+                </label>
+                <div class="input-wrapper @(_nameFocused ? "focused" : "")">
+                    <span class="input-pre">◈</span>
+                    <input type="text" class="field-input"
+                           placeholder="e.g. Karachi Banking Alerts"
+                           value="@_formName"
+                           @oninput="e => _formName = e.Value?.ToString() ?? string.Empty"
+                           @onfocus="() => _nameFocused = true"
+                           @onblur="() => _nameFocused = false"
+                           maxlength="60" />
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">
+                    <span class="fl-idx">02</span> ATTACK TYPES
+                    <span class="fl-hint">empty = all types</span>
+                </label>
+                <div class="chip-grid">
+                    @foreach (var t in _attackTypes)
+                    {
+                        var type = t;
+                        var selected = _formAttackTypes.Contains(type);
+                        <button type="button"
+                                class="chip-select @(selected ? $"chip-selected chip-{type.ToLower().Replace(" ","")}" : "")"
+                                @onclick="() => ToggleItem(_formAttackTypes, type)">
+                            @GetAttackIcon(type) @type
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">
+                    <span class="fl-idx">03</span> CITIES
+                    <span class="fl-hint">empty = all cities</span>
+                </label>
+                <div class="chip-grid chip-grid-cities">
+                    @foreach (var c in _cities)
+                    {
+                        var city = c;
+                        var selected = _formCities.Contains(city);
+                        <button type="button"
+                                class="chip-select @(selected ? "chip-selected chip-city" : "")"
+                                @onclick="() => ToggleItem(_formCities, city)">
+                            @city
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">
+                    <span class="fl-idx">04</span> SECTORS
+                    <span class="fl-hint">empty = all sectors</span>
+                </label>
+                <div class="chip-grid">
+                    @foreach (var s in _sectors)
+                    {
+                        var sector = s;
+                        var selected = _formSectors.Contains(sector);
+                        <button type="button"
+                                class="chip-select @(selected ? "chip-selected chip-sector" : "")"
+                                @onclick="() => ToggleItem(_formSectors, sector)">
+                            @sector
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">
+                    <span class="fl-idx">05</span> MINIMUM SEVERITY
+                </label>
+                <div class="sev-select-row">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        var level = i;
+                        <button type="button"
+                                class="sev-btn @(_formMinSeverity == level ? "sev-active sev-active-@level" : "")"
+                                @onclick="() => _formMinSeverity = level">
+                            <span class="sev-num">@level</span>
+                            <span class="sev-lbl">@GetSeverityLabel(level)</span>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_formError))
+            {
+                <div class="form-error">⚠ @_formError</div>
+            }
+
+            <div class="form-actions">
+                <button class="btn-cancel-form"
+                        @onclick="@(isEdit ? (Action)CancelEdit : (Action)CancelNewForm)">
+                    CANCEL
+                </button>
+                <button class="btn-save @(_formLoading ? "loading" : "")"
+                        @onclick="@(isEdit ? SaveEdit : SaveNew)"
+                        disabled="@(_formLoading || string.IsNullOrWhiteSpace(_formName))">
+                    @if (_formLoading)
+                    {
+                        <span class="btn-spinner-sm"></span>
+                        <span>SAVING...</span>
+                    }
+                    else
+                    {
+                        <span>@(isEdit ? "SAVE CHANGES →" : "CREATE SUBSCRIPTION →")</span>
+                    }
+                </button>
+            </div>
+
+        </div>;
+}
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .sub-root {
+        min-height: 100vh; background: #0d1117;
+        font-family: 'Inter', sans-serif;
+        padding: 76px 32px 64px; position: relative; overflow-x: hidden;
+    }
+
+    .bg-grid {
+        position: fixed; inset: 0;
+        background-image:
+            linear-gradient(rgba(159,239,0,0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(159,239,0,0.025) 1px, transparent 1px);
+        background-size: 40px 40px; pointer-events: none; z-index: 0;
+    }
+
+    .scan-line {
+        position: fixed; top: -2px; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, transparent, #9fef00, transparent);
+        animation: scan 8s linear infinite; opacity: 0.3;
+        z-index: 1; pointer-events: none;
+    }
+
+    .corner { position: fixed; width: 18px; height: 18px; z-index: 2; pointer-events: none; }
+    .corner-tl { top: 14px; left: 14px; border-top: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-tr { top: 14px; right: 14px; border-top: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+    .corner-bl { bottom: 14px; left: 14px; border-bottom: 2px solid #9fef00; border-left: 2px solid #9fef00; }
+    .corner-br { bottom: 14px; right: 14px; border-bottom: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+
+    /* ── Layout ── */
+    .sub-layout {
+        max-width: 1200px; margin: 0 auto;
+        display: grid; grid-template-columns: 1fr 320px; gap: 24px;
+        position: relative; z-index: 3;
+        animation: fadeInUp 0.5s ease both;
+    }
+
+    @@keyframes fadeInUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes scan     { 0% { top: -2px; } 100% { top: 100vh; } }
+    @@keyframes spin     { to { transform: rotate(360deg); } }
+    @@keyframes blink    { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+    @@keyframes slideUp  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Header ── */
+    .page-header {
+        display: flex; align-items: flex-start; justify-content: space-between;
+        margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+    }
+
+    .ph-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #9fef00; letter-spacing: 2px; opacity: 0.7; margin-bottom: 8px;
+    }
+
+    .ph-title {
+        font-size: 38px; font-weight: 700; color: #e6edf3;
+        line-height: 1.1; letter-spacing: -0.5px; margin-bottom: 8px;
+    }
+
+    .ph-accent { color: #9fef00; }
+    .ph-sub { font-size: 13px; color: #6e7681; line-height: 1.6; max-width: 480px; }
+
+    /* Slot counter */
+    .slot-counter {
+        display: flex; flex-direction: column; align-items: center; gap: 8px;
+        padding: 16px 20px; background: #161b22;
+        border: 1px solid #21262d; border-radius: 8px; min-width: 130px;
+    }
+
+    .sc-dots { display: flex; gap: 8px; }
+
+    .sc-dot {
+        width: 12px; height: 12px; border-radius: 50%;
+        transition: background 0.3s, box-shadow 0.3s;
+    }
+    .dot-used {
+        background: #9fef00;
+        box-shadow: 0 0 8px rgba(159,239,0,0.5);
+    }
+    .dot-free {
+        background: #21262d;
+        border: 1px solid #30363d;
+    }
+
+    .sc-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        display: flex; align-items: baseline; gap: 3px;
+    }
+
+    .sc-used  { color: #9fef00; font-size: 16px; font-weight: 700; }
+    .sc-sep   { color: #4a5160; }
+    .sc-total { color: #6e7681; }
+    .sc-text  { color: #4a5160; font-size: 9px; letter-spacing: 1px; margin-left: 4px; }
+
+    /* ── Toast ── */
+    .toast {
+        display: flex; align-items: center; gap: 10px;
+        padding: 12px 16px; border-radius: 6px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+        border: 1px solid; margin-bottom: 20px;
+        transition: opacity 0.4s, transform 0.4s;
+    }
+    .toast-success { background: rgba(159,239,0,0.07); border-color: rgba(159,239,0,0.3); color: #9fef00; }
+    .toast-error   { background: rgba(255,62,62,0.07); border-color: rgba(255,62,62,0.3); color: #ff3e3e; }
+    .toast-show { opacity: 1; transform: translateY(0); }
+    .toast-hide { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+    .toast-icon { font-size: 14px; flex-shrink: 0; }
+
+    /* ── Subscriptions list ── */
+    .subs-list { display: flex; flex-direction: column; gap: 12px; }
+
+    /* ── Subscription card ── */
+    .sub-card {
+        background: #161b22; border: 1px solid #21262d;
+        border-radius: 8px; overflow: hidden;
+        transition: border-color 0.2s;
+    }
+    .sub-card:hover { border-color: #30363d; }
+    .sub-inactive { opacity: 0.7; }
+    .sub-editing { border-color: rgba(159,239,0,0.3); }
+
+    .sc-top {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 18px; border-bottom: 1px solid #21262d;
+        background: #0d1117; gap: 12px; flex-wrap: wrap;
+    }
+
+    .sc-name-row { display: flex; align-items: center; gap: 12px; }
+
+    .sc-icon-wrap {
+        width: 36px; height: 36px; border-radius: 8px;
+        background: rgba(159,239,0,0.08); border: 1px solid rgba(159,239,0,0.2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 16px; flex-shrink: 0;
+    }
+
+    .sc-name-info { display: flex; flex-direction: column; gap: 2px; }
+
+    .sc-name { font-size: 15px; font-weight: 600; color: #e6edf3; }
+
+    .sc-created {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #4a5160;
+    }
+
+    .sc-controls { display: flex; align-items: center; gap: 8px; }
+
+    /* Toggle button */
+    .toggle-btn {
+        display: flex; align-items: center; gap: 7px;
+        background: none; border: none; cursor: pointer; padding: 4px;
+    }
+    .toggle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .toggle-track {
+        width: 36px; height: 20px; border-radius: 10px;
+        position: relative; display: block;
+        transition: background 0.2s;
+    }
+
+    .toggle-on .toggle-track { background: rgba(159,239,0,0.25); border: 1px solid rgba(159,239,0,0.5); }
+    .toggle-off .toggle-track { background: #21262d; border: 1px solid #30363d; }
+
+    .toggle-thumb {
+        position: absolute; top: 2px;
+        width: 14px; height: 14px; border-radius: 50%;
+        transition: left 0.2s, background 0.2s;
+    }
+
+    .toggle-on  .toggle-thumb { left: 18px; background: #9fef00; box-shadow: 0 0 6px rgba(159,239,0,0.5); }
+    .toggle-off .toggle-thumb { left: 2px;  background: #4a5160; }
+
+    .toggle-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    }
+    .toggle-on  .toggle-label { color: #9fef00; }
+    .toggle-off .toggle-label { color: #4a5160; }
+
+    .icon-btn {
+        width: 28px; height: 28px; border-radius: 4px;
+        background: transparent; border: 1px solid #21262d;
+        color: #6e7681; cursor: pointer; font-size: 12px;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.15s;
+    }
+    .icon-btn:hover { border-color: #9fef00; color: #9fef00; background: rgba(159,239,0,0.06); }
+    .icon-btn-danger:hover { border-color: #ff3e3e; color: #ff3e3e; background: rgba(255,62,62,0.06); }
+
+    /* Filter summary */
+    .sc-filters { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+
+    .filter-row { display: flex; align-items: flex-start; gap: 12px; }
+
+    .fr-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+        color: #4a5160; letter-spacing: 1.5px; min-width: 88px;
+        flex-shrink: 0; padding-top: 3px;
+    }
+
+    .fr-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+
+    .tag {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        padding: 3px 8px; border-radius: 3px; white-space: nowrap;
+    }
+
+    .tag-all    { background: rgba(110,118,129,0.1); color: #6e7681; border: 1px solid #21262d; }
+    .tag-city   { background: rgba(0,200,255,0.08); color: #00c8ff; border: 1px solid rgba(0,200,255,0.2); }
+    .tag-sector { background: rgba(255,165,0,0.08); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
+    .tag-more   { background: #21262d; color: #6e7681; border: 1px solid #30363d; }
+
+    .tag-type { display: inline-flex; align-items: center; gap: 3px; }
+    .chip-ransomware    { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid rgba(255,62,62,0.2); }
+    .chip-phishing      { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
+    .chip-ddos          { background: rgba(0,200,255,0.1); color: #00c8ff; border: 1px solid rgba(0,200,255,0.2); }
+    .chip-malware       { background: rgba(191,64,191,0.1); color: #bf40bf; border: 1px solid rgba(191,64,191,0.2); }
+    .chip-identitytheft { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
+    .chip-other         { background: rgba(110,118,129,0.1); color: #6e7681; border: 1px solid rgba(110,118,129,0.2); }
+
+    .sev-tag { font-weight: 600; }
+    .sev-1 { background: rgba(159,239,0,0.1); color: #9fef00; border: 1px solid rgba(159,239,0,0.25); }
+    .sev-2 { background: rgba(125,199,0,0.1); color: #7dc700; border: 1px solid rgba(125,199,0,0.25); }
+    .sev-3 { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.25); }
+    .sev-4 { background: rgba(255,107,53,0.1); color: #ff6b35; border: 1px solid rgba(255,107,53,0.25); }
+    .sev-5 { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid rgba(255,62,62,0.25); }
+
+    /* Inactive notice */
+    .inactive-notice {
+        padding: 8px 18px; background: rgba(110,118,129,0.06);
+        border-top: 1px solid #21262d;
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #6e7681; letter-spacing: 1px;
+    }
+
+    /* Delete confirm row */
+    .confirm-row {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 16px; background: rgba(255,62,62,0.04);
+        border: 1px solid rgba(255,62,62,0.15); border-top: none;
+        border-radius: 0 0 8px 8px;
+        animation: slideUp 0.2s ease both;
+        flex-wrap: wrap;
+    }
+
+    .cr-icon { font-size: 16px; flex-shrink: 0; }
+
+    .cr-text { font-size: 13px; color: #c9d1d9; flex: 1; }
+    .cr-text strong { color: #ff3e3e; }
+
+    .cr-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .cr-cancel {
+        padding: 7px 14px; background: transparent;
+        border: 1px solid #21262d; border-radius: 3px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #6e7681; letter-spacing: 1px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+    .cr-cancel:hover { border-color: #6e7681; color: #c9d1d9; }
+
+    .cr-confirm {
+        padding: 7px 14px; background: rgba(255,62,62,0.1);
+        border: 1px solid rgba(255,62,62,0.4); border-radius: 3px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        font-weight: 700; color: #ff3e3e; letter-spacing: 1px;
+        display: flex; align-items: center; gap: 6px;
+        transition: background 0.15s;
+    }
+    .cr-confirm:hover:not(:disabled) { background: rgba(255,62,62,0.18); }
+    .cr-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+    .cr-confirm.loading { background: #21262d; color: #6e7681; border-color: #21262d; }
+
+    /* Add slot button */
+    .add-slot-btn {
+        display: flex; align-items: center; gap: 16px;
+        width: 100%; padding: 20px 20px;
+        background: transparent;
+        border: 1px dashed #21262d; border-radius: 8px;
+        cursor: pointer; text-align: left;
+        transition: border-color 0.15s, background 0.15s;
+    }
+    .add-slot-btn:hover {
+        border-color: rgba(159,239,0,0.4);
+        background: rgba(159,239,0,0.02);
+    }
+
+    .asb-icon {
+        width: 40px; height: 40px; border-radius: 8px;
+        background: rgba(159,239,0,0.06); border: 1px solid rgba(159,239,0,0.2);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px; color: #9fef00; flex-shrink: 0;
+    }
+
+    .asb-text { display: flex; flex-direction: column; gap: 3px; }
+
+    .asb-primary {
+        font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+        font-weight: 600; color: #9fef00; letter-spacing: 1px;
+    }
+
+    .asb-secondary {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #4a5160;
+    }
+
+    /* Slots full */
+    .slots-full {
+        display: flex; align-items: center; gap: 14px;
+        padding: 18px 20px; background: #161b22;
+        border: 1px solid #21262d; border-radius: 8px;
+    }
+
+    .sf-icon { font-size: 20px; color: #4a5160; }
+
+    .sf-text { display: flex; flex-direction: column; gap: 3px; }
+
+    .sf-title {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #6e7681; letter-spacing: 1px;
+    }
+
+    .sf-sub { font-size: 12px; color: #4a5160; }
+
+    /* Skeleton */
+    .skeleton-sub {
+        background: #161b22; border: 1px solid #21262d;
+        border-radius: 8px; overflow: hidden;
+        animation: shimmer 1.5s ease-in-out infinite;
+    }
+    .sk-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 14px 18px; background: #0d1117; border-bottom: 1px solid #21262d;
+    }
+    .sk-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+    .sk-line { background: #21262d; border-radius: 2px; height: 12px; }
+    .sk-name  { width: 160px; }
+    .sk-tags  { width: 80%; }
+    .sk-tags-sm { width: 60%; }
+    .sk-toggle { width: 50px; height: 20px; background: #21262d; border-radius: 10px; }
+
+    @@keyframes shimmer { 0%,100% { opacity: 0.6; } 50% { opacity: 0.3; } }
+
+    /* State box */
+    .state-box {
+        display: flex; flex-direction: column; align-items: center;
+        padding: 60px 40px; background: #161b22;
+        border: 1px solid #21262d; border-radius: 8px;
+        text-align: center; gap: 10px;
+    }
+    .sb-icon { font-size: 36px; opacity: 0.4; }
+    .sb-title { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #6e7681; letter-spacing: 2px; }
+    .sb-sub   { font-size: 13px; color: #4a5160; }
+    .sb-btn {
+        padding: 8px 18px; background: transparent;
+        border: 1px solid #21262d; border-radius: 4px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #6e7681; letter-spacing: 1px; margin-top: 4px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+    .sb-btn:hover { border-color: #9fef00; color: #9fef00; }
+
+    /* ── Subscription form card ── */
+    .sub-form-card {
+        background: #161b22; border: 1px solid rgba(159,239,0,0.25);
+        border-radius: 8px; overflow: hidden;
+        animation: fadeInUp 0.3s ease both;
+    }
+
+    .sfc-header {
+        padding: 14px 18px; background: #0d1117;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .sfc-title-row { display: flex; align-items: center; gap: 8px; }
+
+    .sfc-prompt { font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #9fef00; font-weight: 600; }
+    .sfc-title  { font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #c9d1d9; font-weight: 600; }
+    .sfc-cursor { font-family: 'IBM Plex Mono', monospace; font-size: 15px; color: #9fef00; animation: blink 1s step-end infinite; }
+
+    .sfc-body { padding: 20px 18px; }
+
+    /* ── Right side ── */
+    .sub-side { display: flex; flex-direction: column; gap: 16px; }
+
+    /* Edit panel */
+    .edit-panel {
+        background: #161b22; border: 1px solid rgba(159,239,0,0.25);
+        border-radius: 8px; overflow: hidden; position: sticky; top: 80px;
+    }
+
+    .ep-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 18px; background: #0d1117;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .ep-title-row { display: flex; align-items: center; gap: 8px; }
+    .ep-prompt { font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #9fef00; font-weight: 600; }
+    .ep-title  { font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #c9d1d9; font-weight: 600; }
+    .ep-cursor { font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: #9fef00; animation: blink 1s step-end infinite; }
+
+    .ep-close {
+        background: none; border: none; color: #4a5160;
+        cursor: pointer; font-size: 14px; padding: 4px 8px;
+        transition: color 0.15s;
+    }
+    .ep-close:hover { color: #ff3e3e; }
+
+    .ep-body { padding: 20px 18px; }
+
+    /* Info cards */
+    .info-card {
+        background: #161b22; border: 1px solid #21262d;
+        border-radius: 8px; overflow: hidden;
+        transition: border-color 0.2s;
+    }
+    .info-card:hover { border-color: #30363d; }
+
+    .ic-header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 12px 16px; background: #0d1117;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .ic-icon { font-size: 14px; }
+
+    .ic-title {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+        color: #9fef00; letter-spacing: 2px; opacity: 0.8;
+    }
+
+    .ic-body { padding: 12px 16px; display: flex; flex-direction: column; gap: 0; }
+
+    /* How steps */
+    .how-step {
+        display: flex; gap: 12px; padding: 10px 0;
+        border-bottom: 1px solid #21262d;
+    }
+    .how-step:last-child { border-bottom: none; }
+
+    .hs-num {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #9fef00; opacity: 0.6; flex-shrink: 0; margin-top: 1px;
+    }
+
+    .hs-info { display: flex; flex-direction: column; gap: 3px; }
+    .hs-title { font-size: 12px; font-weight: 600; color: #c9d1d9; }
+    .hs-desc  { font-size: 11px; color: #6e7681; line-height: 1.5; }
+
+    /* Limits */
+    .limit-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 0; border-bottom: 1px solid #21262d;
+    }
+    .limit-row:last-child { border-bottom: none; }
+
+    .lr-key {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #6e7681; letter-spacing: 1px;
+    }
+
+    .lr-val { font-size: 12px; color: #c9d1d9; }
+    .lr-val.green { color: #9fef00; font-family: 'IBM Plex Mono', monospace; }
+
+    /* Severity reference */
+    .sev-ref { gap: 0; }
+
+    .sev-ref-row {
+        display: flex; align-items: center; gap: 10px;
+        padding: 8px 0; border-bottom: 1px solid #21262d;
+    }
+    .sev-ref-row:last-child { border-bottom: none; }
+
+    .sev-badge {
+        width: 24px; height: 24px; border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        font-weight: 700; flex-shrink: 0;
+    }
+
+    .sev-ref-label { font-size: 12px; color: #c9d1d9; min-width: 70px; }
+    .sev-ref-desc  { font-size: 11px; color: #6e7681; }
+
+    /* ── Form fields ── */
+    .form-fields { display: flex; flex-direction: column; gap: 18px; }
+
+    .field-group { display: flex; flex-direction: column; gap: 8px; }
+
+    .field-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #6e7681; letter-spacing: 2px;
+        display: flex; align-items: center; gap: 8px;
+    }
+
+    .fl-idx { color: #9fef00; opacity: 0.6; }
+
+    .fl-hint {
+        font-size: 9px; color: #4a5160; letter-spacing: 1px;
+        margin-left: auto; font-weight: 400;
+    }
+
+    .input-wrapper {
+        display: flex; align-items: center; background: #0d1117;
+        border: 1px solid #21262d; border-radius: 4px;
+        transition: border-color 0.15s, box-shadow 0.15s; overflow: hidden;
+    }
+    .input-wrapper.focused {
+        border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+    }
+
+    .input-pre {
+        padding: 0 12px; font-size: 13px; color: #4a5160;
+        border-right: 1px solid #21262d; flex-shrink: 0;
+        user-select: none; line-height: 44px;
+    }
+
+    .field-input {
+        flex: 1; background: transparent; border: none; outline: none;
+        padding: 11px 14px; font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px; color: #c9d1d9; caret-color: #9fef00;
+    }
+    .field-input::placeholder { color: #4a5160; }
+
+    /* Chip grids */
+    .chip-grid {
+        display: flex; flex-wrap: wrap; gap: 6px;
+    }
+
+    .chip-grid-cities { }
+
+    .chip-select {
+        padding: 5px 11px; background: #0d1117;
+        border: 1px solid #21262d; border-radius: 4px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #6e7681; letter-spacing: 0.5px;
+        transition: all 0.15s; display: flex; align-items: center; gap: 4px;
+    }
+    .chip-select:hover { border-color: #30363d; color: #c9d1d9; }
+
+    .chip-selected {
+        color: #0d1117 !important; font-weight: 700;
+        border-color: transparent !important;
+    }
+
+    /* selected colors per type */
+    .chip-selected.chip-ransomware    { background: #ff3e3e; }
+    .chip-selected.chip-phishing      { background: #ffa500; }
+    .chip-selected.chip-ddos          { background: #00c8ff; }
+    .chip-selected.chip-malware       { background: #bf40bf; }
+    .chip-selected.chip-identitytheft { background: #ffa500; }
+    .chip-selected.chip-other         { background: #6e7681; }
+    .chip-selected.chip-city          { background: #00c8ff; }
+    .chip-selected.chip-sector        { background: #ffa500; }
+
+    /* Severity select row */
+    .sev-select-row { display: flex; gap: 6px; }
+
+    .sev-btn {
+        flex: 1; padding: 10px 4px; background: #0d1117;
+        border: 1px solid #21262d; border-radius: 4px; cursor: pointer;
+        display: flex; flex-direction: column; align-items: center; gap: 3px;
+        transition: all 0.15s;
+    }
+    .sev-btn:hover { border-color: #30363d; background: #161b22; }
+
+    .sev-num {
+        font-family: 'IBM Plex Mono', monospace; font-size: 14px;
+        font-weight: 600; color: #6e7681;
+    }
+
+    .sev-lbl {
+        font-family: 'IBM Plex Mono', monospace; font-size: 8px;
+        color: #4a5160; letter-spacing: 0.5px;
+    }
+
+    .sev-active-1 { border-color: #9fef00; background: rgba(159,239,0,0.08); }
+    .sev-active-1 .sev-num { color: #9fef00; }
+    .sev-active-2 { border-color: #7dc700; background: rgba(125,199,0,0.08); }
+    .sev-active-2 .sev-num { color: #7dc700; }
+    .sev-active-3 { border-color: #ffa500; background: rgba(255,165,0,0.08); }
+    .sev-active-3 .sev-num { color: #ffa500; }
+    .sev-active-4 { border-color: #ff6b35; background: rgba(255,107,53,0.08); }
+    .sev-active-4 .sev-num { color: #ff6b35; }
+    .sev-active-5 { border-color: #ff3e3e; background: rgba(255,62,62,0.08); }
+    .sev-active-5 .sev-num { color: #ff3e3e; }
+
+    /* Form error */
+    .form-error {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #ff3e3e; background: rgba(255,62,62,0.07);
+        border: 1px solid rgba(255,62,62,0.2); border-radius: 4px;
+        padding: 9px 12px;
+    }
+
+    /* Form actions */
+    .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    .btn-cancel-form {
+        padding: 10px 16px; background: transparent;
+        border: 1px solid #21262d; border-radius: 4px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #6e7681; letter-spacing: 1px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-cancel-form:hover { border-color: #6e7681; color: #c9d1d9; }
+
+    .btn-save {
+        padding: 10px 18px; background: #9fef00; border: none; border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        font-weight: 700; color: #0d1117; cursor: pointer; letter-spacing: 1px;
+        display: flex; align-items: center; gap: 8px;
+        transition: opacity 0.15s, box-shadow 0.15s;
+    }
+    .btn-save:hover:not(:disabled) { opacity: 0.9; box-shadow: 0 4px 16px rgba(159,239,0,0.2); }
+    .btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-save.loading { background: #21262d; color: #6e7681; }
+
+    .btn-spinner-sm {
+        width: 12px; height: 12px; border: 2px solid #4a5160;
+        border-top-color: currentColor; border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+
+    /* ── Responsive ── */
+    @@media (max-width: 900px) {
+        .sub-layout { grid-template-columns: 1fr; }
+        .sub-side { display: none; }
+        .sub-root { padding: 72px 16px 40px; }
+    }
+</style>
+
+@code {
+    private List<SubscriptionResponse>? _subscriptions;
+    private bool _loading = true;
+    private string? _loadError;
+
+    // Form state
+    private bool _showForm = false;
+    private Guid? _editingId = null;
+    private string _formName = string.Empty;
+    private HashSet<string> _formAttackTypes = new();
+    private HashSet<string> _formCities = new();
+    private HashSet<string> _formSectors = new();
+    private int _formMinSeverity = 1;
+    private bool _formLoading = false;
+    private string _formError = string.Empty;
+    private bool _nameFocused = false;
+
+    // Action state
+    private Guid? _actioningId = null;
+    private Guid? _deleteConfirmId = null;
+
+    // Toast
+    private string _toastMessage = string.Empty;
+    private string _toastType = "toast-success";
+    private bool _toastVisible = false;
+
+    private readonly string[] _attackTypes =
+        { "Ransomware", "Phishing", "DDoS", "IdentityTheft", "Malware", "Other" };
+    private readonly string[] _cities =
+        { "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad",
+          "Multan", "Peshawar", "Quetta", "Hyderabad", "Gujranwala",
+          "Sialkot", "Abbottabad" };
+    private readonly string[] _sectors =
+        { "Banking", "Telecom", "Healthcare", "Education",
+          "Government", "Energy", "Other" };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadSubscriptions();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadSubscriptions()
+    {
+        _loading = true; _loadError = null;
+        StateHasChanged();
+        var (data, error) = await ApiService.GetSubscriptionsAsync();
+        _loading = false;
+        if (error != null) _loadError = error;
+        else _subscriptions = data ?? new();
+        StateHasChanged();
+    }
+
+    // ── Form helpers ──
+
+    private void OpenNewForm()
+    {
+        ResetForm();
+        _showForm = true;
+        _editingId = null;
+    }
+
+    private void CancelNewForm()
+    {
+        _showForm = false;
+        ResetForm();
+    }
+
+    private void StartEdit(SubscriptionResponse sub)
+    {
+        _editingId = sub.Id;
+        _showForm = false;
+        _formName = sub.Name;
+        _formMinSeverity = sub.MinimumSeverity;
+
+        _formAttackTypes = string.IsNullOrWhiteSpace(sub.AttackTypes)
+            ? new HashSet<string>()
+            : sub.AttackTypes.Split(',').Select(x => x.Trim())
+                .Where(x => !string.IsNullOrEmpty(x)).ToHashSet();
+
+        _formCities = string.IsNullOrWhiteSpace(sub.Cities)
+            ? new HashSet<string>()
+            : sub.Cities.Split(',').Select(x => x.Trim())
+                .Where(x => !string.IsNullOrEmpty(x)).ToHashSet();
+
+        _formSectors = string.IsNullOrWhiteSpace(sub.Sectors)
+            ? new HashSet<string>()
+            : sub.Sectors.Split(',').Select(x => x.Trim())
+                .Where(x => !string.IsNullOrEmpty(x)).ToHashSet();
+
+        _formError = string.Empty;
+    }
+
+    private void CancelEdit()
+    {
+        _editingId = null;
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        _formName = string.Empty;
+        _formAttackTypes = new();
+        _formCities = new();
+        _formSectors = new();
+        _formMinSeverity = 1;
+        _formError = string.Empty;
+    }
+
+    private void ToggleItem(HashSet<string> set, string item)
+    {
+        if (set.Contains(item)) set.Remove(item);
+        else set.Add(item);
+    }
+
+    private async Task SaveNew()
+    {
+        _formError = string.Empty;
+        if (string.IsNullOrWhiteSpace(_formName))
+        { _formError = "Subscription name is required."; return; }
+
+        _formLoading = true;
+        var error = await ApiService.CreateSubscriptionAsync(new
+        {
+            name           = _formName.Trim(),
+            attackTypes    = string.Join(",", _formAttackTypes),
+            cities         = string.Join(",", _formCities),
+            sectors        = string.Join(",", _formSectors),
+            minimumSeverity = _formMinSeverity
+        });
+        _formLoading = false;
+
+        if (error != null) { _formError = error; }
+        else
+        {
+            _showForm = false;
+            ResetForm();
+            await LoadSubscriptions();
+            await ShowToast("Subscription created.", "toast-success");
+        }
+        StateHasChanged();
+    }
+
+    private async Task SaveEdit()
+    {
+        _formError = string.Empty;
+        if (string.IsNullOrWhiteSpace(_formName))
+        { _formError = "Subscription name is required."; return; }
+
+        _formLoading = true;
+        var error = await ApiService.UpdateSubscriptionAsync(_editingId!.Value, new
+        {
+            name            = _formName.Trim(),
+            attackTypes     = string.Join(",", _formAttackTypes),
+            cities          = string.Join(",", _formCities),
+            sectors         = string.Join(",", _formSectors),
+            minimumSeverity = _formMinSeverity
+        });
+        _formLoading = false;
+
+        if (error != null) { _formError = error; }
+        else
+        {
+            _editingId = null;
+            ResetForm();
+            await LoadSubscriptions();
+            await ShowToast("Subscription updated.", "toast-success");
+        }
+        StateHasChanged();
+    }
+
+    private async Task ToggleSubscription(Guid id)
+    {
+        _actioningId = id;
+        var error = await ApiService.ToggleSubscriptionAsync(id);
+        _actioningId = null;
+
+        if (error != null)
+            await ShowToast(error, "toast-error");
+        else
+        {
+            var sub = _subscriptions?.FirstOrDefault(s => s.Id == id);
+            if (sub != null) sub.IsActive = !sub.IsActive;
+        }
+        StateHasChanged();
+    }
+
+    private void StartDelete(Guid id) => _deleteConfirmId = id;
+    private void CancelDelete() => _deleteConfirmId = null;
+
+    private async Task ConfirmDelete(Guid id)
+    {
+        _actioningId = id;
+        var error = await ApiService.DeleteSubscriptionAsync(id);
+        _actioningId = null;
+        _deleteConfirmId = null;
+
+        if (error != null)
+            await ShowToast(error, "toast-error");
+        else
+        {
+            _subscriptions?.RemoveAll(s => s.Id == id);
+            await ShowToast("Subscription deleted.", "toast-success");
+        }
+        StateHasChanged();
+    }
+
+    private async Task ShowToast(string message, string type)
+    {
+        _toastMessage = message; _toastType = type; _toastVisible = true;
+        StateHasChanged();
+        await Task.Delay(3500);
+        _toastVisible = false; StateHasChanged();
+        await Task.Delay(400);
+        _toastMessage = string.Empty; StateHasChanged();
+    }
+
+    private static string GetAttackIcon(string type) => type switch
+    {
+        "Ransomware"    => "🔐",
+        "Phishing"      => "🎣",
+        "DDoS"          => "🌊",
+        "IdentityTheft" => "👤",
+        "Malware"       => "🦠",
+        _               => "⚠"
+    };
+
+    private static string GetSeverityLabel(int s) => s switch
+    {
+        1 => "Low", 2 => "Medium", 3 => "High", 4 => "Critical", 5 => "Catastrophic", _ => ""
+    };
+
+    private static string GetSeverityDesc(int s) => s switch
+    {
+        1 => "Minor incidents",
+        2 => "Moderate disruption",
+        3 => "Significant impact",
+        4 => "Critical systems",
+        5 => "Catastrophic damage",
+        _ => ""
+    };
+
+    private static string GetRelativeTime(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - dt;
+        if (diff.TotalDays >= 1) return $"{(int)diff.TotalDays}d ago";
+        if (diff.TotalHours >= 1) return $"{(int)diff.TotalHours}h ago";
+        return $"{(int)diff.TotalMinutes}m ago";
+    }
+}

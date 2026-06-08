@@ -1,0 +1,1025 @@
+@* ThreatCastPK.Web/Components/Pages/AdminUsers.razor *@
+@page "/admin/users"
+@rendermode InteractiveServer
+@inject AuthService AuthService
+@inject ApiService ApiService
+
+<PageTitle>User Management — ThreatCast PK</PageTitle>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<AuthGuard RequiredRole="Admin">
+<div class="admin-root">
+    <div class="bg-grid"></div>
+    <div class="scan-line"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="admin-inner">
+
+        @* ── Admin sub-nav ── *@
+        <div class="admin-subnav">
+            <NavLink href="/admin/moderation" class="subnav-link" ActiveClass="subnav-active">
+                <span>🛡</span> Moderation Queue
+            </NavLink>
+            <NavLink href="/admin/users" class="subnav-link" ActiveClass="subnav-active" Match="NavLinkMatch.All">
+                <span>👥</span> User Management
+            </NavLink>
+            <NavLink href="/admin/auditlog" class="subnav-link" ActiveClass="subnav-active">
+                <span>📋</span> Audit Log
+            </NavLink>
+        </div>
+
+        @* ── Header ── *@
+        <div class="page-header">
+            <div class="ph-left">
+                <div class="ph-label">// ADMIN PANEL</div>
+                <h1 class="ph-title">
+                    User <span class="ph-accent">Management</span>
+                </h1>
+                <p class="ph-sub">
+                    Manage operator accounts, roles, and access permissions.
+                </p>
+            </div>
+            <div class="ph-right">
+                <button class="refresh-btn" @onclick="LoadUsers" disabled="@_loading">
+                    @if (_loading) { <span class="btn-spinner-sm"></span> }
+                    else { <span>↺</span> }
+                    REFRESH
+                </button>
+            </div>
+        </div>
+
+        @* ── Stats strip ── *@
+        @if (_users != null)
+        {
+            <div class="stats-strip">
+                <div class="ss-item">
+                    <span class="ss-val white">@_users.Count</span>
+                    <span class="ss-label">TOTAL USERS</span>
+                </div>
+                <div class="ss-div"></div>
+                <div class="ss-item">
+                    <span class="ss-val green">@_users.Count(u => u.Role == "Reporter")</span>
+                    <span class="ss-label">REPORTERS</span>
+                </div>
+                <div class="ss-div"></div>
+                <div class="ss-item">
+                    <span class="ss-val orange">@_users.Count(u => u.ReporterRequestPending)</span>
+                    <span class="ss-label">PENDING REQUESTS</span>
+                </div>
+                <div class="ss-div"></div>
+                <div class="ss-item">
+                    <span class="ss-val red">@_users.Count(u => u.IsSuspended)</span>
+                    <span class="ss-label">SUSPENDED</span>
+                </div>
+                <div class="ss-div"></div>
+                <div class="ss-item">
+                    <span class="ss-val blue">@_users.Count(u => u.Role == "Admin")</span>
+                    <span class="ss-label">ADMINS</span>
+                </div>
+            </div>
+        }
+
+        @* ── Filter + search bar ── *@
+        <div class="filter-bar">
+            <div class="filter-tabs">
+                @foreach (var tab in _tabs)
+                {
+                    <button class="filter-tab @(_activeTab == tab.Key ? "tab-active" : "")"
+                            @onclick="() => _activeTab = tab.Key">
+                        @tab.Label
+                        @if (_users != null)
+                        {
+                            <span class="tab-count @(_activeTab == tab.Key ? "tab-count-active" : "")">
+                                @GetTabCount(tab.Key)
+                            </span>
+                        }
+                    </button>
+                }
+            </div>
+
+            <div class="search-box @(_searchFocused ? "focused" : "")">
+                <span class="search-icon">⌕</span>
+                <input type="text" class="search-input"
+                       placeholder="Search username or email..."
+                       value="@_searchQuery"
+                       @oninput="e => { _searchQuery = e.Value?.ToString() ?? string.Empty; }"
+                       @onfocus="() => _searchFocused = true"
+                       @onblur="() => _searchFocused = false" />
+                @if (!string.IsNullOrEmpty(_searchQuery))
+                {
+                    <button class="search-clear" @onclick="() => _searchQuery = string.Empty">✕</button>
+                }
+            </div>
+        </div>
+
+        @* ── Content ── *@
+        @if (_loading)
+        {
+            <div class="users-table">
+                <div class="table-header">
+                    <div class="th">USER</div>
+                    <div class="th">ROLE</div>
+                    <div class="th">REPUTATION</div>
+                    <div class="th">STATUS</div>
+                    <div class="th">JOINED</div>
+                    <div class="th">ACTIONS</div>
+                </div>
+                @for (int i = 0; i < 8; i++)
+                {
+                    <div class="skeleton-row">
+                        <div class="sk-user">
+                            <div class="sk-avatar"></div>
+                            <div class="sk-name-block">
+                                <div class="sk-line sk-name"></div>
+                                <div class="sk-line sk-email"></div>
+                            </div>
+                        </div>
+                        <div class="sk-line sk-role"></div>
+                        <div class="sk-line sk-rep"></div>
+                        <div class="sk-line sk-status"></div>
+                        <div class="sk-line sk-date"></div>
+                        <div class="sk-line sk-actions"></div>
+                    </div>
+                }
+            </div>
+        }
+        else if (_loadError != null)
+        {
+            <div class="state-box">
+                <div class="sb-icon">⚠</div>
+                <div class="sb-title">FAILED TO LOAD USERS</div>
+                <div class="sb-sub">@_loadError</div>
+                <button class="sb-btn" @onclick="LoadUsers">↺ Retry</button>
+            </div>
+        }
+        else if (FilteredUsers.Count == 0)
+        {
+            <div class="state-box">
+                <div class="sb-icon">👥</div>
+                <div class="sb-title">NO USERS FOUND</div>
+                <div class="sb-sub">
+                    @if (!string.IsNullOrEmpty(_searchQuery))
+                    {
+                        <span>No users match "@_searchQuery"</span>
+                    }
+                    else
+                    {
+                        <span>No users in the @_activeTab filter.</span>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="users-table">
+                <div class="table-header">
+                    <div class="th">USER</div>
+                    <div class="th">ROLE</div>
+                    <div class="th">REPUTATION</div>
+                    <div class="th">STATUS</div>
+                    <div class="th">JOINED</div>
+                    <div class="th">ACTIONS</div>
+                </div>
+
+                @foreach (var user in FilteredUsers)
+                {
+                    var isSelf = user.Username == AuthService.Username;
+
+                    <div class="user-row @(user.IsSuspended ? "row-suspended" : "") @(isSelf ? "row-self" : "")">
+
+                        @* User info *@
+                        <div class="td td-user">
+                            <div class="user-avatar" style="background:@GetAvatarColor(user.Username)">
+                                @user.Username[..1].ToUpper()
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">
+                                    @user.Username
+                                    @if (isSelf)
+                                    {
+                                        <span class="self-badge">YOU</span>
+                                    }
+                                </div>
+                                <div class="user-email">@user.Email</div>
+                            </div>
+                        </div>
+
+                        @* Role *@
+                        <div class="td">
+                            <span class="role-badge role-@user.Role.ToLower()">
+                                @GetRoleIcon(user.Role) @user.Role.ToUpper()
+                            </span>
+                            @if (user.ReporterRequestPending && user.Role == "Registered")
+                            {
+                                <span class="pending-badge" title="Reporter access requested">⏳</span>
+                            }
+                        </div>
+
+                        @* Reputation *@
+                        <div class="td">
+                            <div class="rep-cell">
+                                <span class="rep-num @GetRepColor(user.ReputationScore)">
+                                    @user.ReputationScore
+                                </span>
+                                <div class="rep-mini-bar">
+                                    <div class="rep-mini-fill"
+                                         style="width:@(Math.Min(user.ReputationScore, 100))%">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Status *@
+                        <div class="td">
+                            @if (user.IsSuspended)
+                            {
+                                <span class="status-pill status-suspended">
+                                    ⛔ SUSPENDED
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-pill status-active">
+                                    ✓ ACTIVE
+                                </span>
+                            }
+                        </div>
+
+                        @* Joined *@
+                        <div class="td">
+                            <span class="date-val">@user.JoinDate.ToString("MMM dd, yyyy")</span>
+                        </div>
+
+                        @* Actions *@
+                        <div class="td td-actions">
+                            @if (!isSelf)
+                            {
+                                @* Reporter grant/revoke *@
+                                @if (user.Role == "Registered")
+                                {
+                                    <button class="action-btn btn-grant"
+                                            title="Grant Reporter Access"
+                                            @onclick="() => GrantReporter(user.Id)"
+                                            disabled="@(_actioningUserId == user.Id)">
+                                        @if (_actioningUserId == user.Id && _pendingAction == "grant")
+                                        {
+                                            <span class="btn-spinner-sm"></span>
+                                        }
+                                        else { <span>📡 GRANT</span> }
+                                    </button>
+                                }
+                                else if (user.Role == "Reporter")
+                                {
+                                    <button class="action-btn btn-revoke"
+                                            title="Revoke Reporter Access"
+                                            @onclick="() => RevokeReporter(user.Id)"
+                                            disabled="@(_actioningUserId == user.Id)">
+                                        @if (_actioningUserId == user.Id && _pendingAction == "revoke")
+                                        {
+                                            <span class="btn-spinner-sm"></span>
+                                        }
+                                        else { <span>✕ REVOKE</span> }
+                                    </button>
+                                }
+
+                                @* Suspend/Unsuspend *@
+                                @if (!user.IsSuspended)
+                                {
+                                    <button class="action-btn btn-suspend"
+                                            title="Suspend User"
+                                            @onclick="() => StartSuspend(user.Id)"
+                                            disabled="@(_actioningUserId == user.Id)">
+                                        <span>⛔ SUSPEND</span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="action-btn btn-unsuspend"
+                                            title="Unsuspend User"
+                                            @onclick="() => UnsuspendUser(user.Id)"
+                                            disabled="@(_actioningUserId == user.Id)">
+                                        @if (_actioningUserId == user.Id && _pendingAction == "unsuspend")
+                                        {
+                                            <span class="btn-spinner-sm"></span>
+                                        }
+                                        else { <span>✓ RESTORE</span> }
+                                    </button>
+                                }
+                            }
+                            else
+                            {
+                                <span class="self-note">Cannot modify own account</span>
+                            }
+                        </div>
+
+                    </div>
+
+                    @* Inline suspend confirm *@
+                    @if (_suspendConfirmId == user.Id)
+                    {
+                        <div class="confirm-row">
+                            <div class="confirm-content">
+                                <span class="confirm-icon">⚠</span>
+                                <span class="confirm-text">
+                                    Suspend <strong>@user.Username</strong>?
+                                    They will be unable to login until restored.
+                                </span>
+                                <div class="confirm-actions">
+                                    <button class="confirm-cancel" @onclick="CancelSuspend">CANCEL</button>
+                                    <button class="confirm-proceed @(_actioningUserId == user.Id ? "loading" : "")"
+                                            @onclick="() => ConfirmSuspend(user.Id)"
+                                            disabled="@(_actioningUserId == user.Id)">
+                                        @if (_actioningUserId == user.Id)
+                                        {
+                                            <span class="btn-spinner-sm"></span>
+                                            <span>SUSPENDING...</span>
+                                        }
+                                        else
+                                        {
+                                            <span>⛔ CONFIRM SUSPEND</span>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="result-count">
+                Showing <span class="rc-num">@FilteredUsers.Count</span>
+                of <span class="rc-num">@(_users?.Count ?? 0)</span> users
+            </div>
+        }
+
+        @* Toast *@
+        @if (!string.IsNullOrEmpty(_toastMessage))
+        {
+            <div class="toast-fixed @_toastType @(_toastVisible ? "toast-show" : "toast-hide")">
+                <span>@(_toastType == "toast-success" ? "✓" : "⚠")</span>
+                <span>@_toastMessage</span>
+            </div>
+        }
+
+    </div>
+</div>
+</AuthGuard>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .admin-root {
+        min-height: 100vh; background: #0d1117;
+        font-family: 'Inter', sans-serif;
+        padding: 56px 0 64px; position: relative; overflow-x: hidden;
+    }
+
+    .bg-grid {
+        position: fixed; inset: 0;
+        background-image:
+            linear-gradient(rgba(159,239,0,0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(159,239,0,0.025) 1px, transparent 1px);
+        background-size: 40px 40px; pointer-events: none; z-index: 0;
+    }
+
+    .scan-line {
+        position: fixed; top: -2px; left: 0; right: 0; height: 2px;
+        background: linear-gradient(90deg, transparent, #9fef00, transparent);
+        animation: scan 8s linear infinite; opacity: 0.25; z-index: 1; pointer-events: none;
+    }
+
+    .corner { position: fixed; width: 16px; height: 16px; z-index: 2; pointer-events: none; }
+    .corner-tl { top: 12px; left: 12px; border-top: 2px solid #ffa500; border-left: 2px solid #ffa500; }
+    .corner-tr { top: 12px; right: 12px; border-top: 2px solid #ffa500; border-right: 2px solid #ffa500; }
+    .corner-bl { bottom: 12px; left: 12px; border-bottom: 2px solid #ffa500; border-left: 2px solid #ffa500; }
+    .corner-br { bottom: 12px; right: 12px; border-bottom: 2px solid #ffa500; border-right: 2px solid #ffa500; }
+
+    /* ── Admin sub-nav ── */
+    .admin-subnav {
+        background: #161b22; border-bottom: 1px solid #21262d;
+        display: flex; align-items: center; gap: 0; padding: 0 32px;
+        position: sticky; top: 56px; z-index: 10;
+    }
+
+    .subnav-link {
+        display: flex; align-items: center; gap: 7px;
+        padding: 14px 18px; font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px; color: #6e7681; text-decoration: none;
+        letter-spacing: 1px; border-bottom: 2px solid transparent;
+        transition: color 0.15s, border-color 0.15s; white-space: nowrap;
+    }
+    .subnav-link:hover { color: #c9d1d9; }
+    .subnav-active { color: #ffa500 !important; border-bottom-color: #ffa500 !important; }
+
+    /* ── Inner ── */
+    .admin-inner {
+        max-width: 1200px; margin: 0 auto;
+        padding: 28px 32px 0; position: relative; z-index: 3;
+        animation: fadeInUp 0.4s ease both;
+    }
+
+    @@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes scan     { 0% { top: -2px; } 100% { top: 100vh; } }
+    @@keyframes shimmer  { 0%,100% { opacity: 0.6; } 50% { opacity: 0.3; } }
+    @@keyframes spin     { to { transform: rotate(360deg); } }
+    @@keyframes blink    { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+    @@keyframes slideUp  { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Header ── */
+    .page-header {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        margin-bottom: 20px; flex-wrap: wrap; gap: 16px;
+    }
+
+    .ph-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #ffa500; letter-spacing: 2px; opacity: 0.8; margin-bottom: 8px;
+    }
+
+    .ph-title {
+        font-size: 36px; font-weight: 700; color: #e6edf3;
+        line-height: 1.1; letter-spacing: -0.5px; margin-bottom: 8px;
+    }
+
+    .ph-accent { color: #ffa500; }
+    .ph-sub { font-size: 13px; color: #6e7681; }
+
+    .refresh-btn {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 16px; background: transparent;
+        border: 1px solid #21262d; border-radius: 4px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #6e7681; letter-spacing: 1px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+    .refresh-btn:hover:not(:disabled) { border-color: #9fef00; color: #9fef00; }
+    .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Stats strip ── */
+    .stats-strip {
+        display: flex; align-items: center; gap: 20px;
+        padding: 14px 20px; background: #161b22;
+        border: 1px solid #21262d; border-radius: 8px; margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .ss-item { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+
+    .ss-val {
+        font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 600;
+    }
+    .ss-val.white  { color: #c9d1d9; }
+    .ss-val.green  { color: #9fef00; }
+    .ss-val.orange { color: #ffa500; }
+    .ss-val.red    { color: #ff3e3e; }
+    .ss-val.blue   { color: #00c8ff; }
+
+    .ss-label {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+        color: #4a5160; letter-spacing: 2px;
+    }
+
+    .ss-div { width: 1px; height: 32px; background: #21262d; }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 16px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+
+    .filter-tabs { display: flex; gap: 4px; }
+
+    .filter-tab {
+        display: flex; align-items: center; gap: 7px;
+        padding: 7px 13px; background: transparent;
+        border: 1px solid #21262d; border-radius: 4px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #6e7681; letter-spacing: 1px; transition: all 0.15s;
+    }
+    .filter-tab:hover { border-color: #30363d; color: #c9d1d9; }
+
+    .tab-active {
+        background: rgba(255,165,0,0.08) !important;
+        border-color: rgba(255,165,0,0.4) !important;
+        color: #ffa500 !important;
+    }
+
+    .tab-count {
+        font-size: 9px; background: #21262d;
+        padding: 1px 5px; border-radius: 8px; color: #6e7681;
+    }
+    .tab-count-active { background: rgba(255,165,0,0.15); color: #ffa500; }
+
+    /* ── Search ── */
+    .search-box {
+        display: flex; align-items: center; background: #161b22;
+        border: 1px solid #21262d; border-radius: 4px; overflow: hidden;
+        min-width: 260px; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .search-box.focused {
+        border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+    }
+
+    .search-icon {
+        padding: 0 11px; color: #4a5160; font-size: 16px;
+        border-right: 1px solid #21262d; line-height: 38px;
+    }
+
+    .search-input {
+        flex: 1; background: transparent; border: none; outline: none;
+        padding: 9px 11px; font-family: 'Inter', sans-serif;
+        font-size: 13px; color: #c9d1d9; caret-color: #9fef00;
+    }
+    .search-input::placeholder { color: #4a5160; }
+
+    .search-clear {
+        padding: 0 10px; background: none; border: none;
+        color: #4a5160; cursor: pointer; font-size: 11px;
+        transition: color 0.15s; height: 100%;
+    }
+    .search-clear:hover { color: #ff3e3e; }
+
+    /* ── Table ── */
+    .users-table {
+        background: #161b22; border: 1px solid #21262d;
+        border-radius: 8px; overflow: hidden; margin-bottom: 12px;
+    }
+
+    .table-header {
+        display: grid;
+        grid-template-columns: 240px 130px 120px 120px 110px 1fr;
+        gap: 0; padding: 10px 20px;
+        background: #0d1117; border-bottom: 1px solid #21262d;
+    }
+
+    .th {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+        color: #4a5160; letter-spacing: 2px; font-weight: 600;
+    }
+
+    /* User row */
+    .user-row {
+        display: grid;
+        grid-template-columns: 240px 130px 120px 120px 110px 1fr;
+        gap: 0; padding: 13px 20px;
+        border-bottom: 1px solid #21262d;
+        align-items: center; transition: background 0.1s;
+    }
+    .user-row:last-child { border-bottom: none; }
+    .user-row:hover { background: rgba(159,239,0,0.015); }
+    .row-suspended { background: rgba(255,62,62,0.02) !important; }
+    .row-suspended:hover { background: rgba(255,62,62,0.04) !important; }
+    .row-self { background: rgba(159,239,0,0.02) !important; }
+
+    .td { display: flex; align-items: center; }
+
+    .td-user { gap: 12px; }
+
+    .user-avatar {
+        width: 34px; height: 34px; border-radius: 6px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'IBM Plex Mono', monospace; font-size: 14px;
+        font-weight: 700; color: white; flex-shrink: 0;
+    }
+
+    .user-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+    .user-name {
+        font-size: 13px; font-weight: 600; color: #c9d1d9;
+        display: flex; align-items: center; gap: 6px;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .self-badge {
+        font-family: 'IBM Plex Mono', monospace; font-size: 8px;
+        color: #9fef00; background: rgba(159,239,0,0.08);
+        border: 1px solid rgba(159,239,0,0.2);
+        padding: 1px 5px; border-radius: 2px; letter-spacing: 1px;
+        flex-shrink: 0;
+    }
+
+    .user-email {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #4a5160; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* Role badge */
+    .role-badge {
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        font-weight: 600; padding: 3px 8px; border-radius: 3px;
+        letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;
+    }
+    .role-public     { background: rgba(110,118,129,0.12); color: #6e7681; border: 1px solid #21262d; }
+    .role-registered { background: rgba(0,200,255,0.08); color: #00c8ff; border: 1px solid rgba(0,200,255,0.2); }
+    .role-reporter   { background: rgba(159,239,0,0.08); color: #9fef00; border: 1px solid rgba(159,239,0,0.2); }
+    .role-admin      { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
+
+    .pending-badge {
+        font-size: 13px; margin-left: 6px; cursor: help;
+    }
+
+    /* Reputation */
+    .rep-cell { display: flex; flex-direction: column; gap: 4px; width: 80px; }
+
+    .rep-num {
+        font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600;
+    }
+    .rep-green  { color: #9fef00; }
+    .rep-yellow { color: #ffa500; }
+    .rep-grey   { color: #6e7681; }
+
+    .rep-mini-bar {
+        height: 2px; background: #21262d; border-radius: 1px; overflow: hidden;
+    }
+
+    .rep-mini-fill {
+        height: 100%; background: linear-gradient(90deg, #00c8ff, #9fef00);
+        border-radius: 1px;
+    }
+
+    /* Status */
+    .status-pill {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 600;
+        padding: 3px 8px; border-radius: 3px; letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+    .status-active   { background: rgba(159,239,0,0.08); color: #9fef00; border: 1px solid rgba(159,239,0,0.2); }
+    .status-suspended { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid rgba(255,62,62,0.2); }
+
+    .date-val {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6e7681;
+    }
+
+    /* Actions */
+    .td-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+    .action-btn {
+        padding: 5px 10px; background: transparent; border-radius: 3px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 600;
+        cursor: pointer; letter-spacing: 1px; display: flex; align-items: center;
+        gap: 5px; transition: background 0.15s, border-color 0.15s;
+        white-space: nowrap;
+    }
+    .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-grant    { border: 1px solid rgba(159,239,0,0.3); color: #9fef00; }
+    .btn-grant:hover:not(:disabled)    { background: rgba(159,239,0,0.08); border-color: #9fef00; }
+
+    .btn-revoke   { border: 1px solid rgba(255,165,0,0.3); color: #ffa500; }
+    .btn-revoke:hover:not(:disabled)   { background: rgba(255,165,0,0.08); border-color: #ffa500; }
+
+    .btn-suspend  { border: 1px solid rgba(255,62,62,0.3); color: #ff3e3e; }
+    .btn-suspend:hover:not(:disabled)  { background: rgba(255,62,62,0.08); border-color: #ff3e3e; }
+
+    .btn-unsuspend { border: 1px solid rgba(0,200,255,0.3); color: #00c8ff; }
+    .btn-unsuspend:hover:not(:disabled) { background: rgba(0,200,255,0.08); border-color: #00c8ff; }
+
+    .self-note {
+        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
+        color: #4a5160; font-style: italic;
+    }
+
+    /* Confirm row */
+    .confirm-row {
+        background: rgba(255,62,62,0.04);
+        border-bottom: 1px solid rgba(255,62,62,0.15);
+        animation: slideUp 0.2s ease both;
+    }
+
+    .confirm-content {
+        display: flex; align-items: center; gap: 14px;
+        padding: 12px 20px; flex-wrap: wrap;
+    }
+
+    .confirm-icon { font-size: 16px; flex-shrink: 0; }
+
+    .confirm-text { font-size: 13px; color: #c9d1d9; flex: 1; }
+    .confirm-text strong { color: #ff3e3e; }
+
+    .confirm-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .confirm-cancel {
+        padding: 7px 14px; background: transparent;
+        border: 1px solid #21262d; border-radius: 3px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        color: #6e7681; letter-spacing: 1px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+    .confirm-cancel:hover { border-color: #6e7681; color: #c9d1d9; }
+
+    .confirm-proceed {
+        padding: 7px 14px; background: rgba(255,62,62,0.1);
+        border: 1px solid rgba(255,62,62,0.4); border-radius: 3px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+        font-weight: 700; color: #ff3e3e; letter-spacing: 1px;
+        display: flex; align-items: center; gap: 6px;
+        transition: background 0.15s;
+    }
+    .confirm-proceed:hover:not(:disabled) { background: rgba(255,62,62,0.18); }
+    .confirm-proceed:disabled { opacity: 0.5; cursor: not-allowed; }
+    .confirm-proceed.loading { background: #21262d; color: #6e7681; border-color: #21262d; }
+
+    /* Result count */
+    .result-count {
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #4a5160; text-align: right; padding: 4px 0;
+    }
+    .rc-num { color: #9fef00; }
+
+    /* ── State box ── */
+    .state-box {
+        display: flex; flex-direction: column; align-items: center;
+        padding: 60px 40px; background: #161b22;
+        border: 1px solid #21262d; border-radius: 8px;
+        text-align: center; gap: 10px;
+    }
+
+    .sb-icon { font-size: 36px; opacity: 0.4; }
+    .sb-title { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #6e7681; letter-spacing: 2px; }
+    .sb-sub   { font-size: 13px; color: #4a5160; }
+
+    .sb-btn {
+        padding: 8px 18px; background: transparent;
+        border: 1px solid #21262d; border-radius: 4px; cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+        color: #6e7681; letter-spacing: 1px; margin-top: 4px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+    .sb-btn:hover { border-color: #9fef00; color: #9fef00; }
+
+    /* ── Skeleton ── */
+    .skeleton-row {
+        display: grid;
+        grid-template-columns: 240px 130px 120px 120px 110px 1fr;
+        gap: 0; padding: 14px 20px;
+        border-bottom: 1px solid #21262d;
+        align-items: center;
+        animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+    .sk-user { display: flex; align-items: center; gap: 12px; }
+    .sk-avatar { width: 34px; height: 34px; border-radius: 6px; background: #21262d; flex-shrink: 0; }
+    .sk-name-block { display: flex; flex-direction: column; gap: 5px; }
+    .sk-line { background: #21262d; border-radius: 2px; }
+    .sk-name    { height: 12px; width: 100px; }
+    .sk-email   { height: 9px; width: 140px; }
+    .sk-role    { height: 20px; width: 80px; border-radius: 3px; }
+    .sk-rep     { height: 12px; width: 40px; }
+    .sk-status  { height: 18px; width: 80px; border-radius: 3px; }
+    .sk-date    { height: 11px; width: 80px; }
+    .sk-actions { height: 22px; width: 120px; border-radius: 3px; }
+
+    /* ── Toast ── */
+    .toast-fixed {
+        position: fixed; bottom: 24px; right: 24px;
+        display: flex; align-items: center; gap: 10px;
+        padding: 12px 18px; border-radius: 6px;
+        font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+        border: 1px solid; z-index: 500;
+        transition: opacity 0.4s, transform 0.4s;
+    }
+    .toast-success { background: rgba(159,239,0,0.1); border-color: rgba(159,239,0,0.3); color: #9fef00; }
+    .toast-error   { background: rgba(255,62,62,0.1); border-color: rgba(255,62,62,0.3); color: #ff3e3e; }
+    .toast-show { opacity: 1; transform: translateY(0); }
+    .toast-hide { opacity: 0; transform: translateY(12px); pointer-events: none; }
+
+    /* Shared */
+    .btn-spinner-sm {
+        width: 11px; height: 11px; border: 2px solid #4a5160;
+        border-top-color: currentColor; border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+
+    /* ── Responsive ── */
+    @@media (max-width: 1024px) {
+        .users-table .table-header,
+        .user-row,
+        .skeleton-row {
+            grid-template-columns: 200px 110px 90px 100px 1fr;
+        }
+        .th:nth-child(5), .td:nth-child(5), .sk-date { display: none; }
+    }
+
+    @@media (max-width: 768px) {
+        .admin-inner { padding: 20px 16px 0; }
+        .admin-subnav { padding: 0 16px; overflow-x: auto; }
+        .stats-strip { gap: 12px; }
+        .ss-div { display: none; }
+        .filter-bar { flex-direction: column; align-items: stretch; }
+        .search-box { min-width: unset; }
+    }
+</style>
+
+@code {
+    private List<UserAdminResponse>? _users;
+    private bool _loading = true;
+    private string? _loadError;
+    private string _activeTab = "all";
+    private string _searchQuery = string.Empty;
+    private bool _searchFocused = false;
+
+    private Guid? _actioningUserId;
+    private string _pendingAction = string.Empty;
+    private Guid? _suspendConfirmId;
+
+    private string _toastMessage = string.Empty;
+    private string _toastType = "toast-success";
+    private bool _toastVisible = false;
+
+    private record TabItem(string Key, string Label);
+
+    private readonly TabItem[] _tabs =
+    {
+        new("all",        "ALL"),
+        new("admin",      "ADMIN"),
+        new("reporter",   "REPORTER"),
+        new("registered", "REGISTERED"),
+        new("pending",    "PENDING"),
+        new("suspended",  "SUSPENDED"),
+    };
+
+    private List<UserAdminResponse> FilteredUsers
+    {
+        get
+        {
+            if (_users == null) return new();
+
+            var list = _activeTab switch
+            {
+                "admin"      => _users.Where(u => u.Role == "Admin").ToList(),
+                "reporter"   => _users.Where(u => u.Role == "Reporter").ToList(),
+                "registered" => _users.Where(u => u.Role == "Registered").ToList(),
+                "pending"    => _users.Where(u => u.ReporterRequestPending).ToList(),
+                "suspended"  => _users.Where(u => u.IsSuspended).ToList(),
+                _            => _users.ToList()
+            };
+
+            if (!string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                var q = _searchQuery.ToLower();
+                list = list.Where(u =>
+                    u.Username.ToLower().Contains(q) ||
+                    u.Email.ToLower().Contains(q)
+                ).ToList();
+            }
+
+            return list.OrderBy(u => u.Username).ToList();
+        }
+    }
+
+    private int GetTabCount(string key) => key switch
+    {
+        "admin"      => _users?.Count(u => u.Role == "Admin") ?? 0,
+        "reporter"   => _users?.Count(u => u.Role == "Reporter") ?? 0,
+        "registered" => _users?.Count(u => u.Role == "Registered") ?? 0,
+        "pending"    => _users?.Count(u => u.ReporterRequestPending) ?? 0,
+        "suspended"  => _users?.Count(u => u.IsSuspended) ?? 0,
+        _            => _users?.Count ?? 0
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadUsers();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadUsers()
+    {
+        _loading = true; _loadError = null;
+        StateHasChanged();
+
+        var (data, error) = await ApiService.GetAllUsersAsync();
+        _loading = false;
+
+        if (error != null) _loadError = error;
+        else _users = data ?? new();
+
+        StateHasChanged();
+    }
+
+    private async Task GrantReporter(Guid id)
+    {
+        _actioningUserId = id; _pendingAction = "grant";
+        StateHasChanged();
+
+        var error = await ApiService.GrantReporterAsync(id);
+        _actioningUserId = null; _pendingAction = string.Empty;
+
+        if (error != null)
+            await ShowToast(error, "toast-error");
+        else
+        {
+            var user = _users?.FirstOrDefault(u => u.Id == id);
+            if (user != null)
+            {
+                user.Role = "Reporter";
+                user.ReporterRequestPending = false;
+            }
+            await ShowToast("Reporter access granted.", "toast-success");
+        }
+        StateHasChanged();
+    }
+
+    private async Task RevokeReporter(Guid id)
+    {
+        _actioningUserId = id; _pendingAction = "revoke";
+        StateHasChanged();
+
+        var error = await ApiService.RevokeReporterAsync(id);
+        _actioningUserId = null; _pendingAction = string.Empty;
+
+        if (error != null)
+            await ShowToast(error, "toast-error");
+        else
+        {
+            var user = _users?.FirstOrDefault(u => u.Id == id);
+            if (user != null) user.Role = "Registered";
+            await ShowToast("Reporter access revoked.", "toast-success");
+        }
+        StateHasChanged();
+    }
+
+    private void StartSuspend(Guid id)
+    {
+        _suspendConfirmId = id;
+    }
+
+    private void CancelSuspend()
+    {
+        _suspendConfirmId = null;
+    }
+
+    private async Task ConfirmSuspend(Guid id)
+    {
+        _actioningUserId = id; _pendingAction = "suspend";
+        StateHasChanged();
+
+        var error = await ApiService.SuspendUserAsync(id);
+        _actioningUserId = null; _pendingAction = string.Empty;
+        _suspendConfirmId = null;
+
+        if (error != null)
+            await ShowToast(error, "toast-error");
+        else
+        {
+            var user = _users?.FirstOrDefault(u => u.Id == id);
+            if (user != null) user.IsSuspended = true;
+            await ShowToast("User suspended.", "toast-success");
+        }
+        StateHasChanged();
+    }
+
+    private async Task UnsuspendUser(Guid id)
+    {
+        _actioningUserId = id; _pendingAction = "unsuspend";
+        StateHasChanged();
+
+        var error = await ApiService.UnsuspendUserAsync(id);
+        _actioningUserId = null; _pendingAction = string.Empty;
+
+        if (error != null)
+            await ShowToast(error, "toast-error");
+        else
+        {
+            var user = _users?.FirstOrDefault(u => u.Id == id);
+            if (user != null) user.IsSuspended = false;
+            await ShowToast("User restored.", "toast-success");
+        }
+        StateHasChanged();
+    }
+
+    private async Task ShowToast(string message, string type)
+    {
+        _toastMessage = message; _toastType = type; _toastVisible = true;
+        StateHasChanged();
+        await Task.Delay(3000);
+        _toastVisible = false; StateHasChanged();
+        await Task.Delay(400);
+        _toastMessage = string.Empty; StateHasChanged();
+    }
+
+    private static string GetAvatarColor(string username)
+    {
+        var colors = new[] { "#1a472a","#1e3a5f","#4a1942","#2d2b55","#3d2b1f","#1a3a3a","#2b3a1a","#3a1a2b" };
+        return colors[Math.Abs(username.GetHashCode()) % colors.Length];
+    }
+
+    private static string GetRoleIcon(string role) => role switch
+    {
+        "Admin"      => "⚡",
+        "Reporter"   => "📡",
+        "Registered" => "◈",
+        _            => "👁"
+    };
+
+    private static string GetRepColor(int rep) =>
+        rep >= 75 ? "rep-green" : rep >= 30 ? "rep-yellow" : "rep-grey";
+}

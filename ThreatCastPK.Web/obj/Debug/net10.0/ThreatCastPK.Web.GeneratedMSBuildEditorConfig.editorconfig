@@ -26,12 +26,32 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/AdminModeration.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pbk1vZGVyYXRpb24ucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/AdminUsers.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pblVzZXJzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3VudGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/Dashboard.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xEYXNoYm9hcmQucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/Error.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFcnJvci5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/Forum.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xGb3J1bS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/Glossary.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xHbG9zc2FyeS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/Home.razor]
@@ -40,6 +60,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xOb3RGb3VuZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/Subscriptions.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdWJzY3JpcHRpb25zLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/hp/Desktop/University/4th Semester/Projects/VP/ThreatCastPK/ThreatCastPK.Web/Components/Pages/Weather.razor]
