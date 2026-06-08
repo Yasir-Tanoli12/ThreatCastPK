@@ -147,18 +147,19 @@ namespace ThreatCastPK.API.Controllers
             }
 
             await _hubContext.Clients.Group("all_viewers")
-                .SendAsync("NewAttackEvent", new
-                {
-                    id = attackEvent.Id,
-                    city = report.City,
-                    attackType = report.AttackType.ToString(),
-                    targetSector = report.TargetSector.ToString(),
-                    severity = report.Severity,
-                    occurredAt = attackEvent.OccurredAt,
-                    confidenceTier = "CommunityReported",
-                    source = "Community"
-                });
-
+                  .SendAsync("NewAttackEvent", new
+                  {
+                      id = attackEvent.Id,
+                      city = report.City,
+                      attackType = report.AttackType.ToString(),
+                      targetSector = report.TargetSector.ToString(),
+                      severity = report.Severity,
+                      occurredAt = attackEvent.OccurredAt,
+                      confidenceTier = "CommunityReported",
+                      source = "Community",
+                      latitude = location.Latitude,
+                      longitude = location.Longitude
+                  });
             return Ok(new { message = "Report approved. Attack event created and broadcast to map." });
         }
 
