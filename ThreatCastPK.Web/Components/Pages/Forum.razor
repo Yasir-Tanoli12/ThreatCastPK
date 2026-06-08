@@ -1,0 +1,1969 @@
+﻿@* ThreatCastPK.Web/Components/Pages/Forum.razor *@
+@page "/forum"
+@rendermode InteractiveServer
+@inject AuthService AuthService
+@inject ApiService ApiService
+@inject NavigationManager Navigation
+
+<PageTitle>Forum — ThreatCast PK</PageTitle>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<div class="forum-root">
+    <div class="bg-grid"></div>
+    <div class="scan-line"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+
+    <div class="forum-layout">
+
+        @* ── Left sidebar ── *@
+        <aside class="forum-sidebar">
+
+            <div class="sidebar-brand">
+                <div class="sb-label">// COMMUNITY</div>
+                <h1 class="sb-title">Threat<br /><span class="sb-accent">Forum</span></h1>
+                <p class="sb-sub">
+                    Share intelligence, discuss incidents, and collaborate with
+                    Pakistan's security community.
+                </p>
+            </div>
+
+            <div class="sidebar-card">
+                <div class="sc-header">CATEGORIES</div>
+                @foreach (var cat in _categories)
+                {
+                    <button class="cat-btn @(_activeCategory == cat.Name ? "cat-active" : "")"
+                            @onclick="() => SetCategory(cat.Name)">
+                        <span class="cat-icon">@cat.Icon</span>
+                        <span class="cat-name">@cat.Name</span>
+                        <span class="cat-count">@(_posts?.Count(p => cat.Name == "All" || p.Category == cat.Name) ?? 0)</span>
+                    </button>
+                }
+            </div>
+
+            <div class="sidebar-card">
+                <div class="sc-header">COMMUNITY RULES</div>
+                <div class="rules-list">
+                    <div class="rule-item">
+                        <span class="rule-num">01</span>
+                        <span class="rule-text">Share verified intelligence only</span>
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-num">02</span>
+                        <span class="rule-text">No attribution without evidence</span>
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-num">03</span>
+                        <span class="rule-text">Respect operational security</span>
+                    </div>
+                    <div class="rule-item">
+                        <span class="rule-num">04</span>
+                        <span class="rule-text">No offensive tool sharing</span>
+                    </div>
+                </div>
+            </div>
+
+            @if (!AuthService.IsLoggedIn)
+            {
+                <div class="sidebar-auth-cta">
+                    <div class="sac-text">Sign in to post and reply</div>
+                    <a href="/login" class="sac-btn">Sign In →</a>
+                </div>
+            }
+
+        </aside>
+
+        @* ── Main content ── *@
+        <main class="forum-main">
+
+            @* Top bar *@
+            <div class="forum-topbar">
+                <div class="ftb-left">
+                    <div class="ftb-title">
+                        @(_activeCategory == "All" ? "All Discussions" : _activeCategory)
+                    </div>
+                    @if (_posts != null)
+                    {
+                        <div class="ftb-count">
+                            @FilteredPosts.Count @(FilteredPosts.Count == 1 ? "thread" : "threads")
+                        </div>
+                    }
+                </div>
+                <div class="ftb-right">
+                    @* Search *@
+                    <div class="search-box @(_searchFocused ? "focused" : "")">
+                        <span class="search-icon">⌕</span>
+                        <input type="text" class="search-input"
+                               placeholder="Search threads..."
+                               value="@_searchQuery"
+                               @oninput="e => { _searchQuery = e.Value?.ToString() ?? string.Empty; }"
+                               @onfocus="() => _searchFocused = true"
+                               @onblur="() => _searchFocused = false" />
+                    </div>
+                    @if (AuthService.IsLoggedIn)
+                    {
+                        <button class="new-post-btn" @onclick="OpenNewPost">
+                            + NEW THREAD
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @* Post list *@
+            @if (_loadingPosts)
+            {
+                <div class="posts-list">
+                    @for (int i = 0; i < 5; i++)
+                    {
+                        <div class="post-skeleton">
+                            <div class="sk-avatar"></div>
+                            <div class="sk-body">
+                                <div class="sk-line sk-title"></div>
+                                <div class="sk-line sk-meta"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else if (_loadError != null)
+            {
+                <div class="state-box">
+                    <div class="sb-icon">⚠</div>
+                    <div class="sb-title">FAILED TO LOAD</div>
+                    <div class="sb-sub">@_loadError</div>
+                    <button class="sb-btn" @onclick="LoadPosts">↺ Retry</button>
+                </div>
+            }
+            else if (FilteredPosts.Count == 0)
+            {
+                <div class="state-box">
+                    <div class="sb-icon">💬</div>
+                    <div class="sb-title">NO THREADS YET</div>
+                    <div class="sb-sub">
+                        @if (!string.IsNullOrEmpty(_searchQuery))
+                        {
+                            <span>No results for "@_searchQuery"</span>
+                        }
+                        else
+                        {
+                            <span>Be the first to start a discussion in this category.</span>
+                        }
+                    </div>
+                    @if (AuthService.IsLoggedIn)
+                    {
+                        <button class="sb-btn" @onclick="OpenNewPost">+ Start a thread</button>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="posts-list">
+                    @foreach (var post in FilteredPosts)
+                    {
+                        <div class="post-card @(_expandedPostId == post.Id ? "post-expanded" : "")"
+                             @onclick="() => TogglePost(post.Id)">
+
+                            @* Author avatar *@
+                            <div class="pc-avatar" style="background:@GetAvatarColor(post.AuthorUsername)">
+                                @post.AuthorUsername[..1].ToUpper()
+                            </div>
+
+                            @* Post content *@
+                            <div class="pc-body">
+                                <div class="pc-top">
+                                    <div class="pc-title-row">
+                                        <span class="pc-title">@post.Title</span>
+                                        <span class="cat-pill cat-@post.Category.ToLower().Replace(" ", "").Replace("&", "")">
+                                            @post.Category
+                                        </span>
+                                    </div>
+                                    <div class="pc-preview">
+                                        @(post.Content.Length > 120
+                                                                        ? post.Content[..120] + "…"
+                                                                        : post.Content)
+                                    </div>
+                                </div>
+                                <div class="pc-meta">
+                                    <span class="pc-author">
+                                        <span class="author-name role-@post.AuthorRole.ToLower()">
+                                            @post.AuthorUsername
+                                        </span>
+                                        <span class="author-role-badge role-badge-@post.AuthorRole.ToLower()">
+                                            @post.AuthorRole.ToUpper()
+                                        </span>
+                                    </span>
+                                    <span class="pc-dot">·</span>
+                                    <span class="pc-time">@GetRelativeTime(post.CreatedAt)</span>
+                                    <span class="pc-dot">·</span>
+                                    <span class="pc-replies">
+                                        💬 @post.ReplyCount @(post.ReplyCount == 1 ? "reply" : "replies")
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="pc-chevron @(_expandedPostId == post.Id ? "chevron-open" : "")">
+                                ▾
+                            </div>
+                        </div>
+
+                        @* Expanded post detail *@
+                        @if (_expandedPostId == post.Id)
+                        {
+                            <div class="post-detail" @onclick:stopPropagation="true">
+
+                                @* Full post content *@
+                                <div class="pd-content">
+                                    <div class="pd-author-row">
+                                        <div class="pd-avatar" style="background:@GetAvatarColor(post.AuthorUsername)">
+                                            @post.AuthorUsername[..1].ToUpper()
+                                        </div>
+                                        <div class="pd-author-info">
+                                            <span class="pd-username role-@post.AuthorRole.ToLower()">
+                                                @post.AuthorUsername
+                                            </span>
+                                            <span class="pd-time">@post.CreatedAt.ToString("MMM dd, yyyy HH:mm UTC")</span>
+                                        </div>
+                                        <span class="author-role-badge role-badge-@post.AuthorRole.ToLower() ml-auto">
+                                            @post.AuthorRole.ToUpper()
+                                        </span>
+                                    </div>
+                                    <div class="pd-text">@post.Content</div>
+                                </div>
+
+                                @* Replies *@
+                                @if (_loadingReplies)
+                                {
+                                    <div class="replies-loading">
+                                        <div class="rl-spinner"></div>
+                                        <span>Loading replies...</span>
+                                    </div>
+                                }
+                                else if (_currentPostDetail?.Replies.Any() == true)
+                                {
+                                    <div class="replies-section">
+                                        <div class="replies-header">
+                                            @_currentPostDetail.Replies.Count
+                                            @(_currentPostDetail.Replies.Count == 1 ? "REPLY" : "REPLIES")
+                                        </div>
+                                        @foreach (var reply in _currentPostDetail.Replies)
+                                        {
+                                            <div class="reply-item">
+                                                <div class="ri-avatar" style="background:@GetAvatarColor(reply.AuthorUsername)">
+                                                    @reply.AuthorUsername[..1].ToUpper()
+                                                </div>
+                                                <div class="ri-body">
+                                                    <div class="ri-meta">
+                                                        <span class="ri-author role-@reply.AuthorRole.ToLower()">
+                                                            @reply.AuthorUsername
+                                                        </span>
+                                                        <span class="author-role-badge role-badge-@reply.AuthorRole.ToLower()">
+                                                            @reply.AuthorRole.ToUpper()
+                                                        </span>
+                                                        <span class="ri-time">@GetRelativeTime(reply.CreatedAt)</span>
+                                                    </div>
+                                                    <div class="ri-text">@reply.Content</div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                                @* Reply input *@
+                                @if (AuthService.IsLoggedIn)
+                                {
+                                    <div class="reply-input-section">
+                                        <div class="ris-header">WRITE A REPLY</div>
+                                        <div class="ris-box @(_replyFocused ? "focused" : "")">
+                                            <textarea class="ris-textarea"
+                                                      placeholder="Share your intelligence or analysis..."
+                                                      rows="3"
+                                                      @bind="_replyContent"
+                                                      @bind:event="oninput"
+                                                      @onfocus="() => _replyFocused = true"
+                                                      @onblur="() => _replyFocused = false"
+                                                      disabled="@_replyLoading">
+                                                            </textarea>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(_replyError))
+                                        {
+                                            <div class="ris-error">⚠ @_replyError</div>
+                                        }
+                                        <div class="ris-actions">
+                                            <span class="ris-char">@_replyContent.Length / 2000</span>
+                                            <button class="ris-btn @(_replyLoading ? "ris-loading" : "")"
+                                                    @onclick="() => SubmitReply(post.Id)"
+                                                    disabled="@(_replyLoading || string.IsNullOrWhiteSpace(_replyContent))">
+                                                @if (_replyLoading)
+                                                {
+                                                    <span class="btn-spinner-sm"></span>
+                                                    <span>POSTING...</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>POST REPLY →</span>
+                                                }
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="reply-login-cta">
+                                        <span>Sign in to reply to this thread</span>
+                                        <a href="/login" class="rlc-link">Sign In →</a>
+                                    </div>
+                                }
+
+                            </div>
+                        }
+                    }
+                </div>
+            }
+
+        </main>
+    </div>
+
+    @* ── New Post Modal ── *@
+    @if (_showNewPost)
+    {
+        <div class="modal-backdrop" @onclick="CloseNewPost"></div>
+        <div class="modal-card" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <div class="mh-title-row">
+                    <span class="mh-prompt">$</span>
+                    <span class="mh-title">forum.new_thread</span>
+                    <span class="mh-cursor">_</span>
+                </div>
+                <button class="mh-close" @onclick="CloseNewPost">✕</button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="field-group">
+                    <label class="field-label">
+                        <span class="fl-idx">01</span> CATEGORY
+                    </label>
+                    <div class="select-wrapper @(_catFocused ? "focused" : "")">
+                        <select class="field-select"
+                                @bind="_newPostCategory"
+                                @onfocus="() => _catFocused = true"
+                                @onblur="() => _catFocused = false">
+                            @foreach (var cat in _categories.Where(c => c.Name != "All"))
+                            {
+                                <option value="@cat.Name">@cat.Icon @cat.Name</option>
+                            }
+                        </select>
+                        <span class="select-arrow">▾</span>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">
+                        <span class="fl-idx">02</span> THREAD TITLE
+                    </label>
+                    <div class="input-wrapper @(_titleFocused ? "focused" : "")">
+                        <input type="text" class="field-input"
+                               placeholder="What's your thread about?"
+                               @bind="_newPostTitle"
+                               @bind:event="oninput"
+                               @onfocus="() => _titleFocused = true"
+                               @onblur="() => _titleFocused = false"
+                               maxlength="200" />
+                    </div>
+                    <span class="field-hint-right">@_newPostTitle.Length / 200</span>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label">
+                        <span class="fl-idx">03</span> CONTENT
+                    </label>
+                    <div class="textarea-wrapper @(_contentFocused ? "focused" : "")">
+                        <textarea class="field-textarea"
+                                  placeholder="Share your intelligence, analysis, or question..."
+                                  rows="6"
+                                  @bind="_newPostContent"
+                                  @bind:event="oninput"
+                                  @onfocus="() => _contentFocused = true"
+                                  @onblur="() => _contentFocused = false">
+                            </textarea>
+                        <div class="textarea-footer">
+                            <span class="char-count @(_newPostContent.Length > 4500 ? "count-warn" : "")">
+                                @_newPostContent.Length / 5000
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_newPostError))
+                {
+                    <div class="modal-error">⚠ @_newPostError</div>
+                }
+
+                <div class="modal-actions">
+                    <button class="modal-cancel" @onclick="CloseNewPost">CANCEL</button>
+                    <button class="modal-submit @(_newPostLoading ? "loading" : "")"
+                            @onclick="SubmitNewPost"
+                            disabled="@(_newPostLoading || string.IsNullOrWhiteSpace(_newPostTitle) || string.IsNullOrWhiteSpace(_newPostContent))">
+                        @if (_newPostLoading)
+                        {
+                            <span class="btn-spinner-sm"></span>
+                            <span>POSTING...</span>
+                        }
+                        else
+                        {
+                            <span>PUBLISH THREAD →</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    .forum-root {
+        min-height: 100vh;
+        background: #0d1117;
+        font-family: 'Inter', sans-serif;
+        padding: 72px 0 0;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    .bg-grid {
+        position: fixed;
+        inset: 0;
+        background-image: linear-gradient(rgba(159,239,0,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(159,239,0,0.025) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .scan-line {
+        position: fixed;
+        top: -2px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #9fef00, transparent);
+        animation: scan 8s linear infinite;
+        opacity: 0.3;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .corner {
+        position: fixed;
+        width: 18px;
+        height: 18px;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    .corner-tl {
+        top: 14px;
+        left: 14px;
+        border-top: 2px solid #9fef00;
+        border-left: 2px solid #9fef00;
+    }
+
+    .corner-tr {
+        top: 14px;
+        right: 14px;
+        border-top: 2px solid #9fef00;
+        border-right: 2px solid #9fef00;
+    }
+
+    .corner-bl {
+        bottom: 14px;
+        left: 14px;
+        border-bottom: 2px solid #9fef00;
+        border-left: 2px solid #9fef00;
+    }
+
+    .corner-br {
+        bottom: 14px;
+        right: 14px;
+        border-bottom: 2px solid #9fef00;
+        border-right: 2px solid #9fef00;
+    }
+
+    /* ── Layout ── */
+    .forum-layout {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 0;
+        min-height: calc(100vh - 72px);
+        position: relative;
+        z-index: 3;
+    }
+
+    /* ── Sidebar ── */
+    .forum-sidebar {
+        border-right: 1px solid #21262d;
+        padding: 32px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        position: sticky;
+        top: 72px;
+        height: calc(100vh - 72px);
+        overflow-y: auto;
+    }
+
+    .sidebar-brand {
+        padding-bottom: 4px;
+    }
+
+    .sb-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #9fef00;
+        letter-spacing: 2px;
+        opacity: 0.7;
+        margin-bottom: 10px;
+    }
+
+    .sb-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #e6edf3;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+        margin-bottom: 10px;
+    }
+
+    .sb-accent {
+        color: #9fef00;
+    }
+
+    .sb-sub {
+        font-size: 12px;
+        color: #6e7681;
+        line-height: 1.6;
+    }
+
+    .sidebar-card {
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .sc-header {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #4a5160;
+        letter-spacing: 2px;
+        padding: 10px 14px;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .cat-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: none;
+        border: none;
+        border-bottom: 1px solid #21262d;
+        cursor: pointer;
+        transition: background 0.1s;
+        text-align: left;
+    }
+
+        .cat-btn:last-child {
+            border-bottom: none;
+        }
+
+        .cat-btn:hover {
+            background: #0d1117;
+        }
+
+    .cat-active {
+        background: rgba(159,239,0,0.04) !important;
+    }
+
+        .cat-active .cat-name {
+            color: #9fef00 !important;
+        }
+
+    .cat-icon {
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .cat-name {
+        font-size: 13px;
+        color: #c9d1d9;
+        flex: 1;
+        transition: color 0.1s;
+    }
+
+    .cat-count {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+        background: #21262d;
+        padding: 1px 6px;
+        border-radius: 8px;
+    }
+
+    .rules-list {
+        padding: 4px 0;
+    }
+
+    .rule-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 8px 14px;
+        border-bottom: 1px solid #21262d;
+    }
+
+        .rule-item:last-child {
+            border-bottom: none;
+        }
+
+    .rule-num {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #9fef00;
+        opacity: 0.5;
+        flex-shrink: 0;
+    }
+
+    .rule-text {
+        font-size: 12px;
+        color: #6e7681;
+        line-height: 1.4;
+    }
+
+    .sidebar-auth-cta {
+        background: rgba(159,239,0,0.05);
+        border: 1px solid rgba(159,239,0,0.2);
+        border-radius: 8px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+        text-align: center;
+    }
+
+    .sac-text {
+        font-size: 12px;
+        color: #6e7681;
+    }
+
+    .sac-btn {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 600;
+        color: #0d1117;
+        background: #9fef00;
+        padding: 7px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        letter-spacing: 1px;
+        transition: opacity 0.15s;
+    }
+
+        .sac-btn:hover {
+            opacity: 0.88;
+        }
+
+    /* ── Main ── */
+    .forum-main {
+        padding: 24px 32px;
+    }
+
+    /* ── Topbar ── */
+    .forum-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .ftb-left {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+    }
+
+    .ftb-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #e6edf3;
+        letter-spacing: -0.3px;
+    }
+
+    .ftb-count {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #4a5160;
+    }
+
+    .ftb-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        overflow: hidden;
+        min-width: 220px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+        .search-box.focused {
+            border-color: #9fef00;
+            box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+        }
+
+    .search-icon {
+        padding: 0 10px;
+        color: #4a5160;
+        font-size: 16px;
+        border-right: 1px solid #21262d;
+        line-height: 36px;
+    }
+
+    .search-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        padding: 8px 10px;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #c9d1d9;
+        caret-color: #9fef00;
+    }
+
+        .search-input::placeholder {
+            color: #4a5160;
+        }
+
+    .new-post-btn {
+        padding: 8px 16px;
+        background: #9fef00;
+        border: none;
+        border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        color: #0d1117;
+        cursor: pointer;
+        letter-spacing: 1.5px;
+        white-space: nowrap;
+        transition: opacity 0.15s, box-shadow 0.15s;
+    }
+
+        .new-post-btn:hover {
+            opacity: 0.9;
+            box-shadow: 0 4px 16px rgba(159,239,0,0.2);
+        }
+
+    /* ── Post cards ── */
+    .posts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .post-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 18px 16px;
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-bottom: none;
+        cursor: pointer;
+        transition: background 0.1s, border-color 0.15s;
+        animation: fadeInUp 0.4s ease both;
+    }
+
+        .post-card:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+
+    .posts-list > .post-card:last-child,
+    .posts-list > .post-detail:last-child + .post-card {
+        border-radius: 0 0 8px 8px;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .posts-list > *:last-child {
+        border-bottom: 1px solid #21262d;
+        border-radius: 0 0 8px 8px;
+    }
+
+    .post-card:hover {
+        background: rgba(159,239,0,0.02);
+        border-color: #30363d;
+    }
+
+    .post-expanded {
+        border-color: rgba(159,239,0,0.3) !important;
+        background: rgba(159,239,0,0.02) !important;
+    }
+
+    .pc-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 16px;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .pc-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .pc-top {
+        margin-bottom: 8px;
+    }
+
+    .pc-title-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 5px;
+        flex-wrap: wrap;
+    }
+
+    .pc-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #e6edf3;
+        line-height: 1.3;
+        flex: 1;
+    }
+
+    .cat-pill {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    .cat-general {
+        background: rgba(110,118,129,0.12);
+        color: #6e7681;
+        border: 1px solid #21262d;
+    }
+
+    .cat-threatintel {
+        background: rgba(255,62,62,0.1);
+        color: #ff3e3e;
+        border: 1px solid rgba(255,62,62,0.2);
+    }
+
+    .cat-malwareanalysis {
+        background: rgba(191,64,191,0.1);
+        color: #bf40bf;
+        border: 1px solid rgba(191,64,191,0.2);
+    }
+
+    .cat-incidentreports {
+        background: rgba(255,165,0,0.1);
+        color: #ffa500;
+        border: 1px solid rgba(255,165,0,0.2);
+    }
+
+    .cat-toolsresources {
+        background: rgba(0,200,255,0.1);
+        color: #00c8ff;
+        border: 1px solid rgba(0,200,255,0.2);
+    }
+
+    .pc-preview {
+        font-size: 13px;
+        color: #6e7681;
+        line-height: 1.5;
+    }
+
+    .pc-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .pc-author {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .author-name {
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+        .author-name.role-public {
+            color: #6e7681;
+        }
+
+        .author-name.role-registered {
+            color: #c9d1d9;
+        }
+
+        .author-name.role-reporter {
+            color: #9fef00;
+        }
+
+        .author-name.role-admin {
+            color: #ffa500;
+        }
+
+    .author-role-badge {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 8px;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 2px;
+        letter-spacing: 1px;
+    }
+
+    .role-badge-public {
+        background: rgba(110,118,129,0.1);
+        color: #6e7681;
+        border: 1px solid #21262d;
+    }
+
+    .role-badge-registered {
+        background: rgba(0,200,255,0.08);
+        color: #00c8ff;
+        border: 1px solid rgba(0,200,255,0.2);
+    }
+
+    .role-badge-reporter {
+        background: rgba(159,239,0,0.08);
+        color: #9fef00;
+        border: 1px solid rgba(159,239,0,0.2);
+    }
+
+    .role-badge-admin {
+        background: rgba(255,165,0,0.1);
+        color: #ffa500;
+        border: 1px solid rgba(255,165,0,0.2);
+    }
+
+    .ml-auto {
+        margin-left: auto;
+    }
+
+    .pc-dot {
+        color: #4a5160;
+        font-size: 10px;
+    }
+
+    .pc-time, .pc-replies {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #4a5160;
+    }
+
+    .pc-chevron {
+        font-size: 12px;
+        color: #4a5160;
+        flex-shrink: 0;
+        transition: transform 0.2s, color 0.2s;
+        margin-top: 4px;
+    }
+
+    .chevron-open {
+        transform: rotate(180deg);
+        color: #9fef00;
+    }
+
+    /* ── Post detail ── */
+    .post-detail {
+        background: #0d1117;
+        border: 1px solid rgba(159,239,0,0.2);
+        border-top: none;
+        border-bottom: none;
+        animation: expandIn 0.2s ease both;
+    }
+
+    .pd-content {
+        padding: 20px 20px 16px;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .pd-author-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .pd-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .pd-author-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        flex: 1;
+    }
+
+    .pd-username {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .pd-time {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+    }
+
+    .pd-text {
+        font-size: 14px;
+        color: #c9d1d9;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    /* ── Replies ── */
+    .replies-loading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 20px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #4a5160;
+    }
+
+    .rl-spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid #21262d;
+        border-top-color: #9fef00;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    .replies-section {
+        padding: 0 20px;
+    }
+
+    .replies-header {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #4a5160;
+        letter-spacing: 2px;
+        padding: 14px 0 10px;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .reply-item {
+        display: flex;
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid #21262d;
+    }
+
+        .reply-item:last-child {
+            border-bottom: none;
+        }
+
+    .ri-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .ri-body {
+        flex: 1;
+    }
+
+    .ri-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .ri-author {
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+        .ri-author.role-reporter {
+            color: #9fef00;
+        }
+
+        .ri-author.role-admin {
+            color: #ffa500;
+        }
+
+        .ri-author.role-registered {
+            color: #c9d1d9;
+        }
+
+    .ri-time {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+        margin-left: auto;
+    }
+
+    .ri-text {
+        font-size: 13px;
+        color: #c9d1d9;
+        line-height: 1.6;
+        word-break: break-word;
+    }
+
+    /* ── Reply input ── */
+    .reply-input-section {
+        padding: 16px 20px;
+        border-top: 1px solid #21262d;
+    }
+
+    .ris-header {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 9px;
+        color: #4a5160;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+    }
+
+    .ris-box {
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        overflow: hidden;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+        .ris-box.focused {
+            border-color: #9fef00;
+            box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+        }
+
+    .ris-textarea {
+        width: 100%;
+        background: transparent;
+        border: none;
+        outline: none;
+        padding: 12px 14px;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #c9d1d9;
+        resize: none;
+        caret-color: #9fef00;
+        line-height: 1.6;
+    }
+
+        .ris-textarea::placeholder {
+            color: #4a5160;
+        }
+
+    .ris-error {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #ff3e3e;
+        margin: 8px 0;
+    }
+
+    .ris-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .ris-char {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+    }
+
+    .ris-btn {
+        padding: 9px 18px;
+        background: #9fef00;
+        border: none;
+        border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        color: #0d1117;
+        cursor: pointer;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: opacity 0.15s, box-shadow 0.15s;
+    }
+
+        .ris-btn:hover:not(:disabled) {
+            opacity: 0.9;
+            box-shadow: 0 4px 14px rgba(159,239,0,0.2);
+        }
+
+        .ris-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+    .ris-loading {
+        background: #21262d !important;
+        color: #6e7681 !important;
+    }
+
+    .reply-login-cta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-top: 1px solid #21262d;
+        font-size: 13px;
+        color: #6e7681;
+    }
+
+    .rlc-link {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #9fef00;
+        text-decoration: none;
+        letter-spacing: 1px;
+    }
+
+    /* ── State boxes ── */
+    .state-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 80px 40px;
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        text-align: center;
+        gap: 12px;
+    }
+
+    .sb-icon {
+        font-size: 40px;
+        opacity: 0.4;
+    }
+
+    .sb-title {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+        color: #6e7681;
+        letter-spacing: 2px;
+    }
+
+    .sb-sub {
+        font-size: 13px;
+        color: #4a5160;
+        max-width: 360px;
+        line-height: 1.6;
+    }
+
+    .sb-btn {
+        padding: 8px 20px;
+        background: transparent;
+        border: 1px solid rgba(159,239,0,0.3);
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #9fef00;
+        letter-spacing: 1px;
+        transition: background 0.15s;
+    }
+
+        .sb-btn:hover {
+            background: rgba(159,239,0,0.06);
+        }
+
+    /* ── Skeleton ── */
+    .post-skeleton {
+        display: flex;
+        gap: 14px;
+        padding: 18px 16px;
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-bottom: none;
+        animation: shimmer 1.5s ease-in-out infinite;
+    }
+
+        .post-skeleton:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .post-skeleton:last-child {
+            border-bottom: 1px solid #21262d;
+            border-radius: 0 0 8px 8px;
+        }
+
+    .sk-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: #21262d;
+        flex-shrink: 0;
+    }
+
+    .sk-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .sk-line {
+        background: #21262d;
+        border-radius: 2px;
+    }
+
+    .sk-title {
+        height: 16px;
+        width: 60%;
+    }
+
+    .sk-meta {
+        height: 10px;
+        width: 35%;
+    }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        z-index: 100;
+        backdrop-filter: blur(2px);
+    }
+
+    .modal-card {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 580px;
+        max-width: calc(100vw - 32px);
+        background: #161b22;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        z-index: 101;
+        animation: modalIn 0.2s ease both;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+        background: #0d1117;
+        border-bottom: 1px solid #21262d;
+    }
+
+    .mh-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mh-prompt {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 16px;
+        color: #9fef00;
+        font-weight: 600;
+    }
+
+    .mh-title {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 16px;
+        color: #c9d1d9;
+        font-weight: 600;
+    }
+
+    .mh-cursor {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 16px;
+        color: #9fef00;
+        animation: blink 1s step-end infinite;
+    }
+
+    .mh-close {
+        background: none;
+        border: none;
+        color: #4a5160;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 4px 8px;
+        transition: color 0.15s;
+    }
+
+        .mh-close:hover {
+            color: #ff3e3e;
+        }
+
+    .modal-body {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    /* Form fields (reused from other pages) */
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .field-label {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #6e7681;
+        letter-spacing: 2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .fl-idx {
+        color: #9fef00;
+        opacity: 0.6;
+    }
+
+    .field-hint-right {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+        text-align: right;
+    }
+
+    .select-wrapper {
+        position: relative;
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        overflow: hidden;
+    }
+
+        .select-wrapper.focused {
+            border-color: #9fef00;
+            box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+        }
+
+    .field-select {
+        width: 100%;
+        padding: 11px 36px 11px 14px;
+        background: transparent;
+        border: none;
+        outline: none;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+        color: #c9d1d9;
+        cursor: pointer;
+        appearance: none;
+    }
+
+        .field-select option {
+            background: #161b22;
+            color: #c9d1d9;
+        }
+
+    .select-arrow {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #4a5160;
+        font-size: 10px;
+        pointer-events: none;
+    }
+
+    .input-wrapper {
+        display: flex;
+        align-items: center;
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        overflow: hidden;
+    }
+
+        .input-wrapper.focused {
+            border-color: #9fef00;
+            box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+        }
+
+    .field-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        padding: 11px 14px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 13px;
+        color: #c9d1d9;
+        caret-color: #9fef00;
+    }
+
+        .field-input::placeholder {
+            color: #4a5160;
+        }
+
+    .textarea-wrapper {
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        overflow: hidden;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+        .textarea-wrapper.focused {
+            border-color: #9fef00;
+            box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+        }
+
+    .field-textarea {
+        width: 100%;
+        background: transparent;
+        border: none;
+        outline: none;
+        padding: 12px 14px;
+        font-family: 'Inter', sans-serif;
+        font-size: 13px;
+        color: #c9d1d9;
+        resize: none;
+        caret-color: #9fef00;
+        line-height: 1.6;
+    }
+
+        .field-textarea::placeholder {
+            color: #4a5160;
+        }
+
+    .textarea-footer {
+        display: flex;
+        justify-content: flex-end;
+        padding: 5px 12px;
+        border-top: 1px solid #21262d;
+    }
+
+    .char-count {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        color: #4a5160;
+    }
+
+    .count-warn {
+        color: #ffa500;
+    }
+
+    .modal-error {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px;
+        color: #ff3e3e;
+        background: rgba(255,62,62,0.07);
+        border: 1px solid rgba(255,62,62,0.2);
+        border-radius: 4px;
+        padding: 10px 14px;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    .modal-cancel {
+        padding: 11px 18px;
+        background: transparent;
+        border: 1px solid #21262d;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        color: #6e7681;
+        letter-spacing: 1px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+
+        .modal-cancel:hover {
+            border-color: #6e7681;
+            color: #c9d1d9;
+        }
+
+    .modal-submit {
+        padding: 11px 20px;
+        background: #9fef00;
+        border: none;
+        border-radius: 4px;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        color: #0d1117;
+        cursor: pointer;
+        letter-spacing: 1.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: opacity 0.15s, box-shadow 0.15s;
+    }
+
+        .modal-submit:hover:not(:disabled) {
+            opacity: 0.9;
+            box-shadow: 0 4px 16px rgba(159,239,0,0.2);
+        }
+
+        .modal-submit:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .modal-submit.loading {
+            background: #21262d !important;
+            color: #6e7681 !important;
+        }
+
+    .btn-spinner-sm {
+        width: 12px;
+        height: 12px;
+        border: 2px solid #4a5160;
+        border-top-color: #9fef00;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+
+    /* ── Animations ── */
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes expandIn {
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes modalIn {
+        from {
+            opacity: 0;
+            transform: translate(-50%,-48%);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate(-50%,-50%);
+        }
+    }
+
+    @@keyframes shimmer {
+        0%, 100% {
+            opacity: 0.6;
+        }
+
+        50% {
+            opacity: 0.3;
+        }
+    }
+
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @@keyframes blink {
+        0%, 100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0;
+        }
+    }
+
+    @@keyframes scan {
+        0% {
+            top: -2px;
+        }
+
+        100% {
+            top: 100vh;
+        }
+    }
+
+    /* ── Responsive ── */
+    @@media (max-width: 860px) {
+        .forum-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .forum-sidebar {
+            display: none;
+        }
+
+        .forum-main {
+            padding: 20px 16px;
+        }
+    }
+</style>
+
+@code {
+    private List<PostResponseDTO>? _posts;
+    private PostResponseDTO? _currentPostDetail;
+    private bool _loadingPosts = true;
+    private bool _loadingReplies = false;
+    private string? _loadError;
+    private string _activeCategory = "All";
+    private string _searchQuery = string.Empty;
+    private bool _searchFocused = false;
+    private Guid? _expandedPostId;
+
+    private bool _showNewPost = false;
+    private string _newPostTitle = string.Empty;
+    private string _newPostContent = string.Empty;
+    private string _newPostCategory = "General";
+    private bool _newPostLoading = false;
+    private string _newPostError = string.Empty;
+    private bool _titleFocused = false;
+    private bool _contentFocused = false;
+    private bool _catFocused = false;
+
+    private string _replyContent = string.Empty;
+    private bool _replyLoading = false;
+    private bool _replyFocused = false;
+    private string _replyError = string.Empty;
+
+    private record CategoryItem(string Name, string Icon);
+
+    private readonly CategoryItem[] _categories = {
+        new("All",              "◈"),
+        new("General",          "💬"),
+        new("Threat Intel",     "🔍"),
+        new("Malware Analysis", "🦠"),
+        new("Incident Reports", "🚨"),
+        new("Tools & Resources","⚙"),
+    };
+
+    private List<PostResponseDTO> FilteredPosts
+    {
+        get
+        {
+            if (_posts == null) return new();
+            var list = _activeCategory == "All"
+                ? _posts
+                : _posts.Where(p => p.Category == _activeCategory).ToList();
+
+            if (!string.IsNullOrWhiteSpace(_searchQuery))
+            {
+                var q = _searchQuery.ToLower();
+                list = list.Where(p =>
+                    p.Title.ToLower().Contains(q) ||
+                    p.Content.ToLower().Contains(q) ||
+                    p.AuthorUsername.ToLower().Contains(q)
+                ).ToList();
+            }
+            return list;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AuthService.InitializeAsync();
+            await LoadPosts();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadPosts()
+    {
+        _loadingPosts = true; _loadError = null;
+        StateHasChanged();
+        var (data, error) = await ApiService.GetForumPostsAsync();
+        _loadingPosts = false;
+        if (error != null) _loadError = error;
+        else _posts = data ?? new();
+        StateHasChanged();
+    }
+
+    private async Task TogglePost(Guid id)
+    {
+        if (_expandedPostId == id)
+        {
+            _expandedPostId = null;
+            _currentPostDetail = null;
+            _replyContent = string.Empty;
+            _replyError = string.Empty;
+            return;
+        }
+
+        _expandedPostId = id;
+        _replyContent = string.Empty;
+        _replyError = string.Empty;
+        _loadingReplies = true;
+        StateHasChanged();
+
+        var (detail, _) = await ApiService.GetForumPostAsync(id);
+        _currentPostDetail = detail;
+        _loadingReplies = false;
+        StateHasChanged();
+    }
+
+    private void SetCategory(string cat)
+    {
+        _activeCategory = cat;
+        _expandedPostId = null;
+    }
+
+    private void OpenNewPost()
+    {
+        _newPostTitle = _newPostContent = _newPostError = string.Empty;
+        _newPostCategory = "General";
+        _showNewPost = true;
+    }
+
+    private void CloseNewPost()
+    {
+        _showNewPost = false;
+        _newPostError = string.Empty;
+    }
+
+    private async Task SubmitNewPost()
+    {
+        _newPostError = string.Empty;
+        if (string.IsNullOrWhiteSpace(_newPostTitle))
+        { _newPostError = "Title is required."; return; }
+        if (string.IsNullOrWhiteSpace(_newPostContent))
+        { _newPostError = "Content is required."; return; }
+
+        _newPostLoading = true;
+        var error = await ApiService.CreateForumPostAsync(_newPostTitle, _newPostContent, _newPostCategory);
+        _newPostLoading = false;
+
+        if (error != null) { _newPostError = error; }
+        else
+        {
+            CloseNewPost();
+            await LoadPosts();
+        }
+    }
+
+    private async Task SubmitReply(Guid postId)
+    {
+        _replyError = string.Empty;
+        if (string.IsNullOrWhiteSpace(_replyContent)) return;
+
+        _replyLoading = true;
+        var error = await ApiService.CreateReplyAsync(postId, _replyContent);
+        _replyLoading = false;
+
+        if (error != null) { _replyError = error; }
+        else
+        {
+            _replyContent = string.Empty;
+            // Refresh the post detail to show new reply
+            var (detail, _) = await ApiService.GetForumPostAsync(postId);
+            _currentPostDetail = detail;
+            // Also update reply count in list
+            var post = _posts?.FirstOrDefault(p => p.Id == postId);
+            if (post != null) post.ReplyCount = _currentPostDetail?.Replies.Count ?? 0;
+        }
+        StateHasChanged();
+    }
+
+    private static string GetAvatarColor(string username)
+    {
+        var colors = new[] { "#1a472a", "#1e3a5f", "#4a1942", "#2d2b55", "#3d2b1f", "#1a3a3a", "#2b3a1a", "#3a1a2b" };
+        return colors[Math.Abs(username.GetHashCode()) % colors.Length];
+    }
+
+    private static string GetRelativeTime(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - dt;
+        if (diff.TotalMinutes < 1) return "just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return dt.ToString("MMM dd, yyyy");
+    }
+}
