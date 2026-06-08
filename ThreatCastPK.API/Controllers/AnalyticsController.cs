@@ -227,4 +227,27 @@ public class AnalyticsController : ControllerBase
 
         return Ok(events);
     }
+    // GET /api/analytics/campaigns
+    // Returns active threat campaigns from the last 24 hours
+    [HttpGet("campaigns")]
+    public async Task<IActionResult> GetActiveCampaigns()
+    {
+        var cutoff = DateTime.UtcNow.AddHours(-24);
+        var campaigns = await _context.ThreatCampaigns
+            .Where(c => c.DetectedAt >= cutoff)
+            .OrderByDescending(c => c.DetectedAt)
+            .Select(c => new
+            {
+                id = c.Id,
+                ipRange = c.IpRange,
+                detectedAt = c.DetectedAt,
+                affectedCities = c.AffectedCities,
+                affectedSectors = c.AffectedSectors,
+                reportCount = c.ReportCount,
+                alertLevel = c.AlertLevel.ToString()
+            })
+            .ToListAsync();
+
+        return Ok(campaigns);
+    }
 }

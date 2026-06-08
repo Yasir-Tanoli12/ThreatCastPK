@@ -144,6 +144,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<NotificationChannel>();
 builder.Services.AddHostedService<NotificationDispatchService>();
 builder.Services.AddHostedService<SectorRiskScoringService>();
+builder.Services.AddHttpClient<ThreatCastPK.API.Services.MLService>();
+builder.Services.AddHostedService<ThreatCastPK.API.BackgroundServices.CampaignDetectionBackgroundService>();
 
 var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
 Directory.CreateDirectory(keysFolder);

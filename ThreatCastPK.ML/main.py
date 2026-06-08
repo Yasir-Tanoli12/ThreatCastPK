@@ -1,3 +1,4 @@
+# Location: ThreatCastPK.ML/main.py
 from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
@@ -61,7 +62,14 @@ def detect_campaign(request: CampaignRequest):
     if not model:
         return {"error": "ML model not loaded on server."}
     if not request.events:
-        return {"is_campaign": False, "alert_level": "NORMAL", "message": "No events provided"}
+        return {
+            "is_campaign": False, 
+            "alert_level": "NORMAL", 
+            "anomaly_count": 0, 
+            "total_events": 0, 
+            "anomaly_flags": [], 
+            "message": "No events provided"
+        }
 
     processed_features = []
     for e in request.events:
@@ -97,6 +105,8 @@ def detect_campaign(request: CampaignRequest):
     features = np.array(processed_features)
     predictions = model.predict(features)
     
+    # Isolation Forest predicts -1 for anomalies, 1 for normal data
+    anomaly_flags = [True if p == -1 else False for p in predictions]
     anomaly_count = int(np.sum(predictions == -1))
     is_campaign = anomaly_count > len(predictions) * 0.3
 
@@ -105,6 +115,7 @@ def detect_campaign(request: CampaignRequest):
         "alert_level": "CRITICAL" if is_campaign else "NORMAL",
         "anomaly_count": anomaly_count,
         "total_events": len(predictions),
+        "anomaly_flags": anomaly_flags,
         "message": "Coordinated campaign detected!" if is_campaign else "Normal activity"
     }
 

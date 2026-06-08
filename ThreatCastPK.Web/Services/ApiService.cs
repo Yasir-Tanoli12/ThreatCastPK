@@ -1,7 +1,4 @@
-﻿// ThreatCastPK.Web/Services/ApiService.cs
-// Central HTTP client wrapper — automatically attaches JWT to every request.
-// All pages inject this instead of raw HttpClient.
-
+﻿// File Path: ThreatCastPK.Web/Services/ApiService.cs
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -12,7 +9,6 @@ public class ApiService
     private readonly HttpClient _http;
     private readonly AuthService _auth;
 
-    // Shared JSON options — matches how the API serializes enums as strings
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -23,10 +19,6 @@ public class ApiService
         _http = http;
         _auth = auth;
     }
-
-    // ----------------------------------------------------------------
-    // Private helpers — attach Bearer token to every outgoing request
-    // ----------------------------------------------------------------
 
     private async Task<HttpRequestMessage> BuildRequest(
         HttpMethod method, string url, object? body = null)
@@ -44,11 +36,6 @@ public class ApiService
         return request;
     }
 
-    // ----------------------------------------------------------------
-    // Generic request methods — used by all the typed methods below
-    // ----------------------------------------------------------------
-
-    // Returns (data, null) on success, (default, errorMessage) on failure
     public async Task<(T? Data, string? Error)> GetAsync<T>(string url)
     {
         try
@@ -80,7 +67,6 @@ public class ApiService
 
             if (response.IsSuccessStatusCode)
             {
-                // Some POST endpoints return 200/201 with no body
                 if (response.Content.Headers.ContentLength == 0)
                     return (default, null);
 
@@ -97,7 +83,6 @@ public class ApiService
         }
     }
 
-    // For POST endpoints that return no body (just a status code)
     public async Task<string?> PostAsync(string url, object body)
     {
         try
@@ -106,7 +91,7 @@ public class ApiService
             var response = await _http.SendAsync(request);
 
             if (response.IsSuccessStatusCode)
-                return null; // null = success
+                return null;
 
             return await ReadErrorAsync(response);
         }
@@ -192,11 +177,6 @@ public class ApiService
         }
     }
 
-
-    // ----------------------------------------------------------------
-    // Typed API methods — pages call these directly
-    // ----------------------------------------------------------------
-
     // Auth
     public Task<string?> RegisterAsync(string username, string email, string password)
         => PostAsync("/api/auth/register", new { username, email, password });
@@ -240,10 +220,13 @@ public class ApiService
         => GetAsync<List<SectorRiskResponse>>("/api/analytics/sector-risk");
 
     public Task<(List<RecentEventResponse>? Data, string? Error)> GetRecentEventsAsync()
-    => GetAsync<List<RecentEventResponse>>("/api/analytics/recent-events");
+        => GetAsync<List<RecentEventResponse>>("/api/analytics/recent-events");
 
     public Task<(List<MapEventResponse>? Data, string? Error)> GetEventsAsync(string timeFilter = "24h")
         => GetAsync<List<MapEventResponse>>($"/api/analytics/events?timeFilter={timeFilter}");
+
+    public Task<(List<CampaignResponseDTO>? Data, string? Error)> GetActiveCampaignsAsync()
+        => GetAsync<List<CampaignResponseDTO>>("/api/analytics/campaigns");
 
     // Subscriptions
     public Task<(List<SubscriptionResponse>? Data, string? Error)> GetSubscriptionsAsync()
@@ -289,9 +272,6 @@ public class ApiService
     public Task<(List<NotificationResponseDTO>? Data, string? Error)> GetNotificationsAsync()
         => GetAsync<List<NotificationResponseDTO>>("/api/notifications");
 
-    // ----------------------------------------------------------------
-    // Private helper — reads error message from response body
-    // ----------------------------------------------------------------
     private static async Task<string> ReadErrorAsync(HttpResponseMessage response)
     {
         try
@@ -312,6 +292,7 @@ public class ApiService
             _ => response.ReasonPhrase ?? "Unknown error"
         };
     }
+
     // Forum
     public Task<(List<PostResponseDTO>? Data, string? Error)> GetForumPostsAsync(string? category = null)
     {
@@ -333,11 +314,6 @@ public class ApiService
     public Task<string?> DeleteForumPostAsync(Guid id)
         => DeleteAsync($"/api/forum/posts/{id}");
 }
-
-// ----------------------------------------------------------------
-// Response DTOs — mirror what the API returns
-// These live here for simplicity; move to a Models/ folder if preferred
-// ----------------------------------------------------------------
 
 public class ProfileResponse
 {
@@ -386,6 +362,10 @@ public class ModerationReportResponse
     public string? SourceIP { get; set; }
     public string? Description { get; set; }
     public DateTime SubmittedAt { get; set; }
+
+    // Added ML Anomaly integration properties
+    public bool IsMlAnomaly { get; set; }
+    public double MlAnomalyScore { get; set; }
 }
 
 public class UserAdminResponse
@@ -399,6 +379,7 @@ public class UserAdminResponse
     public bool IsSuspended { get; set; }
     public DateTime JoinDate { get; set; }
 }
+
 public class StatsResponse
 {
     public int TotalToday { get; set; }
@@ -442,6 +423,7 @@ public class RecentEventResponse
     public int Severity { get; set; }
     public string Source { get; set; } = string.Empty;
 }
+
 public class PostResponseDTO
 {
     public Guid Id { get; set; }
@@ -463,6 +445,7 @@ public class ReplyResponseDTO
     public string AuthorRole { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }
+
 public class MapEventResponse
 {
     public Guid Id { get; set; }
@@ -475,6 +458,7 @@ public class MapEventResponse
     public double Longitude { get; set; }
     public string Source { get; set; } = string.Empty;
 }
+
 public class NotificationResponseDTO
 {
     public Guid Id { get; set; }
@@ -484,3 +468,13 @@ public class NotificationResponseDTO
     public string NotificationType { get; set; } = string.Empty;
 }
 
+public class CampaignResponseDTO
+{
+    public Guid Id { get; set; }
+    public string IpRange { get; set; } = string.Empty;
+    public DateTime DetectedAt { get; set; }
+    public string AffectedCities { get; set; } = string.Empty;
+    public string AffectedSectors { get; set; } = string.Empty;
+    public int ReportCount { get; set; }
+    public string AlertLevel { get; set; } = string.Empty;
+}

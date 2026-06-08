@@ -6,6 +6,7 @@ using System.Security.Claims;
 using ThreatCastPK.API.BackgroundServices;
 using ThreatCastPK.API.DTOs;
 using ThreatCastPK.API.Hubs;
+using ThreatCastPK.API.Services;
 using ThreatCastPK.Database.Context;
 using ThreatCastPK.Database.Enums;
 using ThreatCastPK.Database.Models;
@@ -20,15 +21,18 @@ namespace ThreatCastPK.API.Controllers
         private readonly ThreatCastDbContext _context;
         private readonly IHubContext<ThreatCastHub> _hubContext;
         private readonly NotificationChannel _notificationChannel;
+        private readonly MLService _mlService;
 
         public ModerationController(
             ThreatCastDbContext context,
             IHubContext<ThreatCastHub> hubContext,
-            NotificationChannel notificationChannel)
+            NotificationChannel notificationChannel,
+            MLService mlService)
         {
             _context = context;
             _hubContext = hubContext;
             _notificationChannel = notificationChannel;
+            _mlService = mlService;
         }
 
         // Get Moderation Queue
@@ -39,23 +43,52 @@ namespace ThreatCastPK.API.Controllers
                 .Where(r => r.Status == ReportStatus.Pending && !r.IsDeleted)
                 .Include(r => r.Reporter)
                 .OrderBy(r => r.SubmittedAt)
-                .Select(r => new ModerationReportResponseDTO
-                {
-                    Id = r.Id,
-                    ReporterUsername = r.Reporter.Username,
-                    AttackType = r.AttackType.ToString(),
-                    TargetSector = r.TargetSector.ToString(),
-                    City = r.City,
-                    Severity = r.Severity,
-                    Description = r.Description,
-                    SourceIP = r.SourceIP,
-                    SubmittedAt = r.SubmittedAt,
-                    Status = r.Status.ToString(),
-                    ConfidenceTier = r.ConfidenceTier.ToString()
-                })
                 .ToListAsync();
 
-            return Ok(reports);
+            var responseList = reports.Select(r => new ModerationReportResponseDTO
+            {
+                Id = r.Id,
+                ReporterUsername = r.Reporter.Username,
+                ReporterReputation = r.Reporter.ReputationScore,
+                AttackType = r.AttackType.ToString(),
+                TargetSector = r.TargetSector.ToString(),
+                City = r.City,
+                Severity = r.Severity,
+                Description = r.Description,
+                SourceIP = r.SourceIP,
+                SubmittedAt = r.SubmittedAt,
+                Status = r.Status.ToString(),
+                ConfidenceTier = r.ConfidenceTier.ToString(),
+                IsMlAnomaly = false
+            }).ToList();
+
+            if (responseList.Count > 0)
+            {
+                // Run pending queue items through the ML model
+                var mlInputs = responseList.Select(r => new AttackEventInput
+                {
+                    AttackType = r.AttackType,
+                    AnomalyScore = r.Severity * 20.0,
+                    PacketLength = 500,
+                    Protocol = "TCP",
+                    GeoLocation = r.City,
+                    NetworkSegment = "Enterprise"
+                }).ToList();
+
+                var mlResult = await _mlService.DetectCampaignAsync(mlInputs);
+
+                if (mlResult != null && mlResult.AnomalyFlags.Count == responseList.Count)
+                {
+                    // Map anomaly predictions back to queue items
+                    for (int i = 0; i < responseList.Count; i++)
+                    {
+                        responseList[i].IsMlAnomaly = mlResult.AnomalyFlags[i];
+                        responseList[i].MlAnomalyScore = mlResult.AnomalyFlags[i] ? 90.0 : 10.0;
+                    }
+                }
+            }
+
+            return Ok(responseList);
         }
 
         // Approve Report
@@ -160,6 +193,7 @@ namespace ThreatCastPK.API.Controllers
                       latitude = location.Latitude,
                       longitude = location.Longitude
                   });
+
             return Ok(new { message = "Report approved. Attack event created and broadcast to map." });
         }
 

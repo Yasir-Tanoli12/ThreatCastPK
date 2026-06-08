@@ -1,8 +1,4 @@
-﻿// ThreatCastPK.Web/Services/SignalRService.cs
-// Manages a single SignalR connection shared across the whole app.
-// Pages subscribe to events through this service instead of
-// creating their own HubConnection (which would waste connections).
-
+﻿// File Path: ThreatCastPK.Web/Services/SignalRService.cs
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace ThreatCastPK.Web.Services;
@@ -17,9 +13,19 @@ public class AttackEventPayload
     public DateTime OccurredAt { get; set; }
     public string ConfidenceTier { get; set; } = string.Empty;
     public string Source { get; set; } = string.Empty;
-    // Coordinates for heatmap — populated from seeded Locations table
     public double Latitude { get; set; }
     public double Longitude { get; set; }
+}
+
+public class ThreatCampaignPayload
+{
+    public Guid Id { get; set; }
+    public string IpRange { get; set; } = string.Empty;
+    public DateTime DetectedAt { get; set; }
+    public string AffectedCities { get; set; } = string.Empty;
+    public string AffectedSectors { get; set; } = string.Empty;
+    public int ReportCount { get; set; }
+    public string AlertLevel { get; set; } = string.Empty;
 }
 
 public class SignalRService : IAsyncDisposable
@@ -28,12 +34,10 @@ public class SignalRService : IAsyncDisposable
     private readonly IConfiguration _config;
     private readonly AuthService _auth;
 
-    // Pages subscribe to this to receive new attack events
     public event Func<AttackEventPayload, Task>? OnNewAttackEvent;
-
-    // Pages subscribe to this to receive raw notification strings
     public event Func<NotificationPayload, Task>? OnNewNotification;
-    
+    public event Func<ThreatCampaignPayload, Task>? OnNewThreatCampaign; // Event handler
+
     public bool IsConnected =>
         _connection?.State == HubConnectionState.Connected;
 
@@ -43,31 +47,28 @@ public class SignalRService : IAsyncDisposable
         _auth = auth;
     }
 
-    // Called from MainLayout.razor OnAfterRenderAsync after auth is initialized
     public async Task StartAsync()
     {
-        if (_connection != null) return; // already started
+        if (_connection != null) return;
 
         var hubUrl = _config["SignalR:HubUrl"]
                      ?? "http://localhost:5262/hubs/threatcast";
 
         _connection = new HubConnectionBuilder()
-    .WithUrl(hubUrl, options =>
-    {
-        options.AccessTokenProvider = async () =>
-            await _auth.GetTokenAsync();
-        options.HttpMessageHandlerFactory = handler =>
-        {
-            if (handler is HttpClientHandler clientHandler)
-                clientHandler.ServerCertificateCustomValidationCallback =
-                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-            return handler;
-        };
-    })
-    .WithAutomaticReconnect()
-    .Build();
+            .WithUrl(hubUrl, options =>
+            {
+                options.AccessTokenProvider = async () => await _auth.GetTokenAsync();
+                options.HttpMessageHandlerFactory = handler =>
+                {
+                    if (handler is HttpClientHandler clientHandler)
+                        clientHandler.ServerCertificateCustomValidationCallback =
+                            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                    return handler;
+                };
+            })
+            .WithAutomaticReconnect()
+            .Build();
 
-        // Wire up incoming server events
         _connection.On<AttackEventPayload>("NewAttackEvent", async payload =>
         {
             if (OnNewAttackEvent != null)
@@ -76,50 +77,31 @@ public class SignalRService : IAsyncDisposable
 
         _connection.On<NotificationPayload>("NewNotification", async payload =>
         {
-            Console.WriteLine($"[SignalR] NewNotification received: {payload.Message}");
             if (OnNewNotification != null)
                 await OnNewNotification.Invoke(payload);
-            else
-                Console.WriteLine("[SignalR] OnNewNotification has no subscribers!");
         });
 
-        // Log reconnection state changes (useful during dev)
-        _connection.Reconnecting += error =>
+        // Register campaign listener
+        _connection.On<ThreatCampaignPayload>("NewThreatCampaign", async payload =>
         {
-            Console.WriteLine($"[SignalR] Reconnecting: {error?.Message}");
-            return Task.CompletedTask;
-        };
-
-        _connection.Reconnected += connectionId =>
-        {
-            Console.WriteLine($"[SignalR] Reconnected: {connectionId}");
-            return Task.CompletedTask;
-        };
+            if (OnNewThreatCampaign != null)
+                await OnNewThreatCampaign.Invoke(payload);
+        });
 
         try
         {
             await _connection.StartAsync();
-            Console.WriteLine("[SignalR] Connected.");
-
             if (_auth.IsLoggedIn)
             {
-                Console.WriteLine($"[SignalR] Joining user group: user_{_auth.UserId}");
                 await JoinUserGroupAsync(_auth.UserId);
-                Console.WriteLine($"[SignalR] Joined user group successfully.");
-            }
-            else
-            {
-                Console.WriteLine("[SignalR] Not logged in — skipping user group join.");
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"[SignalR] Failed to connect: {ex.Message}");
-            Console.WriteLine($"[SignalR] Full error: {ex}");
         }
     }
 
-    // Join a city-specific group to receive filtered events
     public async Task JoinCityGroupAsync(string city)
     {
         if (!IsConnected) return;
@@ -132,7 +114,6 @@ public class SignalRService : IAsyncDisposable
         await _connection!.InvokeAsync("LeaveCityGroup", city);
     }
 
-    // Join a sector-specific group
     public async Task JoinSectorGroupAsync(string sector)
     {
         if (!IsConnected) return;
@@ -145,7 +126,6 @@ public class SignalRService : IAsyncDisposable
         await _connection!.InvokeAsync("LeaveSectorGroup", sector);
     }
 
-    // Join the user's personal group for notifications
     public async Task JoinUserGroupAsync(string userId)
     {
         if (!IsConnected || string.IsNullOrEmpty(userId)) return;
@@ -167,5 +147,4 @@ public class SignalRService : IAsyncDisposable
             _connection = null;
         }
     }
-
 }
