@@ -250,4 +250,6 @@ public class AnalyticsController : ControllerBase
 
         return Ok(campaigns);
     }
+   
+
 }

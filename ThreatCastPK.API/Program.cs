@@ -138,6 +138,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient<ThreatCastPK.API.Services.AbuseIPDBService>();
+builder.Services.AddHttpClient<MLService>();
+builder.Services.AddHostedService<CampaignDetectionBackgroundService>();
 builder.Services.AddHttpClient<GreyNoiseService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

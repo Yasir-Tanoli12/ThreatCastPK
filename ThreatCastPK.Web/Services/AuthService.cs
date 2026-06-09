@@ -117,6 +117,7 @@ public class AuthService
                 if (result == null) return "Unexpected response from server.";
 
                 // Persist to localStorage
+                await _js.InvokeVoidAsync("tcpkAuth.clearAll");
                 await _js.InvokeVoidAsync("tcpkAuth.setToken", result.Token);
                 await _js.InvokeVoidAsync("tcpkAuth.setUserInfo",
                     result.UserId, result.Username, result.Role);

@@ -57,7 +57,7 @@ public class CampaignDetectionBackgroundService : BackgroundService
             // Group events by Class C IP Range (e.g. 192.168.1.0/24)
             var ipGroups = events
                 .Where(e => e.AttackReport != null && !string.IsNullOrEmpty(e.AttackReport.SourceIP))
-                .GroupBy(e => GetClassCSubnet(e.AttackReport!.SourceIP))
+                .GroupBy(e => GetClassCSubnet(e.AttackReport!.SourceIP ?? string.Empty))
                 .Where(g => g.Count() >= 10) // Minimum 10 events per subnet
                 .ToList();
 

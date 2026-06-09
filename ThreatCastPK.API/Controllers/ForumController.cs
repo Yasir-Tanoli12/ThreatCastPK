@@ -30,7 +30,7 @@ public class ForumController : ControllerBase
     {
         var query = _context.DiscussionPosts
             .Include(p => p.User)
-            .Where(p => !p.IsDeleted);
+            .Where(p => !p.IsDeleted && p.ParentPostId == null);
 
         if (!string.IsNullOrWhiteSpace(category) && category != "All")
             query = query.Where(p => p.Category == category);

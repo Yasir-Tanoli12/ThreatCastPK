@@ -295,5 +295,128 @@ namespace ThreatCastPK.API.Controllers
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
+        // GET /api/moderation/users
+        [HttpGet("users")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await _context.Users
+                .OrderBy(u => u.Username)
+                .Select(u => new
+                {
+                    id = u.Id,
+                    username = u.Username,
+                    email = u.Email,
+                    role = u.Role.ToString(),
+                    reputationScore = u.ReputationScore,
+                    reporterRequestPending = u.ReporterRequestPending,
+                    isSuspended = u.IsSuspended,
+                    joinDate = u.JoinDate
+                })
+                .ToListAsync();
+
+            return Ok(users);
+        }
+
+        // PUT /api/moderation/users/{id}/grant-reporter
+        [HttpPut("users/{id}/grant-reporter")]
+        public async Task<IActionResult> GrantReporter(Guid id)
+        {
+            var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.Role = UserRole.Reporter;
+            user.ReporterRequestPending = false;
+
+            _context.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                AdminId = adminId,
+                Action = "GrantReporter",
+                TargetEntity = "User",
+                TargetEntityId = id,
+                Reason = "Reporter role granted by admin",
+                PerformedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Reporter role granted." });
+        }
+
+        // PUT /api/moderation/users/{id}/revoke-reporter
+        [HttpPut("users/{id}/revoke-reporter")]
+        public async Task<IActionResult> RevokeReporter(Guid id)
+        {
+            var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.Role = UserRole.Registered;
+
+            _context.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                AdminId = adminId,
+                Action = "RevokeReporter",
+                TargetEntity = "User",
+                TargetEntityId = id,
+                Reason = "Reporter role revoked by admin",
+                PerformedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Reporter role revoked." });
+        }
+
+        // PUT /api/moderation/users/{id}/suspend
+        [HttpPut("users/{id}/suspend")]
+        public async Task<IActionResult> SuspendUser(Guid id)
+        {
+            var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.IsSuspended = true;
+
+            _context.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                AdminId = adminId,
+                Action = "SuspendUser",
+                TargetEntity = "User",
+                TargetEntityId = id,
+                Reason = "User suspended by admin",
+                PerformedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "User suspended." });
+        }
+
+        // PUT /api/moderation/users/{id}/unsuspend
+        [HttpPut("users/{id}/unsuspend")]
+        public async Task<IActionResult> UnsuspendUser(Guid id)
+        {
+            var adminId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { message = "User not found." });
+
+            user.IsSuspended = false;
+
+            _context.AuditLogs.Add(new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                AdminId = adminId,
+                Action = "UnsuspendUser",
+                TargetEntity = "User",
+                TargetEntityId = id,
+                Reason = "User suspension lifted by admin",
+                PerformedAt = DateTime.UtcNow
+            });
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "User suspension lifted." });
+        }
     }
+
 }
