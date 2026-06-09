@@ -168,6 +168,7 @@ builder.Services.AddCors(options =>
             "http://localhost:5262",
             "https://localhost:7130",
             "http://localhost:5136"
+            "https://threatcastpk-web.azurewebsites.net"
         };
 
     options.AddPolicy("AllowAll", policy =>
