@@ -1,0 +1,64 @@
+name: Build and deploy Web to Azure - threatcastpk-web
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore
+        run: dotnet restore "ThreatCastPK.Web/ThreatCastPK.Web.csproj"
+
+      - name: Build
+        run: dotnet build "ThreatCastPK.Web/ThreatCastPK.Web.csproj" --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish "ThreatCastPK.Web/ThreatCastPK.Web.csproj" --configuration Release --no-build --output ./published/web
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-app
+          path: ./published/web
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-app
+          path: ./published/web
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_4074E816538148C9826929FB1A27A504 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E24440EFE6604ECE96A440129BF16C9A }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E8A87FA7C5704DD4A7AF6096F4E9977A }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'threatcastpk-web'
+          slot-name: 'Production'
+          package: ./published/web

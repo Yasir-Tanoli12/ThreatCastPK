@@ -1,0 +1,58 @@
+name: Build and deploy ML to Azure - threatcastpk-ml
+
+on:
+  workflow_dispatch:  # Manual only — enable push trigger when ML service is ready
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m venv antenv
+          source antenv/bin/activate
+          pip install -r ThreatCastPK.ML/requirements.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: |
+            ThreatCastPK.ML/
+            !ThreatCastPK.ML/antenv/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_67D35E0013B74EEDBCC05DCE1FFA1274 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9111F1E98A2E45CEA7E4DA3E5A0FA18B }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3F08B9E64713466FB66E5A933AB8E81D }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'threatcastpk-ml'
+          slot-name: 'Production'
