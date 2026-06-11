@@ -82,7 +82,8 @@ namespace ThreatCastPK.API.Controllers
                 Token = token,
                 Username = user.Username,
                 Email = user.Email,
-                Role = user.Role.ToString()
+                Role = user.Role.ToString(),
+                UserId = user.Id.ToString()
             });
         }
 
