@@ -14,6 +14,7 @@ using ThreatCastPK.Database.Enums;
 using ThreatCastPK.Database.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+var blazorUrl = builder.Configuration["BlazorBaseUrl"] ?? "https://localhost:7130";
 
 builder.Services.AddDbContext<ThreatCastDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -94,7 +95,7 @@ builder.Services.AddAuthentication(options =>
 
         if (user.IsSuspended)
         {
-            context.Response.Redirect("https://localhost:7130/login?error=suspended");
+            context.Response.Redirect($"{blazorUrl}/login?error=suspended");
             context.HandleResponse();
             return;
         }
@@ -119,16 +120,16 @@ builder.Services.AddAuthentication(options =>
         await context.HttpContext.SignOutAsync("ExternalCookies");
 
         context.Response.Redirect(
-            $"https://localhost:7130/oauth-callback?token={token}" +
-            $"&userId={user.Id}" +
-            $"&username={Uri.EscapeDataString(user.Username)}" +
-            $"&role={user.Role}");
+    $"{blazorUrl}/oauth-callback?token={token}" +
+    $"&userId={user.Id}" +
+    $"&username={Uri.EscapeDataString(user.Username)}" +
+    $"&role={user.Role}");
         context.HandleResponse();
     };
 
     options.Events.OnRemoteFailure = context =>
     {
-        context.Response.Redirect("https://localhost:7130/login?error=google_failed");
+        context.Response.Redirect($"{blazorUrl}/login?error=google_failed");
         context.HandleResponse();
         return Task.CompletedTask;
     };
@@ -167,7 +168,7 @@ builder.Services.AddCors(options =>
             "https://localhost:5001",
             "http://localhost:5262",
             "https://localhost:7130",
-            "http://localhost:5136"
+            "http://localhost:5136",
             "https://threatcastpk-web.azurewebsites.net"
         };
 

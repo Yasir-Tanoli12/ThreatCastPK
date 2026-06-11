@@ -23,22 +23,19 @@ public class ThreatCastAuthStateProvider : AuthenticationStateProvider
     {
         var user = _authService.GetCurrentUser();
 
-        if (!user.IsLoggedIn || string.IsNullOrEmpty(user.UserId))
+        if (!user.IsLoggedIn)
         {
-            // Return an empty (anonymous) principal
             var anonymous = new ClaimsPrincipal(new ClaimsIdentity());
             return Task.FromResult(new AuthenticationState(anonymous));
         }
 
-        // Build claims that match what your JWT contains
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, user.UserId),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.Role, user.Role)
-        };
+        new Claim(ClaimTypes.NameIdentifier, user.UserId ?? ""),
+        new Claim(ClaimTypes.Name, user.Username),
+        new Claim(ClaimTypes.Role, user.Role)
+    };
 
-        // "jwt" is the authentication type — marks this principal as authenticated
         var identity = new ClaimsIdentity(claims, authenticationType: "jwt");
         var principal = new ClaimsPrincipal(identity);
 

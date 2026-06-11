@@ -54,11 +54,11 @@ public class AuthService
             var username = info.GetProperty("username").GetString();
             var role = info.GetProperty("role").GetString();
 
-            if (!string.IsNullOrEmpty(userId) && !string.IsNullOrEmpty(username))
+            if (!string.IsNullOrEmpty(username))
             {
                 _currentUser = new UserInfo
                 {
-                    UserId = userId,
+                    UserId = userId ?? string.Empty,
                     Username = username,
                     Role = role ?? "Public",
                     IsLoggedIn = true
