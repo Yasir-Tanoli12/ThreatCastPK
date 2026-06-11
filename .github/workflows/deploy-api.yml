@@ -56,6 +56,12 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_23B4E0C2FACF49159EFED72D7DCFEE42 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A8D1676290F04C9B91D73630AA85BFEF }}
 
+      - name: Set startup command
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az webapp config set --name threatcastpk-api --resource-group threatcastpk-rg --startup-file "dotnet ThreatCastPK.API.dll"
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
