@@ -72,6 +72,7 @@ public class AuthService
             {
                 // JS interop not available during prerender — safe to ignore
                 _currentUser = new UserInfo();
+                return;
             }
 
             _initialized = true;
