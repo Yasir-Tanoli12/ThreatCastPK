@@ -5,7 +5,6 @@ using System.Text.Json;
 
 namespace ThreatCastPK.Web.Services;
 
-// Holds the data we get back from POST /api/auth/login
 public class AuthResponse
 {
     public string Token { get; set; } = string.Empty;
@@ -14,7 +13,6 @@ public class AuthResponse
     public string UserId { get; set; } = string.Empty;
 }
 
-// Holds the current user's state — read by components and NavBar
 public class UserInfo
 {
     public string UserId { get; set; } = string.Empty;
@@ -28,14 +26,12 @@ public class AuthService
     private readonly HttpClient _http;
     private readonly IJSRuntime _js;
 
-    // Fires whenever login/logout happens — NavBar subscribes to this
-    // to re-render without a full page refresh
     public event Action? OnAuthStateChanged;
-
     public void NotifyAuthStateChanged() => OnAuthStateChanged?.Invoke();
 
-    // Cached in memory so we don't hit JS interop on every render
     private UserInfo _currentUser = new();
+    private bool _initialized = false;
+    private readonly SemaphoreSlim _initLock = new(1, 1);
 
     public AuthService(HttpClient http, IJSRuntime js)
     {
@@ -43,40 +39,63 @@ public class AuthService
         _js = js;
     }
 
-    // Call this once when the app starts (from MainLayout.razor OnAfterRenderAsync)
-    // Reads localStorage and restores the in-memory state
+    // Call this once from MainLayout or ThreatCastAuthStateProvider
     public async Task InitializeAsync()
     {
+        // Guard: only initialize once per circuit lifetime
+        if (_initialized) return;
+
+        await _initLock.WaitAsync();
         try
         {
-            var info = await _js.InvokeAsync<JsonElement>("tcpkAuth.getUserInfo");
-            var userId = info.GetProperty("userId").GetString();
-            var username = info.GetProperty("username").GetString();
-            var role = info.GetProperty("role").GetString();
+            if (_initialized) return;
 
-            if (!string.IsNullOrEmpty(username))
+            try
             {
-                _currentUser = new UserInfo
+                var info = await _js.InvokeAsync<JsonElement>("tcpkAuth.getUserInfo");
+                var userId = info.GetProperty("userId").GetString();
+                var username = info.GetProperty("username").GetString();
+                var role = info.GetProperty("role").GetString();
+
+                if (!string.IsNullOrEmpty(username))
                 {
-                    UserId = userId ?? string.Empty,
-                    Username = username,
-                    Role = role ?? "Public",
-                    IsLoggedIn = true
-                };
+                    _currentUser = new UserInfo
+                    {
+                        UserId = userId ?? string.Empty,
+                        Username = username,
+                        Role = role ?? "Public",
+                        IsLoggedIn = true
+                    };
+                }
             }
+            catch
+            {
+                // JS interop not available during prerender — safe to ignore
+                _currentUser = new UserInfo();
+            }
+
+            _initialized = true;
         }
-        catch
+        finally
         {
-            // JS interop can fail during prerender — safe to ignore,
-            // InitializeAsync will be called again after render
-            _currentUser = new UserInfo();
+            _initLock.Release();
         }
     }
 
-    // Returns the current user state (always safe to call — never throws)
+    // Used by NavBar and pages — ensures auth is loaded before returning state
+    // This is the key fix: if somehow _currentUser is blank and we haven't
+    // initialized, try again rather than silently returning empty state
+    public async Task<UserInfo> GetCurrentUserAsync()
+    {
+        if (!_initialized)
+            await InitializeAsync();
+        return _currentUser;
+    }
+
+    // Synchronous version — only use where async isn't possible
+    // Will return blank if InitializeAsync hasn't been called yet
     public UserInfo GetCurrentUser() => _currentUser;
 
-    // Shorthand helpers used in pages and NavBar
     public bool IsLoggedIn => _currentUser.IsLoggedIn;
     public string Username => _currentUser.Username;
     public string Role => _currentUser.Role;
@@ -85,44 +104,31 @@ public class AuthService
     public bool IsAdmin => _currentUser.Role == "Admin";
     public bool IsReporter => _currentUser.Role is "Reporter" or "Admin";
 
-    // Returns the stored JWT token from localStorage
-    // Used by ApiService to attach Authorization header
     public async Task<string?> GetTokenAsync()
     {
         try
         {
             return await _js.InvokeAsync<string?>("tcpkAuth.getToken");
         }
-        catch
-        {
-            return null;
-        }
+        catch { return null; }
     }
 
-    // POST /api/auth/login
-    // Returns null on success, error message string on failure
     public async Task<string?> LoginAsync(string email, string password)
     {
         try
         {
-            var response = await _http.PostAsJsonAsync("/api/auth/login", new
-            {
-                email,
-                password
-            });
+            var response = await _http.PostAsJsonAsync("/api/auth/login", new { email, password });
 
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
                 if (result == null) return "Unexpected response from server.";
 
-                // Persist to localStorage
                 await _js.InvokeVoidAsync("tcpkAuth.clearAll");
                 await _js.InvokeVoidAsync("tcpkAuth.setToken", result.Token);
                 await _js.InvokeVoidAsync("tcpkAuth.setUserInfo",
                     result.UserId, result.Username, result.Role);
 
-                // Update in-memory state
                 _currentUser = new UserInfo
                 {
                     UserId = result.UserId,
@@ -131,9 +137,9 @@ public class AuthService
                     IsLoggedIn = true
                 };
 
-                // Tell NavBar and other subscribers to re-render
+                _initialized = true; // Mark initialized so we don't overwrite on next call
                 OnAuthStateChanged?.Invoke();
-                return null; // null = success
+                return null;
             }
 
             if ((int)response.StatusCode == 403)
@@ -147,23 +153,15 @@ public class AuthService
         }
     }
 
-    // POST /api/auth/register
-    // Returns null on success, error message string on failure
     public async Task<string?> RegisterAsync(string username, string email, string password)
     {
         try
         {
-            var response = await _http.PostAsJsonAsync("/api/auth/register", new
-            {
-                username,
-                email,
-                password
-            });
+            var response = await _http.PostAsJsonAsync("/api/auth/register",
+                new { username, email, password });
 
-            if (response.IsSuccessStatusCode)
-                return null; // null = success
+            if (response.IsSuccessStatusCode) return null;
 
-            // Try to read the error message from the response body
             var body = await response.Content.ReadFromJsonAsync<JsonElement>();
             if (body.TryGetProperty("message", out var msg))
                 return msg.GetString();
@@ -176,11 +174,11 @@ public class AuthService
         }
     }
 
-    // Clears token and user info, fires state change
     public async Task LogoutAsync()
     {
         await _js.InvokeVoidAsync("tcpkAuth.clearAll");
         _currentUser = new UserInfo();
+        _initialized = true; // Still mark initialized — we know the state (logged out)
         OnAuthStateChanged?.Invoke();
     }
 }

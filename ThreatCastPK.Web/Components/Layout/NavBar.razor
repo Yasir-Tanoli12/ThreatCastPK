@@ -573,16 +573,28 @@
         .avatar-name { display: none; }
     }
 </style>
+@* Replace only the @code block in your NavBar.razor with this *@
 
 @code {
     private bool _dropdownOpen = false;
     private bool _mobileOpen = false;
+    private bool _ready = false; // hides auth UI until localStorage is read
     private System.Threading.CancellationTokenSource? _closeCts;
 
     protected override void OnInitialized()
     {
         AuthService.OnAuthStateChanged += OnStateChanged;
         NotificationService.OnChange += OnStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AuthService.InitializeAsync();
+            _ready = true;
+            StateHasChanged();
+        }
     }
 
     private void OpenDropdown()
@@ -603,10 +615,7 @@
         });
     }
 
-    private void CancelClose()
-    {
-        _closeCts?.Cancel();
-    }
+    private void CancelClose() => _closeCts?.Cancel();
 
     private void ToggleDropdown()
     {
@@ -621,8 +630,8 @@
         if (_mobileOpen) _dropdownOpen = false;
     }
 
-    private void CloseDropdown() { _dropdownOpen = false; }
-    private void CloseMobileMenu() { _mobileOpen = false; }
+    private void CloseDropdown()   => _dropdownOpen = false;
+    private void CloseMobileMenu() => _mobileOpen = false;
     private void CloseAll() { _dropdownOpen = false; _mobileOpen = false; }
 
     private async Task Logout()

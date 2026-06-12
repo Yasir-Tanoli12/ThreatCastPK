@@ -7,45 +7,62 @@ namespace ThreatCastPK.Web.Services;
 public class ThreatCastAuthStateProvider : AuthenticationStateProvider
 {
     private readonly AuthService _authService;
+    private bool _initialized = false;
+    private readonly SemaphoreSlim _initLock = new(1, 1);
 
     public ThreatCastAuthStateProvider(AuthService authService)
     {
         _authService = authService;
-
-        // When AuthService says login/logout happened,
-        // tell Blazor to re-evaluate auth state everywhere
         _authService.OnAuthStateChanged += NotifyAuthStateChanged;
     }
 
-    // Blazor calls this whenever it needs to know who is logged in.
-    // We build a ClaimsPrincipal from our AuthService's in-memory state.
-    public override Task<AuthenticationState> GetAuthenticationStateAsync()
+    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
+        // If AuthService hasn't loaded from localStorage yet, do it now.
+        // SemaphoreSlim prevents multiple simultaneous calls from initializing twice.
+        if (!_initialized)
+        {
+            await _initLock.WaitAsync();
+            try
+            {
+                if (!_initialized)
+                {
+                    await _authService.InitializeAsync();
+                    _initialized = true;
+                }
+            }
+            finally
+            {
+                _initLock.Release();
+            }
+        }
+
         var user = _authService.GetCurrentUser();
 
         if (!user.IsLoggedIn)
         {
             var anonymous = new ClaimsPrincipal(new ClaimsIdentity());
-            return Task.FromResult(new AuthenticationState(anonymous));
+            return new AuthenticationState(anonymous);
         }
 
         var claims = new[]
         {
-        new Claim(ClaimTypes.NameIdentifier, user.UserId ?? ""),
-        new Claim(ClaimTypes.Name, user.Username),
-        new Claim(ClaimTypes.Role, user.Role)
-    };
+            new Claim(ClaimTypes.NameIdentifier, user.UserId ?? ""),
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Role, user.Role)
+        };
 
         var identity = new ClaimsIdentity(claims, authenticationType: "jwt");
         var principal = new ClaimsPrincipal(identity);
 
-        return Task.FromResult(new AuthenticationState(principal));
+        return new AuthenticationState(principal);
     }
 
-    // Called by AuthService.OnAuthStateChanged
-    // Triggers Blazor to re-check auth on NavBar, pages with [Authorize], etc.
+    // Also mark initialized when AuthService explicitly notifies —
+    // covers the login/logout flow so we don't re-initialize after login
     private void NotifyAuthStateChanged()
     {
+        _initialized = true;
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 }
