@@ -497,7 +497,7 @@
                     {
                         var level = i;
                         <button type="button"
-                                class="sev-btn @(_formMinSeverity == level ? "sev-active sev-active-@level" : "")"
+                                class="sev-btn @(_formMinSeverity == level ? $"sev-active sev-active-{level}" : "")"
                                 @onclick="() => _formMinSeverity = level">
                             <span class="sev-num">@level</span>
                             <span class="sev-lbl">@GetSeverityLabel(level)</span>
