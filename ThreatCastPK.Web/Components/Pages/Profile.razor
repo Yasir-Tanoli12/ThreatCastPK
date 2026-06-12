@@ -200,9 +200,16 @@
                                     <span class="vf-value">@_profile.Email</span>
                                 </div>
                                 <div class="view-field">
-                                    <span class="vf-label">PASSWORD</span>
-                                    <span class="vf-value">••••••••••••</span>
-                                </div>
+    <span class="vf-label">PASSWORD</span>
+    @if (_profile.IsGoogleLinked)
+    {
+        <span class="vf-value" style="color:#6e7681;font-size:11px;">Managed by Google</span>
+    }
+    else
+    {
+        <span class="vf-value">••••••••••••</span>
+    }
+</div>
                                 <div class="view-field">
                                     <span class="vf-label">ROLE</span>
                                     <span class="vf-value">
@@ -251,6 +258,74 @@
                                                disabled="@_saveLoading" />
                                     </div>
                                 </div>
+
+                                @if (!_profile!.IsGoogleLinked)
+{
+    <div class="field-group">
+        <label class="field-label">
+            <span class="label-idx">03</span>
+            CURRENT PASSWORD
+        </label>
+        <div class="input-wrapper @(_pwFocusCurrent ? "focused" : "")">
+            <span class="input-pre">🔒</span>
+            <input type="password" class="field-input"
+       value="@_pwCurrent"
+       @oninput="e => { _pwCurrent = e.Value?.ToString() ?? string.Empty; }"
+       @onfocus="() => _pwFocusCurrent = true"
+       @onblur="() => _pwFocusCurrent = false"
+       placeholder="Leave blank to keep current"
+       disabled="@_pwLoading" />
+        </div>
+    </div>
+
+    <div class="field-group">
+        <label class="field-label">
+            <span class="label-idx">04</span>
+            NEW PASSWORD
+        </label>
+        <div class="input-wrapper @(_pwFocusNew ? "focused" : "")">
+            <span class="input-pre">◈</span>
+            <input type="password" class="field-input"
+       value="@_pwNew"
+       @oninput="e => { _pwNew = e.Value?.ToString() ?? string.Empty; }"
+       @onfocus="() => _pwFocusNew = true"
+       @onblur="() => _pwFocusNew = false"
+       placeholder="At least 8 characters"
+       disabled="@_pwLoading" />
+        </div>
+        @if (!string.IsNullOrEmpty(_pwNew))
+        {
+            var (css, label) = GetPwStrengthDisplay(_pwNew);
+            <div class="pw-strength-row">
+                <div class="pw-strength-track">
+                    <div class="pw-strength-fill @css"></div>
+                </div>
+                <span class="pw-strength-label @css">@label</span>
+            </div>
+        }
+    </div>
+
+    <div class="field-group">
+        <label class="field-label">
+            <span class="label-idx">05</span>
+            CONFIRM NEW PASSWORD
+        </label>
+        <div class="input-wrapper @(_pwFocusConfirm ? "focused" : "") @(!string.IsNullOrEmpty(_pwConfirm) && _pwNew != _pwConfirm ? "input-mismatch" : "")">
+            <span class="input-pre">◈</span>
+            <input type="password" class="field-input"
+       value="@_pwConfirm"
+       @oninput="e => { _pwConfirm = e.Value?.ToString() ?? string.Empty; }"
+       @onfocus="() => _pwFocusConfirm = true"
+       @onblur="() => _pwFocusConfirm = false"
+       placeholder="Repeat new password"
+       disabled="@_pwLoading" />
+        </div>
+        @if (!string.IsNullOrEmpty(_pwConfirm) && _pwNew != _pwConfirm)
+        {
+            <span class="field-error-hint">⚠ Passwords do not match</span>
+        }
+    </div>
+}
 
                                 @if (!string.IsNullOrEmpty(_saveError))
                                 {
@@ -501,6 +576,55 @@
         flex-direction: column;
         gap: 16px;
     }
+    /* ── Password strength meter ── */
+.pw-strength-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.pw-strength-track {
+    flex: 1;
+    height: 3px;
+    background: #21262d;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.pw-strength-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.pw-strength-fill.pw-weak   { width: 25%; background: #ff3e3e; }
+.pw-strength-fill.pw-fair   { width: 50%; background: #ffa500; }
+.pw-strength-fill.pw-good   { width: 75%; background: #00c8ff; }
+.pw-strength-fill.pw-strong { width: 100%; background: #9fef00; }
+
+.pw-strength-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+
+.pw-strength-label.pw-weak   { color: #ff3e3e; }
+.pw-strength-label.pw-fair   { color: #ffa500; }
+.pw-strength-label.pw-good   { color: #00c8ff; }
+.pw-strength-label.pw-strong { color: #9fef00; }
+
+.input-mismatch { border-color: rgba(255,62,62,0.5) !important; }
+
+.field-error-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: #ff3e3e;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+}
 
     /* ── Identity card ── */
     .avatar-section {
@@ -1106,6 +1230,15 @@
     private string _toastType = "toast-success";
     private bool _toastVisible = false;
 
+    // Password change state
+private string _pwCurrent = string.Empty;
+private string _pwNew = string.Empty;
+private string _pwConfirm = string.Empty;
+private bool _pwFocusCurrent = false;
+private bool _pwFocusNew = false;
+private bool _pwFocusConfirm = false;
+private bool _pwLoading = false;
+private string _pwError = string.Empty;
     protected override async Task OnAfterRenderAsync(bool firstRender)
 {
     if (firstRender)
@@ -1136,36 +1269,74 @@
     }
 
     private void CancelEdit()
-    {
-        _editMode = false;
-        _saveError = string.Empty;
-    }
+{
+    _editMode = false;
+    _saveError = string.Empty;
+    _pwCurrent = _pwNew = _pwConfirm = string.Empty;  // ← add this line
+}
 
     private async Task SaveProfile()
+{
+    _saveError = string.Empty;
+    if (string.IsNullOrWhiteSpace(_editUsername) || string.IsNullOrWhiteSpace(_editEmail))
     {
-        _saveError = string.Empty;
-        if (string.IsNullOrWhiteSpace(_editUsername) || string.IsNullOrWhiteSpace(_editEmail))
+        _saveError = "Username and email cannot be empty.";
+        return;
+    }
+
+    // Validate password fields only if the user typed something
+    bool changingPassword = !string.IsNullOrEmpty(_pwCurrent) || !string.IsNullOrEmpty(_pwNew);
+    if (changingPassword)
+    {
+        if (string.IsNullOrEmpty(_pwCurrent))
         {
-            _saveError = "Username and email cannot be empty.";
+            _saveError = "Enter your current password to set a new one.";
             return;
         }
-
-        _saveLoading = true;
-        var error = await ApiService.UpdateProfileAsync(_editUsername, _editEmail);
-        _saveLoading = false;
-
-        if (error != null)
+        if (_pwNew.Length < 8)
         {
-            _saveError = error;
+            _saveError = "New password must be at least 8 characters.";
+            return;
         }
-        else
+        if (_pwNew != _pwConfirm)
         {
-            _profile!.Username = _editUsername;
-            _profile.Email = _editEmail;
-            _editMode = false;
-            await ShowToast("Profile updated successfully.", "toast-success");
+            _saveError = "New passwords do not match.";
+            return;
         }
     }
+
+    _saveLoading = true;
+
+    // Save username/email
+    var error = await ApiService.UpdateProfileAsync(_editUsername, _editEmail);
+    if (error != null)
+    {
+        _saveError = error;
+        _saveLoading = false;
+        return;
+    }
+
+    // Save password if fields were filled
+    if (changingPassword)
+    {
+        var (success, message) = await ApiService.ChangePasswordAsync(_pwCurrent, _pwNew, _pwConfirm);
+        if (!success)
+        {
+            _saveError = message;
+            _saveLoading = false;
+            return;
+        }
+    }
+
+    _saveLoading = false;
+    _profile!.Username = _editUsername;
+    _profile.Email = _editEmail;
+    _pwCurrent = _pwNew = _pwConfirm = string.Empty;
+    _editMode = false;
+    await ShowToast(
+        changingPassword ? "Profile and password updated." : "Profile updated successfully.",
+        "toast-success");
+}
 
     private async Task RequestReporter()
     {
@@ -1239,4 +1410,53 @@
         >= 10  => "NOVICE",
         _      => "NEW"
     };
+    private bool CanSubmitPwChange() =>
+    !string.IsNullOrWhiteSpace(_pwCurrent) &&
+    _pwNew.Length >= 8 &&
+    _pwNew == _pwConfirm;
+
+private int GetPwStrength(string pwd)
+{
+    int s = 0;
+    if (pwd.Length >= 8) s++;
+    if (pwd.Any(char.IsUpper)) s++;
+    if (pwd.Any(char.IsDigit)) s++;
+    if (pwd.Any(ch => !char.IsLetterOrDigit(ch))) s++;
+    return s;
+}
+
+private (string css, string label) GetPwStrengthDisplay(string pwd)
+{
+    return GetPwStrength(pwd) switch
+    {
+        1 => ("pw-weak",   "WEAK"),
+        2 => ("pw-fair",   "FAIR"),
+        3 => ("pw-good",   "GOOD"),
+        _ => ("pw-strong", "STRONG")
+    };
+}
+
+private async Task HandleChangePassword()
+{
+    if (!CanSubmitPwChange()) return;
+
+    _pwLoading = true;
+    _pwError = string.Empty;
+
+    var (success, message) = await ApiService.ChangePasswordAsync(_pwCurrent, _pwNew, _pwConfirm);
+
+    _pwLoading = false;
+
+    if (success)
+    {
+        _pwCurrent = _pwNew = _pwConfirm = string.Empty;
+        await ShowToast("Password updated successfully.", "toast-success");
+    }
+    else
+    {
+        _pwError = message;
+    }
+
+    StateHasChanged();
+}
 }

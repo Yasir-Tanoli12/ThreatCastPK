@@ -158,6 +158,17 @@ public class ApiService
             return $"Request failed: {ex.Message}";
         }
     }
+    public async Task<(bool Success, string Message)> ChangePasswordAsync(
+    string currentPassword, string newPassword, string confirmNewPassword)
+    {
+        var payload = new { currentPassword, newPassword, confirmNewPassword };
+        var error = await PutAsync("/api/profile/change-password", payload);
+
+        if (error == null)
+            return (true, "Password updated successfully.");
+
+        return (false, error);
+    }
 
     public async Task<string?> DeleteAsync(string url)
     {
@@ -324,6 +335,7 @@ public class ProfileResponse
     public int ReputationScore { get; set; }
     public bool ReporterRequestPending { get; set; }
     public DateTime JoinDate { get; set; }
+    public bool IsGoogleLinked { get; set; }
 }
 
 public class ReportResponse
@@ -477,4 +489,9 @@ public class CampaignResponseDTO
     public string AffectedSectors { get; set; } = string.Empty;
     public int ReportCount { get; set; }
     public string AlertLevel { get; set; } = string.Empty;
+}
+// Add this small class anywhere in ApiService.cs or a shared file:
+public class MessageResponse
+{
+    public string Message { get; set; } = string.Empty;
 }

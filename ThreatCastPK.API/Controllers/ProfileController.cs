@@ -37,7 +37,8 @@ namespace ThreatCastPK.API.Controllers
                 Role = user.Role.ToString(),
                 ReputationScore = user.ReputationScore,
                 ReporterRequestPending = user.ReporterRequestPending,
-                JoinDate = user.JoinDate
+                JoinDate = user.JoinDate,
+                IsGoogleLinked = !string.IsNullOrEmpty(user.GoogleId)
             });
         }
 
@@ -90,6 +91,37 @@ namespace ThreatCastPK.API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Reporter status request submitted. Admin will review your request." });
+        }
+        // PUT /api/profile/change-password
+        [HttpPut("change-password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null)
+                return NotFound(new { message = "User not found." });
+
+            // Block Google-linked accounts
+            if (!string.IsNullOrEmpty(user.GoogleId))
+                return BadRequest(new { message = "Password change is not available for accounts linked via Google." });
+
+            // Verify current password
+            if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
+                return BadRequest(new { message = "Current password is incorrect." });
+
+            // Validate new password
+            if (dto.NewPassword.Length < 8)
+                return BadRequest(new { message = "New password must be at least 8 characters." });
+
+            if (dto.NewPassword == dto.CurrentPassword)
+                return BadRequest(new { message = "New password must be different from current password." });
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Password updated successfully." });
         }
     }
 }
