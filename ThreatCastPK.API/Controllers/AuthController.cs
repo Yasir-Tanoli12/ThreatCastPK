@@ -268,5 +268,99 @@ namespace ThreatCastPK.API.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+        // POST /api/auth/forgot-password
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDTO dto)
+        {
+            var normalizedEmail = dto.Email.Trim().ToLower();
+
+            // Always return 200 — never reveal whether email exists
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+
+            if (user != null && user.IsEmailVerified)
+            {
+                var token = Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+                    .Replace("+", "-").Replace("/", "_").Replace("=", "");
+
+                user.PasswordResetToken = token;
+                user.PasswordResetExpiry = DateTime.UtcNow.AddHours(1);
+                await _context.SaveChangesAsync();
+
+                var apiBase = _configuration["App:BaseUrl"] ?? "https://localhost:7001";
+                var blazorBase = _configuration["App:BlazorBaseUrl"] ?? "https://localhost:5262";
+                var resetUrl = $"{blazorBase}/reset-password?token={token}&email={Uri.EscapeDataString(normalizedEmail)}";
+
+                var emailHtml = $"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: #0f172a; padding: 24px; border-radius: 8px 8px 0 0;">
+                    <h1 style="color: #22d3ee; margin: 0;">ThreatCast PK</h1>
+                    <p style="color: #94a3b8; margin: 4px 0 0;">Live Cyberattack Intelligence for Pakistan</p>
+                </div>
+                <div style="background: #1e293b; padding: 32px; border-radius: 0 0 8px 8px;">
+                    <h2 style="color: #f1f5f9;">Reset your password</h2>
+                    <p style="color: #94a3b8;">Hi {user.Username}, click the button below to reset your password.</p>
+                    <a href="{resetUrl}"
+                       style="display: inline-block; background: #22d3ee; color: #0f172a;
+                              padding: 12px 28px; border-radius: 6px; text-decoration: none;
+                              font-weight: bold; margin: 16px 0;">
+                        Reset Password
+                    </a>
+                    <p style="color: #64748b; font-size: 13px;">This link expires in 1 hour. If you didn't request this, ignore this email — your password won't change.</p>
+                    <p style="color: #64748b; font-size: 12px;">Or copy this link: {resetUrl}</p>
+                </div>
+            </div>
+            """;
+
+                await _emailService.SendAsync(normalizedEmail, "ThreatCast PK — Reset your password", emailHtml);
+            }
+
+            return Ok(new { message = "If that email is registered and verified, a reset link has been sent." });
+        }
+
+        // POST /api/auth/reset-password
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 8)
+                return BadRequest(new { message = "Password must be at least 8 characters." });
+
+            var normalizedEmail = dto.Email.Trim().ToLower();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u =>
+                u.Email == normalizedEmail &&
+                u.PasswordResetToken == dto.Token);
+
+            if (user == null)
+                return BadRequest(new { message = "Invalid or expired reset link." });
+
+            if (user.PasswordResetExpiry < DateTime.UtcNow)
+                return BadRequest(new { message = "This reset link has expired. Please request a new one." });
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            user.PasswordResetToken = null;
+            user.PasswordResetExpiry = null;
+            await _context.SaveChangesAsync();
+
+            // Notify user that password was changed
+            _ = Task.Run(async () =>
+            {
+                var emailHtml = $"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: #0f172a; padding: 24px; border-radius: 8px 8px 0 0;">
+                    <h1 style="color: #22d3ee; margin: 0;">ThreatCast PK</h1>
+                </div>
+                <div style="background: #1e293b; padding: 32px; border-radius: 0 0 8px 8px;">
+                    <h2 style="color: #f1f5f9;">Password changed successfully</h2>
+                    <p style="color: #94a3b8;">Hi {user.Username}, your password was just changed.</p>
+                    <p style="color: #94a3b8;">Time: {DateTime.UtcNow:dd MMM yyyy, HH:mm} UTC</p>
+                    <p style="color: #ef4444; font-size: 13px;">If you didn't do this, contact support immediately.</p>
+                </div>
+            </div>
+            """;
+                await _emailService.SendAsync(user.Email, "ThreatCast PK — Password changed", emailHtml);
+            });
+
+            return Ok(new { message = "Password reset successfully. You can now log in." });
+        }
     }
 }

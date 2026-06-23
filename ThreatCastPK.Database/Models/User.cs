@@ -25,5 +25,7 @@ namespace ThreatCastPK.Database.Models
         public ICollection<DiscussionPost> DiscussionPosts { get; set; } = new List<DiscussionPost>();
         public ICollection<ThreatAdvisory> ThreatAdvisories { get; set; } = new List<ThreatAdvisory>();
         public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+        public string? PasswordResetToken { get; set; }
+        public DateTime? PasswordResetExpiry { get; set; }
     }
 }

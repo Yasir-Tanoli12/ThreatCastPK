@@ -189,6 +189,9 @@
                                 @onclick="() => _showPassword = !_showPassword">
                             @(_showPassword ? "HIDE" : "SHOW")
                         </button>
+                        <div class="forgot-row">
+    <a href="/forgot-password" class="forgot-link">Forgot password?</a>
+</div>
                     </div>
                 </div>
 
@@ -577,7 +580,21 @@
         color: #6e7681;
         font-family: 'IBM Plex Mono', monospace;
     }
+    .forgot-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -8px;
+}
 
+.forgot-link {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #4a5160;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.forgot-link:hover { color: #9fef00; }
     /* ── Banners ── */
     .error-banner {
         display: flex;

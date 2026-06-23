@@ -181,8 +181,22 @@
                             <span class="ca-title">COORDINATED ATTACK CAMPAIGN DETECTED (Alert Level: @campaign.AlertLevel.ToUpper())</span>
                         </div>
                         <div class="ca-details">
-                            ML engine isolated anomaly patterns originating from IP block <strong>@campaign.IpRange</strong>.
-                            Targeting sectors: <strong>@campaign.AffectedSectors</strong> in cities: <strong>@campaign.AffectedCities</strong>.
+                            @if (campaign.AnomalyCount > 0)
+                            {
+                                <span>ML engine flagged @campaign.AnomalyCount anomalous events out of @campaign.TotalEvents analyzed. </span>
+                            }
+                            @if (!string.IsNullOrEmpty(campaign.AffectedSectors))
+                            {
+                                <span>Targeting: <strong>@campaign.AffectedSectors</strong>. </span>
+                            }
+                            @if (!string.IsNullOrEmpty(campaign.AffectedCities))
+                            {
+                                <span>Cities: <strong>@campaign.AffectedCities</strong>. </span>
+                            }
+                            @if (!string.IsNullOrEmpty(campaign.IpRange) && campaign.IpRange != "Multiple")
+                            {
+                                <span>IP block: <strong>@campaign.IpRange</strong>.</span>
+                            }
                         </div>
                     </div>
                 }
@@ -1166,7 +1180,8 @@
                     AffectedCities = c.AffectedCities,
                     AffectedSectors = c.AffectedSectors,
                     ReportCount = c.ReportCount,
-                    AlertLevel = c.AlertLevel
+                    AlertLevel = c.AlertLevel,
+                    // SignalR fields default to 0/empty for API-loaded campaigns — that's fine
                 }).ToList();
             }
 
@@ -1230,7 +1245,7 @@
         try
         {
             await JS.InvokeVoidAsync("tcpkMap.addHeatPoint",
-                payload.Latitude, payload.Longitude, payload.Severity, payload.AttackType);
+    payload.Latitude, payload.Longitude, payload.Severity, payload.AttackType, payload.City);
         }
         catch { }
 

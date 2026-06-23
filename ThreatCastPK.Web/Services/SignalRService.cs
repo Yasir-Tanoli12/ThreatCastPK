@@ -19,13 +19,17 @@ public class AttackEventPayload
 
 public class ThreatCampaignPayload
 {
-    public Guid Id { get; set; }
-    public string IpRange { get; set; } = string.Empty;
-    public DateTime DetectedAt { get; set; }
+    // Fields from SignalR broadcast (CampaignDetected)
+    public string AlertLevel { get; set; } = string.Empty;
+    public int AnomalyCount { get; set; }
+    public int TotalEvents { get; set; }
     public string AffectedCities { get; set; } = string.Empty;
     public string AffectedSectors { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public DateTime DetectedAt { get; set; }
+    public Guid Id { get; set; }
+    public string IpRange { get; set; } = string.Empty;
     public int ReportCount { get; set; }
-    public string AlertLevel { get; set; } = string.Empty;
 }
 
 public class SignalRService : IAsyncDisposable
@@ -82,7 +86,7 @@ public class SignalRService : IAsyncDisposable
         });
 
         // Register campaign listener
-        _connection.On<ThreatCampaignPayload>("NewThreatCampaign", async payload =>
+        _connection.On<ThreatCampaignPayload>("CampaignDetected", async payload =>
         {
             if (OnNewThreatCampaign != null)
                 await OnNewThreatCampaign.Invoke(payload);
