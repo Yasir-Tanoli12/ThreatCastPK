@@ -282,7 +282,26 @@ public class ApiService
 
     public Task<(List<NotificationResponseDTO>? Data, string? Error)> GetNotificationsAsync()
         => GetAsync<List<NotificationResponseDTO>>("/api/notifications");
+    public Task<string?> UpvotePostAsync(Guid id)
+    => PutAsync($"/api/forum/posts/{id}/upvote");
 
+    public Task<string?> DownvotePostAsync(Guid id)
+        => PutAsync($"/api/forum/posts/{id}/downvote");
+
+    public Task<string?> TogglePinPostAsync(Guid id)
+        => PutAsync($"/api/forum/posts/{id}/pin");
+
+    public Task<string?> FlagPostAsync(Guid id, string reason)
+        => PutAsync($"/api/forum/posts/{id}/flag", new { reason });
+
+    public Task<(List<PostResponseDTO>? Data, string? Error)> GetForumPostsAsync(
+        string? category = null, string sort = "new")
+    {
+        var url = "/api/forum/posts?sort=" + sort;
+        if (!string.IsNullOrEmpty(category) && category != "All")
+            url += $"&category={Uri.EscapeDataString(category)}";
+        return GetAsync<List<PostResponseDTO>>(url);
+    }
     private static async Task<string> ReadErrorAsync(HttpResponseMessage response)
     {
         try
@@ -446,6 +465,11 @@ public class PostResponseDTO
     public string AuthorRole { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public int ReplyCount { get; set; }
+    public int Upvotes { get; set; }
+    public int Downvotes { get; set; }
+    public int ViewCount { get; set; }
+    public bool IsPinned { get; set; }
+    public bool IsFlagged { get; set; }
     public List<ReplyResponseDTO> Replies { get; set; } = new();
 }
 
@@ -456,6 +480,8 @@ public class ReplyResponseDTO
     public string AuthorUsername { get; set; } = string.Empty;
     public string AuthorRole { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public int Upvotes { get; set; }
+    public int Downvotes { get; set; }
 }
 
 public class MapEventResponse

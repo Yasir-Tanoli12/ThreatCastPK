@@ -23,5 +23,11 @@
         // Navigation properties
         public User User { get; set; } = null!;
         public DiscussionPost? ParentPost { get; set; }
+        public int Upvotes { get; set; } = 0;
+        public int Downvotes { get; set; } = 0;
+        public int ViewCount { get; set; } = 0;
+        public bool IsPinned { get; set; } = false;
+        public bool IsFlagged { get; set; } = false;
+        public string? FlagReason { get; set; }
     }
 }

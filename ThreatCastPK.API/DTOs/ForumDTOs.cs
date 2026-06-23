@@ -24,6 +24,11 @@ public class PostResponseDTO
     public DateTime CreatedAt { get; set; }
     public int ReplyCount { get; set; }
     public List<ReplyResponseDTO> Replies { get; set; } = new();
+    public int Upvotes { get; set; }
+    public int Downvotes { get; set; }
+    public int ViewCount { get; set; }
+    public bool IsPinned { get; set; }
+    public bool IsFlagged { get; set; }
 }
 
 public class ReplyResponseDTO
@@ -33,4 +38,10 @@ public class ReplyResponseDTO
     public string AuthorUsername { get; set; } = string.Empty;
     public string AuthorRole { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public int Upvotes { get; set; }
+    public int Downvotes { get; set; }
+}
+public class FlagPostDTO
+{
+    public string Reason { get; set; } = string.Empty;
 }
