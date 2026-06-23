@@ -1236,26 +1236,26 @@
     // ── Submit ──
 
     private async Task HandleRegister()
+{
+    _errorMessage = string.Empty;
+    if (!CanSubmit()) return;
+
+    _loading = true;
+    StateHasChanged();
+
+    var error = await AuthService.RegisterAsync(_username, _email, _password);
+
+    if (error == null)
     {
-        _errorMessage = string.Empty;
-        if (!CanSubmit()) return;
-
-        _loading = true;
-        StateHasChanged();
-
-        var error = await AuthService.RegisterAsync(_username, _email, _password);
-
-        if (error == null)
-        {
-            // Redirect to login with success message
-            Navigation.NavigateTo("/login?registered=1");
-        }
-        else
-        {
-            _loading = false;
-            await TriggerShake(error);
-        }
+        // Account created but needs email verification — send to login with that message
+        Navigation.NavigateTo("/login?registered=1&email=" + Uri.EscapeDataString(_email));
     }
+    else
+    {
+        _loading = false;
+        await TriggerShake(error);
+    }
+}
     private string NextBtnClass() => 
     CanGoToStep2() ? "next-btn" : "next-btn btn-disabled";
 

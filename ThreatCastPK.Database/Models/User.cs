@@ -14,6 +14,9 @@ namespace ThreatCastPK.Database.Models
         public bool IsSuspended { get; set; } = false;
         public bool ReporterRequestPending { get; set; } = false;
         public DateTime JoinDate { get; set; } = DateTime.UtcNow;
+        public bool IsEmailVerified { get; set; } = false;
+        public string? EmailVerificationToken { get; set; }
+        public DateTime? EmailVerificationExpiry { get; set; }
 
         // Navigation properties
         public ICollection<AttackReport> AttackReports { get; set; } = new List<AttackReport>();

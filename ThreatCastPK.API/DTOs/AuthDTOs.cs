@@ -21,4 +21,8 @@
         public string Role { get; set; } = string.Empty;
         public string UserId { get; set; } = string.Empty;
     }
+    public class ResendVerificationDTO
+    {
+        public string Email { get; set; } = string.Empty;
+    }
 }

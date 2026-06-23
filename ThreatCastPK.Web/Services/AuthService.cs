@@ -114,7 +114,7 @@ public class AuthService
         catch { return null; }
     }
 
-    public async Task<string?> LoginAsync(string email, string password)
+    public async Task<(string? error, string? errorCode)> LoginAsync(string email, string password)
     {
         try
         {
@@ -123,7 +123,7 @@ public class AuthService
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
-                if (result == null) return "Unexpected response from server.";
+                if (result == null) return ("Unexpected response from server.", null);
 
                 await _js.InvokeVoidAsync("tcpkAuth.clearAll");
                 await _js.InvokeVoidAsync("tcpkAuth.setToken", result.Token);
@@ -138,19 +138,44 @@ public class AuthService
                     IsLoggedIn = true
                 };
 
-                _initialized = true; // Mark initialized so we don't overwrite on next call
+                _initialized = true;
                 OnAuthStateChanged?.Invoke();
-                return null;
+                return (null, null);  // success
             }
 
-            if ((int)response.StatusCode == 403)
-                return "Your account has been suspended.";
-
-            return "Invalid email or password.";
+            // Read the error body to check for error code
+            try
+            {
+                var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+                var message = body.TryGetProperty("message", out var msg)
+                    ? msg.GetString()
+                    : "Invalid email or password.";
+                var code = body.TryGetProperty("code", out var c)
+                    ? c.GetString()
+                    : null;
+                return (message, code);
+            }
+            catch
+            {
+                return ("Invalid email or password.", null);
+            }
         }
         catch
         {
-            return "Unable to reach the server. Please try again.";
+            return ("Unable to reach the server. Please try again.", null);
+        }
+    }
+
+    public async Task<bool> ResendVerificationAsync(string email)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/api/auth/resend-verification", new { email });
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
         }
     }
 

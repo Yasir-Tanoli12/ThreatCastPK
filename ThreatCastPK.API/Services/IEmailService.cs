@@ -1,6 +1,6 @@
-﻿namespace ThreatCastPK.API.Services
+﻿namespace ThreatCastPK.API.Services;
+
+public interface IEmailService
 {
-    public class Class
-    {
-    }
+    Task SendAsync(string toEmail, string subject, string htmlBody);
 }

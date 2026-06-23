@@ -103,6 +103,13 @@
                 </div>
                 <p class="form-subtitle">Access the intelligence dashboard</p>
             </div>
+            @if (ShowVerifiedBanner)
+{
+   <div class="success-banner">
+    <span class="success-icon">✓</span>
+    <span>Email verified successfully! You can now log in.</span>
+</div>
+}
 
             @if (!string.IsNullOrEmpty(_errorMessage))
             {
@@ -111,7 +118,26 @@
                     <span>@_errorMessage</span>
                 </div>
             }
-
+            @if (_showResendLink)
+{
+    <div class="resend-banner">
+        <span>Didn't get the email?</span>
+        @if (_resendLoading)
+        {
+            <span class="resend-sending">Sending...</span>
+        }
+        else
+        {
+            <button class="resend-btn" @onclick="HandleResendVerification">
+                Resend verification email
+            </button>
+        }
+        @if (!string.IsNullOrEmpty(_resendMessage))
+        {
+            <span class="resend-result">@_resendMessage</span>
+        }
+    </div>
+}
             @if (!string.IsNullOrEmpty(_successMessage))
             {
                 <div class="success-banner">
@@ -583,6 +609,39 @@
 
     .success-icon { flex-shrink: 0; }
 
+    .resend-banner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 28px;
+    background: rgba(255, 165, 0, 0.06);
+    border-bottom: 1px solid rgba(255, 165, 0, 0.2);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #ffa500;
+}
+
+.resend-btn {
+    background: none;
+    border: 1px solid rgba(255, 165, 0, 0.4);
+    border-radius: 3px;
+    padding: 3px 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #ffa500;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.resend-btn:hover {
+    background: rgba(255, 165, 0, 0.1);
+    border-color: #ffa500;
+}
+
+.resend-sending { color: #6e7681; font-style: italic; }
+.resend-result  { color: #9fef00; }
+
     /* ── Form body ── */
     .form-body {
         padding: 28px;
@@ -821,6 +880,11 @@
 </style>
 
 @code {
+    [SupplyParameterFromQuery(Name = "verified")]
+    public string? Verified { get; set; }
+
+    private bool ShowVerifiedBanner => Verified == "true";
+
     private string _email = string.Empty;
     private string _password = string.Empty;
     private string _errorMessage = string.Empty;
@@ -830,15 +894,22 @@
     private bool _showPassword = false;
     private bool _emailFocused = false;
     private bool _passFocused = false;
+    private bool _showResendLink = false;      // shown when email not verified
+    private bool _resendLoading = false;
+    private string _resendMessage = string.Empty;
     private string GoogleLoginUrl => $"{Configuration["ApiBaseUrl"]}/api/auth/google-login";
 
     protected override void OnInitialized()
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers
-            .ParseQuery(uri.Query);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
         if (query.TryGetValue("registered", out var val) && val == "1")
-            _successMessage = "Account created successfully. Please sign in.";
+            _successMessage = "Account created! Check your email and click the verification link before signing in.";
+
+        // Pre-fill email if passed from register page
+        if (query.TryGetValue("email", out var emailVal))
+            _email = emailVal.ToString();
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
@@ -850,6 +921,8 @@
     {
         _errorMessage = string.Empty;
         _successMessage = string.Empty;
+        _showResendLink = false;
+        _resendMessage = string.Empty;
 
         if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
         {
@@ -860,18 +933,44 @@
         _loading = true;
         StateHasChanged();
 
-        var error = await AuthService.LoginAsync(_email, _password);
+        var (error, errorCode) = await AuthService.LoginAsync(_email, _password);
 
         if (error == null)
         {
-            // Redirect to home map on success
             Navigation.NavigateTo("/");
         }
         else
         {
             _loading = false;
-            await TriggerShake(error);
+
+            // Special handling for unverified email
+            if (errorCode == "EMAIL_NOT_VERIFIED")
+            {
+                _showResendLink = true;
+                await TriggerShake("Email not verified. Check your inbox or resend the link below.");
+            }
+            else
+            {
+                await TriggerShake(error);
+            }
         }
+    }
+
+    private async Task HandleResendVerification()
+    {
+        if (string.IsNullOrWhiteSpace(_email)) return;
+
+        _resendLoading = true;
+        _resendMessage = string.Empty;
+        StateHasChanged();
+
+        var success = await AuthService.ResendVerificationAsync(_email);
+
+        _resendLoading = false;
+        _resendMessage = success
+            ? "✓ Verification link sent. Check your inbox."
+            : "Failed to send. Try again in a moment.";
+        StateHasChanged();
     }
 
     private async Task TriggerShake(string message)
