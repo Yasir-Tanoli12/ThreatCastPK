@@ -82,7 +82,8 @@ builder.Services.AddAuthentication(options =>
                 PasswordHash = null,
                 GoogleId = googleId,
                 Role = UserRole.Registered,
-                JoinDate = DateTime.UtcNow
+                JoinDate = DateTime.UtcNow,
+                IsEmailVerified = true
             };
             db.Users.Add(user);
             await db.SaveChangesAsync();
@@ -139,8 +140,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient<ThreatCastPK.API.Services.AbuseIPDBService>();
-builder.Services.AddHttpClient<MLService>();
-builder.Services.AddHostedService<CampaignDetectionBackgroundService>();
+builder.Services.AddHttpClient<IEmailService, EmailService>();
 builder.Services.AddHttpClient<GreyNoiseService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -148,7 +148,8 @@ builder.Services.AddSingleton<NotificationChannel>();
 builder.Services.AddHostedService<NotificationDispatchService>();
 builder.Services.AddHostedService<SectorRiskScoringService>();
 builder.Services.AddHttpClient<ThreatCastPK.API.Services.MLService>();
-builder.Services.AddHostedService<ThreatCastPK.API.BackgroundServices.CampaignDetectionBackgroundService>();
+builder.Services.AddHostedService<CampaignDetectionBackgroundService>();
+builder.Services.AddHostedService<PakistanThreatFeedService>();
 
 var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys");
 Directory.CreateDirectory(keysFolder);

@@ -19,5 +19,7 @@ namespace ThreatCastPK.Database.Models
         public Location Location { get; set; } = null!;
         public AttackReport? AttackReport { get; set; }
         public ThreatCampaign? ThreatCampaign { get; set; }
+        public string? SourceIP { get; set; }
+        public string? GreyNoiseClassification { get; set; }
     }
 }
