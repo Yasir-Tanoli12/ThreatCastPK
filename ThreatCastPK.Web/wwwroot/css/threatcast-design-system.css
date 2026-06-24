@@ -714,7 +714,36 @@
     border-radius: 50%;
     animation: tc-spin 0.7s linear infinite;
 }
+/* ── BADGE ADDITIONS ── */
+.tc-badge--malware {
+    background: rgba(191,64,191,0.1);
+    color: #bf40bf;
+    border-color: rgba(191,64,191,0.2);
+}
 
+.tc-badge--identity {
+    background: rgba(255,165,0,0.1);
+    color: #ffa500;
+    border-color: rgba(255,165,0,0.2);
+}
+
+/* ── SCROLLBAR UTILITY ── */
+.tc-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.tc-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tc-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--tc-border);
+    border-radius: 2px;
+}
+
+    .tc-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: var(--tc-border-emphasis);
+    }
 /* ── 15. ANIMATIONS ───────────────────────────────────────────────────── */
 @keyframes tc-scanline {
     0% {

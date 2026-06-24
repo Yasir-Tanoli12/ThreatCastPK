@@ -11,82 +11,84 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-
-@* Leaflet CSS *@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<div class="dash-root">
+<div class="dash">
 
-    @* ── Left sidebar — live ticker ── *@
-    <aside class="dash-sidebar">
+    @* ═══════ LEFT SIDEBAR ═══════ *@
+    <aside class="dash-sidebar tc-scrollbar">
 
-        <div class="sidebar-header">
-            <div class="sh-brand">
-                <span class="sh-hex">◈</span>
-                <span class="sh-name">ThreatCast<span class="sh-pk">PK</span></span>
+        @* ── Brand header ── *@
+        <div class="sb-header">
+            <div class="sb-brand">
+                <span class="sb-brand__icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                        <path d="m9 12 2 2 4-4" />
+                    </svg>
+                </span>
+                <span class="sb-brand__name">ThreatCast<span class="sb-brand__pk">PK</span></span>
             </div>
-            <div class="sh-live">
-                <span class="live-dot"></span>
-                <span class="live-label">LIVE</span>
+            <div class="sb-live-badge">
+                <span class="sb-live-badge__dot"></span>
+                LIVE
             </div>
         </div>
 
-        @* Stats strip *@
-        <div class="sidebar-stats">
-            <div class="stat-mini">
-                <span class="sm-val green">@_totalEvents</span>
-                <span class="sm-label">TODAY</span>
+        @* ── Stats row ── *@
+        <div class="sb-stats">
+            <div class="sb-stat sb-stat--green">
+                <span class="sb-stat__val">@_totalEvents</span>
+                <span class="sb-stat__label">TODAY</span>
             </div>
-            <div class="stat-mini-div"></div>
-            <div class="stat-mini">
-                <span class="sm-val blue">@_activeNow</span>
-                <span class="sm-label">ACTIVE</span>
+            <div class="sb-stat sb-stat--cyan">
+                <span class="sb-stat__val">@_activeNow</span>
+                <span class="sb-stat__label">ACTIVE</span>
             </div>
-            <div class="stat-mini-div"></div>
-            <div class="stat-mini">
-                <span class="sm-val orange">@_cities</span>
-                <span class="sm-label">CITIES</span>
+            <div class="sb-stat sb-stat--orange">
+                <span class="sb-stat__val">@_cities</span>
+                <span class="sb-stat__label">CITIES</span>
             </div>
         </div>
 
-        @* Live ticker *@
-        <div class="ticker-section">
-            <div class="ts-header">
-                <span class="ts-label">LIVE FEED</span>
-                <span class="ts-count">@_tickerItems.Count events</span>
+        @* ── Live feed ticker ── *@
+        <div class="sb-feed">
+            <div class="sb-feed__header">
+                <div class="sb-feed__title">
+                    <span class="sb-feed__dot"></span>
+                    <span>LIVE FEED</span>
+                </div>
+                <span class="sb-feed__count">@_tickerItems.Count events</span>
             </div>
 
             @if (_tickerItems.Count == 0)
             {
-                <div class="ticker-empty">
-                    <div class="te-dot"></div>
-                    <span>Monitoring for threats...</span>
+                <div class="sb-feed__empty">
+                    <span class="sb-feed__empty-pulse"></span>
+                    <span>Monitoring for threats…</span>
                 </div>
             }
             else
             {
-                <div class="ticker-list">
+                <div class="sb-feed__list tc-scrollbar">
                     @foreach (var item in _tickerItems.Take(30))
                     {
-                        <div class="ticker-item @(item.IsNew ? "ti-new" : "")">
-                            <div class="ti-left">
-                                <div class="ti-bar sev-bar-@item.Severity"></div>
-                                <div class="ti-info">
-                                    <div class="ti-type-row">
-                                        <span class="ti-type chip-@item.AttackType.ToLower().Replace(" ", "")">
-                                            @GetAttackIcon(item.AttackType) @item.AttackType
-                                        </span>
-                                    </div>
-                                    <div class="ti-meta-row">
-                                        <span class="ti-city">@item.City</span>
-                                        <span class="ti-dot-sep">·</span>
-                                        <span class="ti-sector">@item.Sector</span>
-                                    </div>
+                        <div class="feed-item @(item.IsNew ? "feed-item--new" : "")">
+                            <div class="feed-item__sev-bar feed-item__sev-bar--@item.Severity"></div>
+                            <div class="feed-item__body">
+                                <div class="feed-item__top">
+                                    <span class="feed-chip feed-chip--@item.AttackType.ToLower().Replace(" ","")">
+                                        @GetAttackSvg(item.AttackType) @item.AttackType
+                                    </span>
+                                    <span class="feed-item__sev-num feed-sev--@item.Severity">@item.Severity</span>
                                 </div>
-                            </div>
-                            <div class="ti-right">
-                                <span class="ti-sev sev-@item.Severity">@item.Severity</span>
-                                <span class="ti-time">@GetRelativeTime(item.OccurredAt)</span>
+                                <div class="feed-item__bottom">
+                                    <span class="feed-item__city">@item.City</span>
+                                    <span class="feed-item__sep">·</span>
+                                    <span class="feed-item__sector">@item.Sector</span>
+                                    <span class="feed-item__time">@GetRelativeTime(item.OccurredAt)</span>
+                                </div>
                             </div>
                         </div>
                     }
@@ -94,108 +96,108 @@
             }
         </div>
 
-        @* Sector risk *@
-        <div class="sector-section">
-            <div class="ss-header">SECTOR RISK</div>
-            <div class="sector-list">
+        @* ── Sector risk ── *@
+        <div class="sb-sectors">
+            <div class="sb-sectors__header">SECTOR RISK</div>
+            <div class="sb-sectors__list">
                 @foreach (var sector in _sectorRisks)
                 {
                     <div class="sector-row">
-                        <span class="sr-icon">@sector.Icon</span>
-                        <span class="sr-name">@sector.Name</span>
-                        <span class="sr-badge risk-@sector.Risk.ToLower()">@sector.Risk.ToUpper()</span>
+                        <span class="sector-row__icon sector-icon--@sector.Name.ToLower()">
+                            @GetSectorSvg(sector.Name)
+                        </span>
+                        <span class="sector-row__name">@sector.Name</span>
+                        <span class="sector-row__badge risk--@sector.Risk.ToLower()">@sector.Risk.ToUpper()</span>
                     </div>
                 }
             </div>
         </div>
 
-        @* Auth CTA if not logged in *@
+        @* ── Auth CTA ── *@
         @if (!AuthService.IsLoggedIn)
         {
-            <div class="auth-cta">
-                <div class="ac-text">Sign in to submit reports and set alerts</div>
-                <div class="ac-btns">
-                    <a href="/login" class="ac-login">Login</a>
-                    <a href="/register" class="ac-register">Register</a>
+            <div class="sb-cta">
+                <p class="sb-cta__text">Sign in to submit reports and set alerts</p>
+                <div class="sb-cta__btns">
+                    <a href="/login" class="sb-cta__login">LOGIN</a>
+                    <a href="/register" class="sb-cta__register">REGISTER</a>
                 </div>
             </div>
         }
 
     </aside>
 
-    @* ── Map area ── *@
-    <div class="map-area">
+    @* ═══════ MAP AREA ═══════ *@
+    <main class="dash-map">
 
-        @* Map controls bar *@
-        <div class="map-controls">
-            <div class="mc-left">
-                <div class="map-title">
-                    <span class="mt-label">// PAKISTAN CYBER THREAT MAP</span>
-                </div>
-                <div class="map-filters">
-                    <button class="mf-btn @(_timeFilter == "1h" ? "mf-active" : "")"
-                            @onclick='() => SetTimeFilter("1h")'>
-                        1H
-                    </button>
-                    <button class="mf-btn @(_timeFilter == "6h" ? "mf-active" : "")"
-                            @onclick='() => SetTimeFilter("6h")'>
-                        6H
-                    </button>
-                    <button class="mf-btn @(_timeFilter == "24h" ? "mf-active" : "")"
-                            @onclick='() => SetTimeFilter("24h")'>
-                        24H
-                    </button>
-                    <button class="mf-btn @(_timeFilter == "7d" ? "mf-active" : "")"
-                            @onclick='() => SetTimeFilter("7d")'>
-                        7D
-                    </button>
+        @* ── Floating controls (glass) ── *@
+        <div class="map-bar">
+            <div class="map-bar__left">
+                <span class="map-bar__title">PAKISTAN CYBER THREAT MAP</span>
+                <div class="map-bar__filters">
+                    @foreach (var f in new[] { "1h", "6h", "24h", "7d" })
+                    {
+                        <button class="filter-pill @(_timeFilter == f ? "filter-pill--active" : "")"
+                                @onclick="() => SetTimeFilter(f)">
+                            @f.ToUpper()
+                        </button>
+                    }
                 </div>
             </div>
-            <div class="mc-right">
-                <div class="mc-legend">
-                    <span class="legend-item"><span class="leg-dot sev-1"></span> Low</span>
-                    <span class="legend-item"><span class="leg-dot sev-3"></span> High</span>
-                    <span class="legend-item"><span class="leg-dot sev-5"></span> Critical</span>
+            <div class="map-bar__right">
+                <div class="map-bar__legend">
+                    <span class="legend-item"><span class="legend-dot legend-dot--low"></span>Low</span>
+                    <span class="legend-item"><span class="legend-dot legend-dot--high"></span>High</span>
+                    <span class="legend-item"><span class="legend-dot legend-dot--crit"></span>Critical</span>
                 </div>
                 @if (AuthService.IsReporter)
                 {
-                    <a href="/submit-report" class="report-btn">
-                        + REPORT THREAT
+                    <a href="/submit-report" class="tc-btn tc-btn--primary map-report-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14" /><path d="M12 5v14" />
+                        </svg>
+                        REPORT
                     </a>
                 }
             </div>
         </div>
 
-        @* Leaflet map container *@
-        <div id="threatmap" class="leaflet-map"></div>
+        @* ── Leaflet container ── *@
+        <div id="threatmap" class="dash-map__canvas"></div>
 
-        @* Dynamic Coordinated Campaign Alert Banners *@
+        @* ── Campaign alerts (glass) ── *@
         @if (_activeCampaigns.Count > 0)
         {
-            <div class="campaign-banners-container">
-                @foreach (var campaign in _activeCampaigns.Take(3))
+            <div class="campaign-stack">
+                @foreach (var c in _activeCampaigns.Take(3))
                 {
-                    <div class="campaign-alert alert-@campaign.AlertLevel.ToLower()">
-                        <div class="ca-header">
-                            <span class="ca-blink">🚨</span>
-                            <span class="ca-title">COORDINATED ATTACK CAMPAIGN DETECTED (Alert Level: @campaign.AlertLevel.ToUpper())</span>
+                    <div class="campaign campaign--@c.AlertLevel.ToLower()">
+                        <div class="campaign__header">
+                            <svg class="campaign__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+                                <path d="M12 9v4" /><path d="M12 17h.01" />
+                            </svg>
+                            <span class="campaign__title">COORDINATED ATTACK — @c.AlertLevel.ToUpper()</span>
                         </div>
-                        <div class="ca-details">
-                            @if (campaign.AnomalyCount > 0)
+                        <div class="campaign__body">
+                            @if (c.AnomalyCount > 0)
                             {
-                                <span>ML engine flagged @campaign.AnomalyCount anomalous events out of @campaign.TotalEvents analyzed. </span>
+                                <span>ML flagged <strong>@c.AnomalyCount</strong> anomalous events out of @c.TotalEvents. </span>
                             }
-                            @if (!string.IsNullOrEmpty(campaign.AffectedSectors))
+                            @if (!string.IsNullOrEmpty(c.AffectedSectors))
                             {
-                                <span>Targeting: <strong>@campaign.AffectedSectors</strong>. </span>
+                                <span>Targeting: <strong>@c.AffectedSectors</strong>. </span>
                             }
-                            @if (!string.IsNullOrEmpty(campaign.AffectedCities))
+                            @if (!string.IsNullOrEmpty(c.AffectedCities))
                             {
-                                <span>Cities: <strong>@campaign.AffectedCities</strong>. </span>
+                                <span>Cities: <strong>@c.AffectedCities</strong>. </span>
                             }
-                            @if (!string.IsNullOrEmpty(campaign.IpRange) && campaign.IpRange != "Multiple")
+                            @if (!string.IsNullOrEmpty(c.IpRange) && c.IpRange != "Multiple")
                             {
-                                <span>IP block: <strong>@campaign.IpRange</strong>.</span>
+                                <span>IP block: <strong>@c.IpRange</strong>.</span>
                             }
                         </div>
                     </div>
@@ -203,550 +205,422 @@
             </div>
         }
 
-        @* Map overlay — loading *@
+        @* ── Loading overlay ── *@
         @if (_mapLoading)
         {
-            <div class="map-overlay">
-                <div class="mo-spinner"></div>
-                <div class="mo-text">INITIALIZING THREAT MAP...</div>
+            <div class="map-loading">
+                <div class="map-loading__spinner"></div>
+                <span class="map-loading__text">INITIALIZING THREAT MAP…</span>
             </div>
         }
 
-        @* Floating event counter *@
-        <div class="map-event-counter">
-            <span class="mec-dot"></span>
-            <span class="mec-text">
-                <span class="mec-num">@_tickerItems.Count</span> events on map
-            </span>
+        @* ── Floating event counter ── *@
+        <div class="map-counter">
+            <span class="map-counter__dot"></span>
+            <span class="map-counter__text"><strong class="map-counter__num">@_tickerItems.Count</strong> events on map</span>
         </div>
 
-    </div>
+        @* ── Mobile stats (sidebar hidden on mobile) ── *@
+        <div class="mobile-stats">
+            <div class="mobile-stats__item">
+                <span class="mobile-stats__val mobile-stats__val--green">@_totalEvents</span>
+                <span class="mobile-stats__label">TODAY</span>
+            </div>
+            <div class="mobile-stats__sep"></div>
+            <div class="mobile-stats__item">
+                <span class="mobile-stats__val mobile-stats__val--cyan">@_activeNow</span>
+                <span class="mobile-stats__label">ACTIVE</span>
+            </div>
+            <div class="mobile-stats__sep"></div>
+            <div class="mobile-stats__item">
+                <span class="mobile-stats__val mobile-stats__val--orange">@_cities</span>
+                <span class="mobile-stats__label">CITIES</span>
+            </div>
+        </div>
+
+    </main>
+
 </div>
 
 <style>
-    *, *::before, *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-    }
+    /* ══════════════════════════════════════════════════════════════════
+       DASHBOARD — ThreatCast PK
+       Glassmorphism · Floating Controls · Premium Ticker
+       ══════════════════════════════════════════════════════════════════ */
 
-    .dash-root {
+    /* ── Root layout ── */
+    .dash {
         display: flex;
         height: 100vh;
-        padding-top: 56px; /* navbar height */
-        background: #0d1117;
-        font-family: 'Inter', sans-serif;
+        padding-top: 56px;
+        background: var(--tc-bg-base);
+        font-family: var(--tc-font-sans);
         overflow: hidden;
     }
 
-    /* ── Sidebar ── */
+    /* ══════════════════════════════════════════════════════════════════
+       SIDEBAR
+       ══════════════════════════════════════════════════════════════════ */
     .dash-sidebar {
-        width: 280px;
+        width: 290px;
         flex-shrink: 0;
-        background: #0d1117;
-        border-right: 1px solid #21262d;
         display: flex;
         flex-direction: column;
-        overflow-y: auto;
-        overflow-x: hidden;
+        overflow: hidden;
+        position: relative;
+        z-index: 2;
+        background: var(--tc-bg-base);
+        border-right: 1px solid rgba(159,239,0,0.06);
     }
 
-        .dash-sidebar::-webkit-scrollbar {
-            width: 4px;
-        }
+    /* Subtle top accent glow */
+    .dash-sidebar::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 120px;
+        background: linear-gradient(180deg, rgba(159,239,0,0.025) 0%, transparent 100%);
+        pointer-events: none;
+        z-index: 0;
+    }
 
-        .dash-sidebar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .dash-sidebar::-webkit-scrollbar-thumb {
-            background: #21262d;
-            border-radius: 2px;
-        }
-
-    /* ── Sidebar header ── */
-    .sidebar-header {
+    /* ── Brand header ── */
+    .sb-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 16px 16px 12px;
-        border-bottom: 1px solid #21262d;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--tc-border);
         flex-shrink: 0;
+        position: relative;
+        z-index: 1;
     }
 
-    .sh-brand {
-        display: flex;
-        align-items: center;
-        gap: 7px;
+    .sb-brand {
+        display: flex; align-items: center; gap: 8px;
     }
 
-    .sh-hex {
-        font-size: 16px;
-        color: #9fef00;
-        filter: drop-shadow(0 0 6px rgba(159,239,0,0.5));
+    .sb-brand__icon {
+        display: flex; color: var(--tc-accent);
+        filter: drop-shadow(0 0 8px rgba(159,239,0,0.4));
     }
 
-    .sh-name {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 13px;
+    .sb-brand__name {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-sm);
         font-weight: 600;
-        color: #c9d1d9;
+        color: var(--tc-text-secondary);
         letter-spacing: 0.5px;
     }
+    .sb-brand__pk { color: var(--tc-accent); }
 
-    .sh-pk {
-        color: #9fef00;
-    }
-
-    .sh-live {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 9px;
-        color: #9fef00;
+    .sb-live-badge {
+        display: flex; align-items: center; gap: 5px;
+        font-family: var(--tc-font-mono);
+        font-size: 8px;
+        color: var(--tc-accent);
         letter-spacing: 2px;
         background: rgba(159,239,0,0.06);
         border: 1px solid rgba(159,239,0,0.2);
         padding: 3px 8px;
-        border-radius: 3px;
+        border-radius: var(--tc-radius-full);
     }
 
-    .live-dot {
-        width: 6px;
-        height: 6px;
+    .sb-live-badge__dot {
+        width: 5px; height: 5px;
         border-radius: 50%;
-        background: #9fef00;
-        animation: blink 1.2s ease-in-out infinite;
-        box-shadow: 0 0 6px rgba(159,239,0,0.6);
+        background: var(--tc-accent);
+        box-shadow: 0 0 8px rgba(159,239,0,0.7);
+        animation: tc-pulse 1.2s ease-in-out infinite;
     }
 
-    .live-label {
-        font-size: 9px;
+    /* ── Stats ── */
+    .sb-stats {
+        display: flex; gap: 6px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--tc-border);
+        flex-shrink: 0;
+        position: relative; z-index: 1;
+    }
+
+    .sb-stat {
+        flex: 1;
+        display: flex; flex-direction: column; align-items: center;
+        gap: 3px;
+        padding: 10px 4px;
+        background: rgba(22,27,34,0.5);
+        border: 1px solid rgba(33,38,45,0.5);
+        border-radius: var(--tc-radius-md);
+        transition: border-color var(--tc-ease-smooth), box-shadow var(--tc-ease-smooth);
+    }
+
+    .sb-stat:hover { border-color: rgba(33,38,45,0.8); }
+
+    .sb-stat--green  { border-top: 2px solid rgba(159,239,0,0.3); }
+    .sb-stat--cyan   { border-top: 2px solid rgba(0,200,255,0.3); }
+    .sb-stat--orange { border-top: 2px solid rgba(255,165,0,0.3); }
+
+    .sb-stat__val {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-xl);
+        font-weight: 600;
+        line-height: 1;
+    }
+
+    .sb-stat--green  .sb-stat__val { color: var(--tc-accent);  text-shadow: 0 0 16px rgba(159,239,0,0.25); }
+    .sb-stat--cyan   .sb-stat__val { color: #00c8ff;           text-shadow: 0 0 16px rgba(0,200,255,0.25); }
+    .sb-stat--orange .sb-stat__val { color: var(--tc-warning);  text-shadow: 0 0 16px rgba(255,165,0,0.25); }
+
+    .sb-stat__label {
+        font-family: var(--tc-font-mono);
+        font-size: 7px;
+        color: var(--tc-text-faint);
         letter-spacing: 2px;
     }
 
-    /* ── Sidebar stats ── */
-    .sidebar-stats {
-        display: flex;
-        align-items: center;
-        justify-content: space-around;
-        padding: 12px 16px;
-        border-bottom: 1px solid #21262d;
-        flex-shrink: 0;
-    }
-
-    .stat-mini {
+    /* ── Live feed ── */
+    .sb-feed {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 2px;
+        min-height: 0;
+        overflow: hidden;
+        position: relative; z-index: 1;
     }
 
-    .sm-val {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 20px;
-        font-weight: 600;
-    }
-
-        .sm-val.green {
-            color: #9fef00;
-        }
-
-        .sm-val.blue {
-            color: #00c8ff;
-        }
-
-        .sm-val.orange {
-            color: #ffa500;
-        }
-
-    .sm-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 8px;
-        color: #4a5160;
-        letter-spacing: 2px;
-    }
-
-    .stat-mini-div {
-        width: 1px;
-        height: 24px;
-        background: #21262d;
-    }
-
-    /* ── Ticker ── */
-    .ticker-section {
+    .sb-feed__header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 8px 14px;
+        background: rgba(22,27,34,0.4);
+        border-bottom: 1px solid var(--tc-border);
         flex-shrink: 0;
     }
 
-    .ts-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 16px;
-        background: #161b22;
-        border-bottom: 1px solid #21262d;
-    }
-
-    .ts-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 9px;
-        color: #9fef00;
+    .sb-feed__title {
+        display: flex; align-items: center; gap: 6px;
+        font-family: var(--tc-font-mono);
+        font-size: 8px;
+        color: var(--tc-accent);
         letter-spacing: 2px;
         opacity: 0.8;
     }
 
-    .ts-count {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 9px;
-        color: #4a5160;
-    }
-
-    .ticker-empty {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 16px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #4a5160;
-    }
-
-    .te-dot {
-        width: 6px;
-        height: 6px;
+    .sb-feed__dot {
+        width: 5px; height: 5px;
         border-radius: 50%;
-        background: #4a5160;
-        animation: blink 2s ease-in-out infinite;
+        background: var(--tc-accent);
+        box-shadow: 0 0 6px rgba(159,239,0,0.6);
+        animation: tc-pulse 1.5s ease-in-out infinite;
+    }
+
+    .sb-feed__count {
+        font-family: var(--tc-font-mono);
+        font-size: 9px;
+        color: var(--tc-text-faint);
+    }
+
+    .sb-feed__empty {
+        display: flex; align-items: center; gap: 10px;
+        padding: 20px 14px;
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-xs);
+        color: var(--tc-text-faint);
+    }
+
+    .sb-feed__empty-pulse {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--tc-text-faint);
+        animation: tc-pulse 2s ease-in-out infinite;
         flex-shrink: 0;
     }
 
-    .ticker-list {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .ticker-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 9px 12px;
-        border-bottom: 1px solid #161b22;
-        transition: background 0.1s;
-    }
-
-        .ticker-item:hover {
-            background: rgba(159,239,0,0.02);
-        }
-
-    .ti-new {
-        animation: tickerSlide 0.4s ease both;
-        background: rgba(159,239,0,0.03) !important;
-    }
-
-    .ti-left {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+    .sb-feed__list {
         flex: 1;
-        min-width: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
 
-    .ti-bar {
+    /* ── Feed item ── */
+    .feed-item {
+        display: flex; align-items: stretch; gap: 0;
+        padding: 0;
+        border-bottom: 1px solid rgba(22,27,34,0.8);
+        transition: background var(--tc-ease-fast);
+        cursor: default;
+    }
+
+    .feed-item:hover { background: rgba(159,239,0,0.015); }
+
+    .feed-item--new {
+        animation: dash-slide-in 0.4s cubic-bezier(0.4,0,0.2,1) both;
+        background: rgba(159,239,0,0.025) !important;
+    }
+
+    .feed-item__sev-bar {
         width: 3px;
-        height: 36px;
-        border-radius: 2px;
         flex-shrink: 0;
+        border-radius: 0;
     }
 
-    .sev-bar-1 {
-        background: #9fef00;
+    .feed-item__sev-bar--1 { background: var(--tc-accent); box-shadow: inset 0 0 4px rgba(159,239,0,0.3); }
+    .feed-item__sev-bar--2 { background: #7dc700; }
+    .feed-item__sev-bar--3 { background: var(--tc-warning); box-shadow: inset 0 0 4px rgba(255,165,0,0.3); }
+    .feed-item__sev-bar--4 { background: #ff6b35; }
+    .feed-item__sev-bar--5 { background: var(--tc-danger); box-shadow: inset 0 0 4px rgba(255,62,62,0.4); }
+
+    .feed-item__body {
+        flex: 1; min-width: 0;
+        display: flex; flex-direction: column;
+        gap: 4px; padding: 8px 10px;
     }
 
-    .sev-bar-2 {
-        background: #7dc700;
+    .feed-item__top {
+        display: flex; align-items: center; justify-content: space-between; gap: 6px;
     }
 
-    .sev-bar-3 {
-        background: #ffa500;
-    }
-
-    .sev-bar-4 {
-        background: #ff6b35;
-    }
-
-    .sev-bar-5 {
-        background: #ff3e3e;
-    }
-
-    .ti-info {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-        min-width: 0;
-    }
-
-    .ti-type {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
+    .feed-chip {
+        font-family: var(--tc-font-mono);
+        font-size: 9px; font-weight: 500;
         padding: 2px 6px;
-        border-radius: 2px;
-        display: inline-flex;
-        align-items: center;
-        gap: 3px;
-        white-space: nowrap;
-    }
-
-    .chip-ransomware {
-        background: rgba(255,62,62,0.1);
-        color: #ff3e3e;
-    }
-
-    .chip-phishing {
-        background: rgba(255,165,0,0.1);
-        color: #ffa500;
-    }
-
-    .chip-ddos {
-        background: rgba(0,200,255,0.1);
-        color: #00c8ff;
-    }
-
-    .chip-malware {
-        background: rgba(191,64,191,0.1);
-        color: #bf40bf;
-    }
-
-    .chip-identitytheft {
-        background: rgba(255,165,0,0.1);
-        color: #ffa500;
-    }
-
-    .chip-other {
-        background: rgba(110,118,129,0.1);
-        color: #6e7681;
-    }
-
-    .ti-meta-row {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        overflow: hidden;
-    }
-
-    .ti-city {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #c9d1d9;
-        white-space: nowrap;
-    }
-
-    .ti-dot-sep {
-        font-size: 8px;
-        color: #4a5160;
-    }
-
-    .ti-sector {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #6e7681;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .ti-right {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 3px;
-        flex-shrink: 0;
-        margin-left: 8px;
-    }
-
-    .ti-sev {
-        width: 22px;
-        height: 22px;
         border-radius: 3px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        font-weight: 700;
+        display: inline-flex; align-items: center; gap: 4px;
+        white-space: nowrap;
+        border: 1px solid transparent;
     }
 
-    .sev-1 {
-        background: rgba(159,239,0,0.12);
-        color: #9fef00;
-    }
+    .feed-chip--ransomware   { background: rgba(255,62,62,0.08);  color: var(--tc-danger);  border-color: rgba(255,62,62,0.15); }
+    .feed-chip--phishing     { background: rgba(255,165,0,0.08);  color: var(--tc-warning); border-color: rgba(255,165,0,0.15); }
+    .feed-chip--ddos         { background: rgba(0,200,255,0.08);  color: #00c8ff;           border-color: rgba(0,200,255,0.15); }
+    .feed-chip--malware      { background: rgba(191,64,191,0.08); color: #bf40bf;           border-color: rgba(191,64,191,0.15); }
+    .feed-chip--identitytheft{ background: rgba(255,165,0,0.08);  color: var(--tc-warning); border-color: rgba(255,165,0,0.15); }
+    .feed-chip--other        { background: rgba(110,118,129,0.08);color: var(--tc-text-muted);border-color: rgba(110,118,129,0.15); }
 
-    .sev-2 {
-        background: rgba(125,199,0,0.12);
-        color: #7dc700;
-    }
-
-    .sev-3 {
-        background: rgba(255,165,0,0.12);
-        color: #ffa500;
-    }
-
-    .sev-4 {
-        background: rgba(255,107,53,0.12);
-        color: #ff6b35;
-    }
-
-    .sev-5 {
-        background: rgba(255,62,62,0.12);
-        color: #ff3e3e;
-    }
-
-    .ti-time {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 9px;
-        color: #4a5160;
-    }
-
-    /* ── Sector risk ── */
-    .sector-section {
-        border-top: 1px solid #21262d;
+    .feed-item__sev-num {
+        width: 20px; height: 20px;
+        border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--tc-font-mono);
+        font-size: 10px; font-weight: 700;
         flex-shrink: 0;
     }
 
-    .ss-header {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 9px;
-        color: #4a5160;
-        letter-spacing: 2px;
-        padding: 10px 16px;
-        background: #161b22;
-        border-bottom: 1px solid #21262d;
+    .feed-sev--1 { background: rgba(159,239,0,0.1);  color: var(--tc-accent); }
+    .feed-sev--2 { background: rgba(125,199,0,0.1);  color: #7dc700; }
+    .feed-sev--3 { background: rgba(255,165,0,0.1);  color: var(--tc-warning); }
+    .feed-sev--4 { background: rgba(255,107,53,0.1);  color: #ff6b35; }
+    .feed-sev--5 { background: rgba(255,62,62,0.12); color: var(--tc-danger); box-shadow: 0 0 8px rgba(255,62,62,0.15); }
+
+    .feed-item__bottom {
+        display: flex; align-items: center; gap: 4px;
+        font-family: var(--tc-font-mono); font-size: 10px;
+        overflow: hidden;
     }
 
-    .sector-list {
-        display: flex;
-        flex-direction: column;
+    .feed-item__city { color: var(--tc-text-secondary); white-space: nowrap; }
+    .feed-item__sep  { color: var(--tc-text-faint); font-size: 8px; }
+    .feed-item__sector { color: var(--tc-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feed-item__time { margin-left: auto; color: var(--tc-text-faint); font-size: 9px; flex-shrink: 0; }
+
+    /* ── Sectors ── */
+    .sb-sectors {
+        border-top: 1px solid var(--tc-border);
+        flex-shrink: 0;
+        position: relative; z-index: 1;
+    }
+
+    .sb-sectors__header {
+        font-family: var(--tc-font-mono);
+        font-size: 8px;
+        color: var(--tc-text-faint);
+        letter-spacing: 2px;
+        padding: 8px 14px;
+        background: rgba(22,27,34,0.4);
+        border-bottom: 1px solid var(--tc-border);
     }
 
     .sector-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border-bottom: 1px solid #161b22;
-        transition: background 0.1s;
+        display: flex; align-items: center; gap: 8px;
+        padding: 6px 14px;
+        border-bottom: 1px solid rgba(22,27,34,0.6);
+        transition: background var(--tc-ease-fast);
     }
+    .sector-row:last-child { border-bottom: none; }
+    .sector-row:hover { background: rgba(159,239,0,0.012); }
 
-        .sector-row:last-child {
-            border-bottom: none;
-        }
-
-        .sector-row:hover {
-            background: rgba(159,239,0,0.015);
-        }
-
-    .sr-icon {
-        font-size: 12px;
+    .sector-row__icon {
+        width: 26px; height: 26px;
+        border-radius: var(--tc-radius-sm);
+        display: flex; align-items: center; justify-content: center;
         flex-shrink: 0;
     }
 
-    .sr-name {
-        font-size: 12px;
-        color: #c9d1d9;
-        flex: 1;
-    }
+    .sector-icon--banking    { background: rgba(0,200,255,0.08);  color: #00c8ff;           border: 1px solid rgba(0,200,255,0.15); }
+    .sector-icon--telecom    { background: rgba(159,239,0,0.08);  color: var(--tc-accent);  border: 1px solid rgba(159,239,0,0.15); }
+    .sector-icon--healthcare { background: rgba(255,62,62,0.08);  color: var(--tc-danger);  border: 1px solid rgba(255,62,62,0.15); }
+    .sector-icon--education  { background: rgba(255,165,0,0.08);  color: var(--tc-warning); border: 1px solid rgba(255,165,0,0.15); }
+    .sector-icon--government { background: rgba(191,64,191,0.08); color: #bf40bf;           border: 1px solid rgba(191,64,191,0.15); }
+    .sector-icon--energy     { background: rgba(255,207,0,0.08);  color: #ffc800;           border: 1px solid rgba(255,207,0,0.15); }
+    .sector-icon--other      { background: rgba(110,118,129,0.08);color: var(--tc-text-muted);border: 1px solid rgba(110,118,129,0.15); }
 
-    .sr-badge {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 8px;
-        font-weight: 700;
+    .sector-row__name { font-size: var(--tc-text-sm); color: var(--tc-text-secondary); flex: 1; }
+
+    .sector-row__badge {
+        font-family: var(--tc-font-mono);
+        font-size: 7px; font-weight: 700;
         padding: 2px 6px;
-        border-radius: 2px;
+        border-radius: 3px;
         letter-spacing: 1px;
+        border: 1px solid;
         flex-shrink: 0;
     }
 
-    .risk-low {
-        background: rgba(159,239,0,0.1);
-        color: #9fef00;
-    }
-
-    .risk-medium {
-        background: rgba(255,165,0,0.1);
-        color: #ffa500;
-    }
-
-    .risk-high {
-        background: rgba(255,107,53,0.1);
-        color: #ff6b35;
-    }
-
-    .risk-critical {
-        background: rgba(255,62,62,0.1);
-        color: #ff3e3e;
-    }
+    .risk--low      { background: rgba(159,239,0,0.08); color: var(--tc-accent);  border-color: rgba(159,239,0,0.2); }
+    .risk--medium   { background: rgba(255,165,0,0.08); color: var(--tc-warning); border-color: rgba(255,165,0,0.2); }
+    .risk--high     { background: rgba(255,107,53,0.08);color: #ff6b35;           border-color: rgba(255,107,53,0.2); }
+    .risk--critical { background: rgba(255,62,62,0.1);  color: var(--tc-danger);  border-color: rgba(255,62,62,0.25);
+                      box-shadow: 0 0 8px rgba(255,62,62,0.1); }
 
     /* ── Auth CTA ── */
-    .auth-cta {
-        margin: 12px;
-        padding: 14px;
-        background: rgba(159,239,0,0.04);
-        border: 1px solid rgba(159,239,0,0.15);
-        border-radius: 6px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
+    .sb-cta {
+        margin: 10px;
+        padding: 12px;
+        background: rgba(159,239,0,0.02);
+        border: 1px solid rgba(159,239,0,0.1);
+        border-radius: var(--tc-radius-md);
+        display: flex; flex-direction: column; gap: 10px;
         flex-shrink: 0;
+        position: relative; z-index: 1;
     }
 
-    .ac-text {
-        font-size: 12px;
-        color: #6e7681;
-        line-height: 1.5;
+    .sb-cta__text { font-size: var(--tc-text-xs); color: var(--tc-text-muted); line-height: 1.5; }
+
+    .sb-cta__btns { display: flex; gap: 6px; }
+
+    .sb-cta__login {
+        flex: 1; padding: 7px; text-align: center;
+        border: 1px solid var(--tc-border); border-radius: var(--tc-radius-sm);
+        font-family: var(--tc-font-mono); font-size: var(--tc-text-xs);
+        color: var(--tc-text-secondary); text-decoration: none;
+        letter-spacing: 1px;
+        transition: border-color var(--tc-ease-fast);
     }
+    .sb-cta__login:hover { border-color: var(--tc-border-emphasis); }
 
-    .ac-btns {
-        display: flex;
-        gap: 8px;
+    .sb-cta__register {
+        flex: 1; padding: 7px; text-align: center;
+        background: var(--tc-accent); border-radius: var(--tc-radius-sm);
+        font-family: var(--tc-font-mono); font-size: var(--tc-text-xs);
+        font-weight: 700; color: var(--tc-bg-base); text-decoration: none;
+        letter-spacing: 1px;
+        transition: opacity var(--tc-ease-fast), box-shadow var(--tc-ease-fast);
     }
+    .sb-cta__register:hover { opacity: 0.88; box-shadow: 0 4px 16px rgba(159,239,0,0.2); }
 
-    .ac-login {
-        flex: 1;
-        padding: 7px;
-        text-align: center;
-        border: 1px solid #21262d;
-        border-radius: 3px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #c9d1d9;
-        text-decoration: none;
-        transition: border-color 0.15s;
-    }
-
-        .ac-login:hover {
-            border-color: #6e7681;
-        }
-
-    .ac-register {
-        flex: 1;
-        padding: 7px;
-        text-align: center;
-        background: #9fef00;
-        border-radius: 3px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        font-weight: 700;
-        color: #0d1117;
-        text-decoration: none;
-        transition: opacity 0.15s;
-    }
-
-        .ac-register:hover {
-            opacity: 0.88;
-        }
-
-    /* ── Map area ── */
-    .map-area {
+    /* ══════════════════════════════════════════════════════════════════
+       MAP AREA
+       ══════════════════════════════════════════════════════════════════ */
+    .dash-map {
         flex: 1;
         position: relative;
         display: flex;
@@ -754,327 +628,289 @@
         overflow: hidden;
     }
 
-    .map-controls {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 20px;
-        background: #0d1117;
-        border-bottom: 1px solid #21262d;
-        flex-shrink: 0;
-        gap: 16px;
+    .dash-map__canvas {
+        flex: 1; width: 100%;
+        min-height: 0;
+        background: var(--tc-bg-base);
+    }
+
+    /* ── Floating controls bar (glass) ── */
+    .map-bar {
+        position: absolute;
+        top: 10px; left: 10px; right: 10px;
+        z-index: 800;
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 12px;
+        padding: 8px 14px;
+        background: rgba(13,17,23,0.78);
+        backdrop-filter: blur(20px) saturate(1.3);
+        -webkit-backdrop-filter: blur(20px) saturate(1.3);
+        border: 1px solid rgba(33,38,45,0.6);
+        border-radius: var(--tc-radius-lg);
+        box-shadow: 0 4px 24px rgba(0,0,0,0.4);
         flex-wrap: wrap;
     }
 
-    .mc-left {
-        display: flex;
-        align-items: center;
-        gap: 16px;
+    .map-bar__left {
+        display: flex; align-items: center; gap: 14px;
     }
 
-    .mt-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #9fef00;
+    .map-bar__title {
+        font-family: var(--tc-font-mono);
+        font-size: 9px;
+        color: var(--tc-accent);
         letter-spacing: 2px;
-        opacity: 0.7;
+        opacity: 0.65;
+        white-space: nowrap;
     }
 
-    .map-filters {
-        display: flex;
-        gap: 4px;
+    .map-bar__filters {
+        display: flex; gap: 3px;
     }
 
-    .mf-btn {
-        padding: 5px 12px;
+    .filter-pill {
+        padding: 4px 10px;
         background: transparent;
-        border: 1px solid #21262d;
-        border-radius: 3px;
+        border: 1px solid rgba(33,38,45,0.6);
+        border-radius: var(--tc-radius-full);
         cursor: pointer;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #6e7681;
-        letter-spacing: 1px;
-        transition: all 0.15s;
+        font-family: var(--tc-font-mono);
+        font-size: 9px; font-weight: 500;
+        color: var(--tc-text-muted);
+        letter-spacing: 0.5px;
+        transition: all var(--tc-ease-base);
     }
 
-        .mf-btn:hover {
-            border-color: #30363d;
-            color: #c9d1d9;
-        }
-
-    .mf-active {
-        background: rgba(159,239,0,0.08) !important;
-        border-color: rgba(159,239,0,0.4) !important;
-        color: #9fef00 !important;
+    .filter-pill:hover {
+        border-color: var(--tc-border-emphasis);
+        color: var(--tc-text-secondary);
     }
 
-    .mc-right {
-        display: flex;
-        align-items: center;
-        gap: 16px;
+    .filter-pill--active {
+        background: rgba(159,239,0,0.1);
+        border-color: rgba(159,239,0,0.35);
+        color: var(--tc-accent);
+        box-shadow: 0 0 12px rgba(159,239,0,0.1);
     }
 
-    .mc-legend {
-        display: flex;
-        align-items: center;
-        gap: 10px;
+    .map-bar__right {
+        display: flex; align-items: center; gap: 14px;
+    }
+
+    .map-bar__legend {
+        display: flex; align-items: center; gap: 10px;
     }
 
     .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #6e7681;
+        display: flex; align-items: center; gap: 5px;
+        font-family: var(--tc-font-mono);
+        font-size: 9px;
+        color: var(--tc-text-muted);
     }
 
-    .leg-dot {
-        width: 10px;
-        height: 10px;
+    .legend-dot {
+        width: 8px; height: 8px;
         border-radius: 50%;
+        animation: legend-pulse 3s ease-in-out infinite;
     }
 
-        .leg-dot.sev-1 {
-            background: #9fef00;
-            box-shadow: 0 0 6px rgba(159,239,0,0.5);
-        }
+    .legend-dot--low  { background: var(--tc-accent);  box-shadow: 0 0 6px rgba(159,239,0,0.4); }
+    .legend-dot--high { background: var(--tc-warning);  box-shadow: 0 0 6px rgba(255,165,0,0.4); animation-delay: 1s; }
+    .legend-dot--crit { background: var(--tc-danger);   box-shadow: 0 0 6px rgba(255,62,62,0.4); animation-delay: 2s; }
 
-        .leg-dot.sev-3 {
-            background: #ffa500;
-            box-shadow: 0 0 6px rgba(255,165,0,0.5);
-        }
+    @@keyframes legend-pulse {
+        0%,100% { opacity: 1; transform: scale(1); }
+        50%     { opacity: 0.5; transform: scale(0.85); }
+    }
 
-        .leg-dot.sev-5 {
-            background: #ff3e3e;
-            box-shadow: 0 0 6px rgba(255,62,62,0.5);
-        }
-
-    .report-btn {
-        padding: 7px 14px;
-        background: #9fef00;
-        border-radius: 3px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        font-weight: 700;
-        color: #0d1117;
-        text-decoration: none;
+    .map-report-btn {
+        padding: 5px 12px !important;
+        font-size: 9px !important;
         letter-spacing: 1px;
-        white-space: nowrap;
-        transition: opacity 0.15s, box-shadow 0.15s;
+        gap: 4px;
     }
 
-        .report-btn:hover {
-            opacity: 0.9;
-            box-shadow: 0 3px 12px rgba(159,239,0,0.2);
-        }
+    /* ── Leaflet dark-mode overrides ── */
+    :global(.leaflet-container)             { background: #0d1117 !important; }
+    :global(.leaflet-popup-content-wrapper) { background: rgba(22,27,34,0.92) !important; border: 1px solid rgba(33,38,45,0.8) !important; border-radius: 8px !important; color: #c9d1d9 !important; box-shadow: 0 12px 40px rgba(0,0,0,0.5) !important; backdrop-filter: blur(16px); }
+    :global(.leaflet-popup-tip)             { background: rgba(22,27,34,0.92) !important; }
+    :global(.leaflet-popup-close-button)    { color: #6e7681 !important; }
+    :global(.leaflet-control-zoom a)        { background: rgba(22,27,34,0.85) !important; border-color: rgba(33,38,45,0.6) !important; color: #c9d1d9 !important; backdrop-filter: blur(12px); }
+    :global(.leaflet-control-attribution)   { background: rgba(13,17,23,0.7) !important; color: #4a5160 !important; backdrop-filter: blur(8px); }
 
-    .leaflet-map {
-        flex: 1;
-        width: 100%;
-        min-height: 0;
-        background: #0d1117;
-    }
-
-    :global(.leaflet-container) {
-        background: #0d1117 !important;
-    }
-
-    :global(.leaflet-popup-content-wrapper) {
-        background: #161b22 !important;
-        border: 1px solid #21262d !important;
-        border-radius: 6px !important;
-        color: #c9d1d9 !important;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
-    }
-
-    :global(.leaflet-popup-tip) {
-        background: #161b22 !important;
-    }
-
-    :global(.leaflet-popup-close-button) {
-        color: #6e7681 !important;
-    }
-
-    :global(.leaflet-control-zoom a) {
-        background: #161b22 !important;
-        border-color: #21262d !important;
-        color: #c9d1d9 !important;
-    }
-
-    :global(.leaflet-control-attribution) {
-        background: rgba(13,17,23,0.8) !important;
-        color: #4a5160 !important;
-    }
-
-    .map-overlay {
+    /* ── Campaign alerts (glass) ── */
+    .campaign-stack {
         position: absolute;
-        inset: 48px 0 0 0;
+        top: 60px; left: 14px; right: 14px;
+        z-index: 850;
+        display: flex; flex-direction: column; gap: 6px;
+    }
+
+    .campaign {
+        background: rgba(13,17,23,0.82);
+        backdrop-filter: blur(16px) saturate(1.3);
+        -webkit-backdrop-filter: blur(16px) saturate(1.3);
+        border: 1px solid;
+        border-radius: var(--tc-radius-lg);
+        padding: 10px 14px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    .campaign--medium   { border-color: rgba(255,165,0,0.25); border-left: 3px solid var(--tc-warning); }
+    .campaign--high     { border-color: rgba(255,107,53,0.25);border-left: 3px solid #ff6b35; }
+    .campaign--critical { border-color: rgba(255,62,62,0.3);  border-left: 3px solid var(--tc-danger);
+                          box-shadow: 0 0 24px rgba(255,62,62,0.12), 0 4px 20px rgba(0,0,0,0.4);
+                          animation: campaign-glow 2.5s ease-in-out infinite; }
+
+    @@keyframes campaign-glow {
+        0%,100% { box-shadow: 0 0 20px rgba(255,62,62,0.08), 0 4px 20px rgba(0,0,0,0.4); }
+        50%     { box-shadow: 0 0 35px rgba(255,62,62,0.18), 0 4px 20px rgba(0,0,0,0.4); }
+    }
+
+    .campaign__header {
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 4px;
+    }
+
+    .campaign__icon { flex-shrink: 0; animation: tc-pulse 1.2s ease-in-out infinite; }
+    .campaign--medium   .campaign__icon { color: var(--tc-warning); }
+    .campaign--high     .campaign__icon { color: #ff6b35; }
+    .campaign--critical .campaign__icon { color: var(--tc-danger); }
+
+    .campaign__title {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-xs); font-weight: 700;
+        letter-spacing: 1px;
+    }
+    .campaign--medium   .campaign__title { color: var(--tc-warning); }
+    .campaign--high     .campaign__title { color: #ff6b35; }
+    .campaign--critical .campaign__title { color: var(--tc-danger); }
+
+    .campaign__body {
+        font-size: var(--tc-text-xs);
+        color: var(--tc-text-muted);
+        line-height: 1.5;
+    }
+    .campaign__body strong { color: var(--tc-text-secondary); }
+
+    /* ── Loading overlay ── */
+    .map-loading {
+        position: absolute;
+        inset: 0;
         background: rgba(13,17,23,0.85);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 14px;
-        z-index: 500;
+        backdrop-filter: blur(4px);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        gap: 14px; z-index: 900;
     }
 
-    .mo-spinner {
-        width: 32px;
-        height: 32px;
-        border: 3px solid #21262d;
-        border-top-color: #9fef00;
+    .map-loading__spinner {
+        width: 36px; height: 36px;
+        border: 3px solid var(--tc-border);
+        border-top-color: var(--tc-accent);
         border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+        animation: tc-spin 0.8s linear infinite;
+        filter: drop-shadow(0 0 8px rgba(159,239,0,0.3));
     }
 
-    .mo-text {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #6e7681;
+    .map-loading__text {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-xs);
+        color: var(--tc-text-muted);
         letter-spacing: 2px;
     }
 
-    .map-event-counter {
+    /* ── Event counter (glass pill) ── */
+    .map-counter {
         position: absolute;
-        bottom: 16px;
-        right: 16px;
-        z-index: 400;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+        bottom: 14px; right: 14px;
+        z-index: 800;
+        display: flex; align-items: center; gap: 8px;
         padding: 7px 14px;
-        background: rgba(13,17,23,0.85);
-        border: 1px solid #21262d;
-        border-radius: 4px;
-        backdrop-filter: blur(4px);
+        background: rgba(13,17,23,0.78);
+        backdrop-filter: blur(16px) saturate(1.3);
+        -webkit-backdrop-filter: blur(16px) saturate(1.3);
+        border: 1px solid rgba(33,38,45,0.5);
+        border-radius: var(--tc-radius-full);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     }
 
-    .mec-dot {
-        width: 7px;
-        height: 7px;
+    .map-counter__dot {
+        width: 6px; height: 6px;
         border-radius: 50%;
-        background: #9fef00;
-        animation: blink 1.5s ease-in-out infinite;
-        box-shadow: 0 0 6px rgba(159,239,0,0.5);
+        background: var(--tc-accent);
+        box-shadow: 0 0 8px rgba(159,239,0,0.6);
+        animation: tc-pulse 1.5s ease-in-out infinite;
     }
 
-    .mec-text {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #6e7681;
+    .map-counter__text {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-xs);
+        color: var(--tc-text-muted);
     }
 
-    .mec-num {
-        color: #9fef00;
-        font-weight: 600;
-    }
+    .map-counter__num { color: var(--tc-accent); font-weight: 600; }
 
-    .campaign-banners-container {
+    /* ── Mobile stats bar ── */
+    .mobile-stats {
+        display: none;
         position: absolute;
-        top: 60px;
-        left: 20px;
-        right: 20px;
-        z-index: 450;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+        bottom: 14px; left: 14px;
+        z-index: 800;
+        align-items: center; gap: 10px;
+        padding: 7px 14px;
+        background: rgba(13,17,23,0.82);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(33,38,45,0.5);
+        border-radius: var(--tc-radius-full);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     }
 
-    .campaign-alert.alert-medium {
-        background: rgba(255, 165, 0, 0.9);
-        color: #0d1117;
-        border-left: 5px solid #ffa500;
-        padding: 10px 16px;
-        border-radius: 4px;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    .mobile-stats__item { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+    .mobile-stats__val { font-family: var(--tc-font-mono); font-size: var(--tc-text-sm); font-weight: 600; }
+    .mobile-stats__val--green  { color: var(--tc-accent); }
+    .mobile-stats__val--cyan   { color: #00c8ff; }
+    .mobile-stats__val--orange { color: var(--tc-warning); }
+    .mobile-stats__label { font-family: var(--tc-font-mono); font-size: 6px; color: var(--tc-text-faint); letter-spacing: 1.5px; }
+    .mobile-stats__sep { width: 1px; height: 20px; background: var(--tc-border); }
+
+    /* ── Animations ── */
+    @@keyframes dash-slide-in {
+        from { opacity: 0; transform: translateX(-10px); }
+        to   { opacity: 1; transform: translateX(0); }
     }
 
-    .campaign-alert.alert-high {
-        background: rgba(255, 107, 53, 0.92);
-        color: white;
-        border-left: 5px solid #ff6b35;
-        padding: 10px 16px;
-        border-radius: 4px;
-        backdrop-filter: blur(8px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    /* ══════════════════════════════════════════════════════════════════
+       RESPONSIVE
+       ══════════════════════════════════════════════════════════════════ */
+    @@media (max-width: 1100px) {
+        .map-bar__title { display: none; }
     }
 
-    .campaign-alert.alert-critical {
-        background: rgba(255, 62, 62, 0.95);
-        color: white;
-        border-left: 5px solid #ff3e3e;
-        padding: 10px 16px;
-        border-radius: 4px;
-        backdrop-filter: blur(8px);
-        animation: pulseBorder 2s infinite;
-        box-shadow: 0 0 15px rgba(255,62,62,0.4);
-    }
-
-    .ca-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-weight: 700;
-        font-size: 11px;
-        margin-bottom: 4px;
-        letter-spacing: 1px;
-    }
-
-    .ca-blink {
-        animation: blink 1s infinite;
-    }
-
-    .ca-details {
-        font-size: 11px;
-        line-height: 1.4;
-    }
-
-    @@keyframes pulseBorder {
-        0%, 100% {
-            border-left-color: #ff3e3e;
-        }
-
-        50% {
-            border-left-color: #ffa500;
-        }
-    }
-
-    @@keyframes blink {
-        0%, 100% {
-            opacity: 1;
-        }
-
-        50% {
-            opacity: 0.2;
-        }
-    }
-
-    @@keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    @@keyframes tickerSlide {
-        from {
-            opacity: 0;
-            transform: translateX(-8px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
+    @@media (max-width: 900px) {
+        .map-bar__legend { display: none; }
     }
 
     @@media (max-width: 768px) {
-        .dash-sidebar {
-            display: none;
+        .dash-sidebar { display: none; }
+        .mobile-stats { display: flex; }
+
+        .map-bar {
+            top: 8px; left: 8px; right: 8px;
+            padding: 6px 10px;
         }
+
+        .filter-pill { padding: 4px 8px; font-size: 8px; }
+        .map-report-btn { padding: 4px 8px !important; font-size: 8px !important; }
+    }
+
+    @@media (max-width: 480px) {
+        .map-bar { flex-direction: column; align-items: stretch; gap: 6px; }
+        .map-bar__left, .map-bar__right { justify-content: center; }
+        .map-bar__filters { justify-content: center; }
+        .mobile-stats { left: 8px; bottom: 8px; gap: 8px; padding: 6px 12px; }
+        .map-counter { bottom: 8px; right: 8px; padding: 5px 10px; }
     }
 </style>
 
@@ -1102,8 +938,33 @@
         new("Education",  "🎓", "Low"),
         new("Government", "🏛", "Low"),
         new("Energy",     "⚡", "Low"),
-        new("Other",      "◈", "Low"),
+        new("Other",      "◈",  "Low"),
     };
+
+    // ── SVG icon helpers ──
+
+    private static MarkupString GetAttackSvg(string type) => new(type switch
+    {
+        "Ransomware" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""11"" height=""11"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><rect width=""18"" height=""11"" x=""3"" y=""11"" rx=""2"" ry=""2""/><path d=""M7 11V7a5 5 0 0 1 10 0v4""/></svg>",
+        "Phishing" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""11"" height=""11"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><rect width=""20"" height=""16"" x=""2"" y=""4"" rx=""2""/><path d=""m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7""/></svg>",
+        "DDoS" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""11"" height=""11"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2""/></svg>",
+        "Malware" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""11"" height=""11"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""m8 2 1.88 1.88""/><path d=""M14.12 3.88 16 2""/><path d=""M9 7.13v-1a3.003 3.003 0 1 1 6 0v1""/><path d=""M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6""/><path d=""M12 20v-9""/><path d=""M6.53 9C4.6 8.8 3 7.1 3 5""/><path d=""M6 13H2""/><path d=""M3 21c0-2.1 1.7-3.9 3.8-4""/><path d=""M20.97 5c0 2.1-1.6 3.8-3.5 4""/><path d=""M22 13h-4""/><path d=""M17.2 17c2.1.1 3.8 1.9 3.8 4""/></svg>",
+        "IdentityTheft" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""11"" height=""11"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2""/><circle cx=""9"" cy=""7"" r=""4""/><line x1=""17"" x2=""22"" y1=""8"" y2=""13""/><line x1=""22"" x2=""17"" y1=""8"" y2=""13""/></svg>",
+        _ => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""11"" height=""11"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><circle cx=""12"" cy=""12"" r=""10""/><path d=""M12 16v-4""/><path d=""M12 8h.01""/></svg>"
+    });
+
+    private static MarkupString GetSectorSvg(string name) => new(name switch
+    {
+        "Banking" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""13"" height=""13"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><line x1=""3"" x2=""21"" y1=""22"" y2=""22""/><line x1=""6"" x2=""6"" y1=""18"" y2=""11""/><line x1=""10"" x2=""10"" y1=""18"" y2=""11""/><line x1=""14"" x2=""14"" y1=""18"" y2=""11""/><line x1=""18"" x2=""18"" y1=""18"" y2=""11""/><polygon points=""12 2 20 7 4 7""/></svg>",
+        "Telecom" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""13"" height=""13"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M4.9 19.1C1 15.2 1 8.8 4.9 4.9""/><path d=""M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.4""/><circle cx=""12"" cy=""12"" r=""2""/><path d=""M16.2 7.8c2.3 2.3 2.3 6.1 0 8.4""/><path d=""M19.1 4.9C23 8.8 23 15.1 19.1 19""/></svg>",
+        "Healthcare" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""13"" height=""13"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z""/><path d=""M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27""/></svg>",
+        "Education" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""13"" height=""13"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z""/><path d=""M22 10v6""/><path d=""M6 12.5V16c0 1 2.5 3 6 3s6-2 6-3v-3.5""/></svg>",
+        "Government" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""13"" height=""13"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><rect width=""16"" height=""20"" x=""4"" y=""2"" rx=""2"" ry=""2""/><path d=""M9 22v-4h6v4""/><path d=""M8 6h.01""/><path d=""M16 6h.01""/><path d=""M12 6h.01""/><path d=""M12 10h.01""/><path d=""M12 14h.01""/><path d=""M16 10h.01""/><path d=""M16 14h.01""/><path d=""M8 10h.01""/><path d=""M8 14h.01""/></svg>",
+        "Energy" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""13"" height=""13"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z""/></svg>",
+        _ => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""13"" height=""13"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z""/></svg>"
+    });
+
+    // ── Lifecycle ──
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -1182,7 +1043,6 @@
                     AffectedSectors = c.AffectedSectors,
                     ReportCount = c.ReportCount,
                     AlertLevel = c.AlertLevel,
-                    // SignalR fields default to 0/empty for API-loaded campaigns — that's fine
                 }).ToList();
             }
 
@@ -1246,8 +1106,8 @@
         try
         {
             await JS.InvokeVoidAsync("tcpkMap.addHeatPoint",
-    payload.Latitude, payload.Longitude, payload.Severity, payload.AttackType, payload.City,
-    payload.GreyNoiseClassification);
+                payload.Latitude, payload.Longitude, payload.Severity, payload.AttackType, payload.City,
+                payload.GreyNoiseClassification);
         }
         catch { }
 
@@ -1269,16 +1129,6 @@
 
         await InvokeAsync(StateHasChanged);
     }
-
-    private static string GetAttackIcon(string type) => type switch
-    {
-        "Ransomware" => "🔐",
-        "Phishing" => "🎣",
-        "DDoS" => "🌊",
-        "IdentityTheft" => "👤",
-        "Malware" => "🦠",
-        _ => "⚠"
-    };
 
     private static string GetRelativeTime(DateTime dt)
     {
