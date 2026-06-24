@@ -10,1103 +10,566 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-<div class="reg-root">
+<div class="tc-page-dark reg-page">
 
-    @* Animated grid *@
-    <div class="bg-grid"></div>
-    <div class="scan-line"></div>
+    @* ── Background Effects ── *@
+    <div class="tc-bg-grid" aria-hidden="true"></div>
+    <div class="tc-scanline" aria-hidden="true"></div>
+    <div class="tc-corner tc-corner--tl" aria-hidden="true"></div>
+    <div class="tc-corner tc-corner--tr" aria-hidden="true"></div>
+    <div class="tc-corner tc-corner--bl" aria-hidden="true"></div>
+    <div class="tc-corner tc-corner--br" aria-hidden="true"></div>
+    <div class="tc-orb" style="width:500px;height:500px;top:5%;left:-8%;--orb-color:rgba(159,239,0,0.06)" aria-hidden="true"></div>
+    <div class="tc-orb" style="width:400px;height:400px;bottom:-5%;right:10%;--orb-color:rgba(0,180,255,0.04);animation-delay:5s;animation-direction:alternate-reverse;animation-duration:22s" aria-hidden="true"></div>
+    <div class="tc-particles" aria-hidden="true">
+        <span style="left:8%;animation-duration:22s;animation-delay:1s"></span>
+        <span style="left:25%;animation-duration:26s;animation-delay:5s"></span>
+        <span style="left:48%;animation-duration:19s;animation-delay:3s"></span>
+        <span style="left:68%;animation-duration:24s;animation-delay:7s"></span>
+        <span style="left:85%;animation-duration:21s;animation-delay:0s"></span>
+    </div>
+    <div class="tc-vignette" aria-hidden="true"></div>
 
-    @* Corner decorations *@
-    <div class="corner corner-tl"></div>
-    <div class="corner corner-tr"></div>
-    <div class="corner corner-bl"></div>
-    <div class="corner corner-br"></div>
+    @* ── Left Panel: Form ── *@
+    <div class="reg-form-panel">
 
-    @* Left panel — form *@
-    <div class="left-panel">
+        <div class="tc-card tc-card--glass tc-card--accent-top tc-card--sweep-border reg-form-card @(_shake ? "tc-shake" : "") tc-anim-fade-up">
 
-        <div class="form-card @(_shake ? "shake" : "")">
-
-            <div class="form-header">
-                <a href="/" class="back-link">← back to map</a>
-                <div class="form-title-row">
-                    <span class="form-prompt">$</span>
-                    <h2 class="form-title">auth.register</h2>
-                    <span class="form-cursor">_</span>
+            <div class="reg-form-header">
+                <a href="/" class="reg-back-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    back to map
+                </a>
+                <div class="reg-form-title">
+                    <span class="reg-form-title__prompt">$</span>
+                    <h2 class="reg-form-title__text">auth.register</h2>
+                    <span class="reg-form-title__cursor" aria-hidden="true">_</span>
                 </div>
-                <p class="form-subtitle">Create your operator account</p>
+                <p class="reg-form-subtitle">Create your operator account</p>
             </div>
 
             @if (!string.IsNullOrEmpty(_errorMessage))
             {
-                <div class="error-banner">
-                    <span class="error-icon">⚠</span>
+                <div class="tc-banner tc-banner--error">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                     <span>@_errorMessage</span>
                 </div>
             }
 
-            <div class="form-body">
+            <div class="reg-form-body">
 
                 @* Step indicator *@
-                <div class="step-bar">
-                    <div class="step @(_currentStep >= 1 ? "active" : "") @(_currentStep > 1 ? "done" : "")">
-                        <span class="step-num">@(_currentStep > 1 ? "✓" : "01")</span>
-                        <span class="step-label">IDENTITY</span>
+                <div class="reg-steps">
+                    <div class="reg-step @(_currentStep >= 1 ? "is-active" : "") @(_currentStep > 1 ? "is-done" : "")">
+                        <span class="reg-step__dot">
+                            @if (_currentStep > 1)
+                            {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+                            }
+                            else
+                            {
+                                <span>01</span>
+                            }
+                        </span>
+                        <span class="reg-step__label">IDENTITY</span>
                     </div>
-                    <div class="step-line @(_currentStep > 1 ? "filled" : "")"></div>
-                    <div class="step @(_currentStep >= 2 ? "active" : "")">
-                        <span class="step-num">02</span>
-                        <span class="step-label">CREDENTIALS</span>
+                    <div class="reg-steps__line @(_currentStep > 1 ? "is-filled" : "")"></div>
+                    <div class="reg-step @(_currentStep >= 2 ? "is-active" : "")">
+                        <span class="reg-step__dot"><span>02</span></span>
+                        <span class="reg-step__label">CREDENTIALS</span>
                     </div>
                 </div>
 
                 @if (_currentStep == 1)
                 {
-                    @* Step 1 — Identity *@
-                    <div class="step-content" key="step1">
+                    <div class="reg-step-content" key="step1">
 
-                        <div class="field-group">
-                            <label class="field-label">
-                                <span class="label-index">01</span>
-                                USERNAME
+                        <div class="tc-field">
+                            <label class="tc-field__label">
+                                <span class="tc-field__index">01</span> USERNAME
                             </label>
-                            <div class="input-wrapper @(_usernameFocused ? "focused" : "") @(GetUsernameState())">
-                                <span class="input-prefix">◈</span>
-                                <input
-    type="text"
-    class="field-input"
-    @bind="_username"
-    @bind:event="oninput"
-    @onfocus="() => _usernameFocused = true"
-    @onblur="ValidateUsername"
-    disabled="@_loading" />
+                            <div class="tc-input-group @(_usernameFocused ? "is-focused" : "") @(GetUsernameState())">
+                                <span class="tc-input-group__prefix">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </span>
+                                <input type="text" class="tc-input" @bind="_username" @bind:event="oninput"
+                                       @onfocus="() => _usernameFocused = true" @onblur="ValidateUsername"
+                                       disabled="@_loading" />
                                 @if (!string.IsNullOrEmpty(_username))
                                 {
-                                    <span class="input-status @(IsUsernameValid() ? "valid" : "invalid")">
-                                        @(IsUsernameValid() ? "✓" : "✗")
+                                    <span class="tc-input-group__status @(IsUsernameValid() ? "tc-input-group__status--valid" : "tc-input-group__status--invalid")">
+                                        @if (IsUsernameValid())
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+                                        }
+                                        else
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                        }
                                     </span>
                                 }
                             </div>
                             @if (!string.IsNullOrEmpty(_usernameError))
                             {
-                                <span class="field-error">@_usernameError</span>
+                                <span class="tc-field__error">@_usernameError</span>
                             }
                             else if (!string.IsNullOrEmpty(_username) && IsUsernameValid())
                             {
-                                <span class="field-hint valid">Callsign available</span>
+                                <span class="tc-field__hint tc-field__hint--valid">Callsign available</span>
                             }
                             else
                             {
-                                <span class="field-hint">3–30 characters, letters/numbers/underscores only</span>
+                                <span class="tc-field__hint">3–30 characters, letters/numbers/underscores only</span>
                             }
                         </div>
 
-                        <div class="field-group">
-                            <label class="field-label">
-                                <span class="label-index">02</span>
-                                EMAIL_ADDRESS
+                        <div class="tc-field">
+                            <label class="tc-field__label">
+                                <span class="tc-field__index">02</span> EMAIL
                             </label>
-                            <div class="input-wrapper @(_emailFocused ? "focused" : "") @(GetEmailState())">
-                                <span class="input-prefix">@@</span>
-                                <input
-    type="email"
-    class="field-input"
-    @bind="_email"
-    @bind:event="oninput"
-    @onfocus="() => _emailFocused = true"
-    @onblur="ValidateEmail"
-    disabled="@_loading" />
+                            <div class="tc-input-group @(_emailFocused ? "is-focused" : "") @(GetEmailState())">
+                                <span class="tc-input-group__prefix">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                                </span>
+                                <input type="email" class="tc-input" @bind="_email" @bind:event="oninput"
+                                       @onfocus="() => _emailFocused = true" @onblur="ValidateEmail"
+                                       disabled="@_loading" />
                                 @if (!string.IsNullOrEmpty(_email))
                                 {
-                                    <span class="input-status @(IsEmailValid() ? "valid" : "invalid")">
-                                        @(IsEmailValid() ? "✓" : "✗")
+                                    <span class="tc-input-group__status @(IsEmailValid() ? "tc-input-group__status--valid" : "tc-input-group__status--invalid")">
+                                        @if (IsEmailValid())
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+                                        }
+                                        else
+                                        {
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                        }
                                     </span>
                                 }
                             </div>
                             @if (!string.IsNullOrEmpty(_emailError))
                             {
-                                <span class="field-error">@_emailError</span>
+                                <span class="tc-field__error">@_emailError</span>
                             }
                         </div>
 
-                        <button class="@NextBtnClass()" @onclick="GoToStep2" disabled="@(!CanGoToStep2())">
+                        <button class="tc-btn tc-btn--primary tc-btn--full" @onclick="GoToStep2" disabled="@(!CanGoToStep2())">
                             <span>CONTINUE</span>
-                            <span class="btn-arrow">→</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         </button>
 
                     </div>
                 }
                 else
                 {
-                    @* Step 2 — Credentials *@
-                    <div class="step-content" key="step2">
+                    <div class="reg-step-content" key="step2">
 
-                        <div class="field-group">
-                            <label class="field-label">
-                                <span class="label-index">03</span>
-                                PASSWORD
+                        <div class="tc-field">
+                            <label class="tc-field__label">
+                                <span class="tc-field__index">03</span> PASSWORD
                             </label>
-                            <div class="input-wrapper @(_passFocused ? "focused" : "")">
-                                <span class="input-prefix">🔒</span>
-                                <input
-                                    type="@(_showPassword ? "text" : "password")"
-                                    class="field-input"
-                                    placeholder="min. 8 characters"
-                                    @bind="_password"
-                                    @bind:event="oninput"
-                                    @onfocus="() => _passFocused = true"
-                                    @onblur="() => _passFocused = false"
-                                    disabled="@_loading" />
-                                <button type="button" class="toggle-pass"
-                                        @onclick="() => _showPassword = !_showPassword">
-                                    @(_showPassword ? "HIDE" : "SHOW")
+                            <div class="tc-input-group @(_passFocused ? "is-focused" : "")">
+                                <span class="tc-input-group__prefix">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                </span>
+                                <input type="@(_showPassword ? "text" : "password")" class="tc-input"
+                                       placeholder="min. 8 characters"
+                                       @bind="_password" @bind:event="oninput"
+                                       @onfocus="() => _passFocused = true"
+                                       @onblur="() => _passFocused = false"
+                                       disabled="@_loading" />
+                                <button type="button" class="tc-input-group__suffix"
+                                        @onclick="() => _showPassword = !_showPassword"
+                                        aria-label="@(_showPassword ? "Hide password" : "Show password")">
+                                    @if (_showPassword)
+                                    {
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>
+                                    }
+                                    else
+                                    {
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+                                    }
                                 </button>
                             </div>
-
-                            @* Password strength meter *@
                             @if (!string.IsNullOrEmpty(_password))
                             {
                                 var strength = GetPasswordStrength();
-                                <div class="strength-bar">
-                                    <div class="strength-track">
-                                        <div class="strength-fill s-@strength.Level"
-                                             style="width: @(strength.Percent)%"></div>
+                                <div class="tc-strength">
+                                    <div class="tc-strength__track">
+                                        <div class="tc-strength__fill tc-strength__fill--@strength.Level"
+                                             style="width:@(strength.Percent)%"></div>
                                     </div>
-                                    <span class="strength-label s-text-@strength.Level">
+                                    <span class="tc-strength__label tc-strength__label--@strength.Level">
                                         @strength.Label
                                     </span>
                                 </div>
                             }
                         </div>
 
-                        <div class="field-group">
-                            <label class="field-label">
-                                <span class="label-index">04</span>
-                                CONFIRM_PASSWORD
+                        <div class="tc-field">
+                            <label class="tc-field__label">
+                                <span class="tc-field__index">04</span> CONFIRM PASSWORD
                             </label>
-                            <div class="input-wrapper @(_confirmFocused ? "focused" : "") @(GetConfirmState())">
-                                <span class="input-prefix">🔑</span>
-                                <input
-                                    type="@(_showConfirm ? "text" : "password")"
-                                    class="field-input"
-                                    placeholder="re-enter password"
-                                    @bind="_confirmPassword"
-                                    @bind:event="oninput"
-                                    @onfocus="() => _confirmFocused = true"
-                                    @onblur="() => _confirmFocused = false"
-                                    disabled="@_loading" />
-                                <button type="button" class="toggle-pass"
-                                        @onclick="() => _showConfirm = !_showConfirm">
-                                    @(_showConfirm ? "HIDE" : "SHOW")
+                            <div class="tc-input-group @(_confirmFocused ? "is-focused" : "") @(GetConfirmState())">
+                                <span class="tc-input-group__prefix">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.068 5.068 0 0 0-3.32 3.32"/><path d="m15.5 7.5 1 1m-8.44 7.94a3 3 0 1 0 4.24-4.24"/><path d="M13.93 6.07A5.07 5.07 0 0 0 8 2c-2.8 0-5 2.2-5 5a5.07 5.07 0 0 0 4.07 5.93"/><path d="M18 13a5.07 5.07 0 0 1-4.07 5.93A5.07 5.07 0 0 1 8 22c2.8 0 5-2.2 5-5a5.07 5.07 0 0 1 4.07-5.93"/></svg>
+                                </span>
+                                <input type="@(_showConfirm ? "text" : "password")" class="tc-input"
+                                       placeholder="re-enter password"
+                                       @bind="_confirmPassword" @bind:event="oninput"
+                                       @onfocus="() => _confirmFocused = true"
+                                       @onblur="() => _confirmFocused = false"
+                                       disabled="@_loading" />
+                                <button type="button" class="tc-input-group__suffix"
+                                        @onclick="() => _showConfirm = !_showConfirm"
+                                        aria-label="@(_showConfirm ? "Hide password" : "Show password")">
+                                    @if (_showConfirm)
+                                    {
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>
+                                    }
+                                    else
+                                    {
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+                                    }
                                 </button>
                             </div>
                             @if (!string.IsNullOrEmpty(_confirmPassword) && _password != _confirmPassword)
                             {
-                                <span class="field-error">Passwords do not match</span>
+                                <span class="tc-field__error">Passwords do not match</span>
                             }
                         </div>
 
-                        @* Terms acknowledgment *@
-                        <div class="terms-row">
-                            <label class="checkbox-label">
-                                <input type="checkbox" class="checkbox-input"
-                                       @bind="_termsAccepted" />
-                                <span class="checkbox-box @(_termsAccepted ? "checked" : "")">
-                                    @(_termsAccepted ? "✓" : "")
+                        <div class="reg-terms">
+                            <label class="tc-checkbox-label">
+                                <input type="checkbox" @bind="_termsAccepted" />
+                                <span class="tc-checkbox @(_termsAccepted ? "is-checked" : "")">
+                                    @if (_termsAccepted)
+                                    {
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+                                    }
                                 </span>
-                                <span class="terms-text">
-                                    I understand this platform is for cyber threat reporting only
-                                </span>
+                                <span class="reg-terms__text">I understand this platform is for cyber threat reporting only</span>
                             </label>
                         </div>
 
-                        <div class="step2-btns">
-                            <button class="back-step-btn" @onclick="() => _currentStep = 1"
-                                    disabled="@_loading">
-                                ← BACK
+                        <div class="reg-step2-btns">
+                            <button class="tc-btn tc-btn--ghost" @onclick="() => _currentStep = 1" disabled="@_loading">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                                BACK
                             </button>
-
-                            <button class="submit-btn @(_loading ? "loading" : "")"
-                                    @onclick="HandleRegister"
-                                    disabled="@(!CanSubmit() || _loading)">
+                            <button class="tc-btn tc-btn--primary reg-submit-btn @(_loading ? "is-loading" : "")"
+                                    @onclick="HandleRegister" disabled="@(!CanSubmit() || _loading)">
                                 @if (_loading)
                                 {
-                                    <span class="btn-spinner"></span>
-                                    <span>CREATING...</span>
+                                    <span class="tc-spinner"></span>
+                                    <span>CREATING…</span>
                                 }
                                 else
                                 {
                                     <span>CREATE ACCOUNT</span>
-                                    <span class="btn-arrow">→</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                                 }
                             </button>
                         </div>
 
                     </div>
                 }
-                <div class="divider-row">
-    <div class="divider-line"></div>
-    <span class="divider-text">OR</span>
-    <div class="divider-line"></div>
-</div>
 
-<a href="@GoogleLoginUrl" class="google-btn">
-    <svg class="g-icon" viewBox="0 0 24 24" width="18" height="18">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-    </svg>
-    <span>CONTINUE WITH GOOGLE</span>
-</a>
-                <div class="form-footer-links">
-                    <span class="footer-text">Already registered?</span>
-                    <a href="/login" class="footer-link">Sign in →</a>
+                <div class="tc-divider"><span>OR</span></div>
+
+                <a href="@GoogleLoginUrl" class="tc-btn tc-btn--outline tc-btn--full">
+                    <svg viewBox="0 0 24 24" width="18" height="18" style="flex-shrink:0">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <span>CONTINUE WITH GOOGLE</span>
+                </a>
+
+                <div class="reg-form-footer">
+                    <span>Already registered?</span>
+                    <a href="/login">Sign in →</a>
                 </div>
 
             </div>
         </div>
 
-        <div class="form-meta">
-            <span class="meta-item">
-                <span class="meta-dot green"></span>
-                REGISTRATION OPEN
-            </span>
-            <span class="meta-sep">//</span>
-            <span class="meta-item">BCrypt · PBKDF2</span>
-            <span class="meta-sep">//</span>
-            <span class="meta-item">DATA ENCRYPTED</span>
-        </div>
-
-    </div>
-
-    @* Right panel — info *@
-    <div class="right-panel">
-        <div class="right-content">
-
-            <div class="brand-block">
-                <div class="hex-icon">◈</div>
-                <div class="brand-name">ThreatCast<span class="brand-pk">PK</span></div>
-            </div>
-
-            <h2 class="right-heading">Join the<br />Intelligence<br />Network</h2>
-
-            <div class="roles-list">
-                <div class="role-card">
-                    <div class="role-icon public">👁</div>
-                    <div class="role-info">
-                        <div class="role-name">Public Viewer</div>
-                        <div class="role-desc">View live threat map, browse analytics, read forum</div>
-                    </div>
-                    <div class="role-badge default">DEFAULT</div>
-                </div>
-
-                <div class="role-connector"></div>
-
-                <div class="role-card">
-                    <div class="role-icon reporter">📡</div>
-                    <div class="role-info">
-                        <div class="role-name">Reporter</div>
-                        <div class="role-desc">Submit attack reports, earn reputation points, get auto-approved</div>
-                    </div>
-                    <div class="role-badge request">REQUEST</div>
-                </div>
-
-                <div class="role-connector"></div>
-
-                <div class="role-card">
-                    <div class="role-icon admin">⚡</div>
-                    <div class="role-info">
-                        <div class="role-name">Admin</div>
-                        <div class="role-desc">Moderate reports, manage users, inject verified events</div>
-                    </div>
-                    <div class="role-badge invite">INVITE ONLY</div>
-                </div>
-            </div>
-
-            <div class="right-footnote">
-                <span class="fn-dot"></span>
-                Reports are verified against AbuseIPDB — false reports reduce your reputation score.
-            </div>
-
+        <div class="reg-meta tc-anim-fade-up" style="animation-delay:.15s">
+            <span class="reg-meta__status"><span class="reg-meta__dot"></span> REGISTRATION OPEN</span>
+            <span class="reg-meta__sep">//</span>
+            <span>BCrypt · PBKDF2</span>
+            <span class="reg-meta__sep">//</span>
+            <span>DATA ENCRYPTED</span>
         </div>
     </div>
+
+    @* ── Right Panel: Info ── *@
+    <aside class="reg-info-panel">
+        <div class="reg-info-content tc-anim-fade-right" style="animation-delay:.1s">
+
+            <div class="reg-brand">
+                <div class="reg-brand__icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>
+                    </svg>
+                </div>
+                <span class="reg-brand__text">ThreatCast<span class="login-logo__accent">PK</span></span>
+            </div>
+
+            <h2 class="reg-info-heading">Join the<br/>Intelligence<br/>Network</h2>
+
+            <div class="reg-roles">
+                <div class="reg-role">
+                    <div class="reg-role__icon reg-role__icon--viewer">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
+                    <div class="reg-role__body">
+                        <div class="reg-role__name">Public Viewer</div>
+                        <div class="reg-role__desc">View live threat map, browse analytics, read forum</div>
+                    </div>
+                    <span class="tc-badge tc-badge--default">DEFAULT</span>
+                </div>
+
+                <div class="reg-roles__connector" aria-hidden="true"></div>
+
+                <div class="reg-role">
+                    <div class="reg-role__icon reg-role__icon--reporter">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.536 11.293a1 1 0 0 0 0-1.414l-2.4-2.4a1 1 0 0 0-1.413 0L2.793 16.41a1 1 0 0 0 0 1.414l2.4 2.4a1 1 0 0 0 1.414 0z"/><path d="m14.5 12.5 4.586-4.586a2 2 0 0 0 0-2.828l-.172-.172a2 2 0 0 0-2.828 0L11.5 9.5"/><path d="m2 22 5.5-1.5L3.5 16.5z"/><circle cx="18" cy="18" r="3"/></svg>
+                    </div>
+                    <div class="reg-role__body">
+                        <div class="reg-role__name">Reporter</div>
+                        <div class="reg-role__desc">Submit attack reports, earn reputation points</div>
+                    </div>
+                    <span class="tc-badge tc-badge--accent">REQUEST</span>
+                </div>
+
+                <div class="reg-roles__connector" aria-hidden="true"></div>
+
+                <div class="reg-role">
+                    <div class="reg-role__icon reg-role__icon--admin">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+                    </div>
+                    <div class="reg-role__body">
+                        <div class="reg-role__name">Admin</div>
+                        <div class="reg-role__desc">Moderate reports, manage users, inject verified events</div>
+                    </div>
+                    <span class="tc-badge tc-badge--warning">INVITE ONLY</span>
+                </div>
+            </div>
+
+            <div class="reg-footnote">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                <span>Reports are verified against AbuseIPDB — false reports reduce your reputation score.</span>
+            </div>
+
+        </div>
+    </aside>
 
 </div>
 
 <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── Left Panel (Form) ── */
+    .reg-form-panel {
+        width: 520px; min-width: 420px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: var(--tc-space-12) var(--tc-space-10);
+        position: relative; z-index: 3;
+        border-right: 1px solid rgba(33,38,45,0.5);
+    }
+    .reg-form-card { width: 100%; }
+
+    .reg-form-header {
+        padding: var(--tc-space-5) var(--tc-space-7);
+        border-bottom: 1px solid rgba(33,38,45,0.4);
+        background: rgba(13,17,23,0.3);
+    }
+    .reg-back-link {
+        display: inline-flex; align-items: center; gap: var(--tc-space-1);
+        font-family: var(--tc-font-mono); font-size: var(--tc-text-2xs);
+        color: var(--tc-text-faint); text-decoration: none;
+        letter-spacing: 1px; margin-bottom: var(--tc-space-3);
+        transition: color var(--tc-ease-fast);
+    }
+    .reg-back-link:hover { color: var(--tc-accent); }
+
+    .reg-form-title { display: flex; align-items: center; gap: var(--tc-space-2); margin-bottom: var(--tc-space-1); }
+    .reg-form-title__prompt { font-family: var(--tc-font-mono); font-size: var(--tc-text-lg); color: var(--tc-accent); font-weight: 600; }
+    .reg-form-title__text { font-family: var(--tc-font-mono); font-size: var(--tc-text-lg); font-weight: 600; color: var(--tc-text-secondary); margin: 0; }
+    .reg-form-title__cursor { font-family: var(--tc-font-mono); font-size: var(--tc-text-lg); color: var(--tc-accent); animation: tc-pulse 1.2s step-end infinite; }
+    .reg-form-subtitle { font-family: var(--tc-font-mono); font-size: var(--tc-text-sm); color: var(--tc-text-muted); }
+
+    .reg-form-body { padding: var(--tc-space-6) var(--tc-space-7); display: flex; flex-direction: column; gap: var(--tc-space-5); }
+
+    /* ── Step indicator ── */
+    .reg-steps { display: flex; align-items: center; margin-bottom: var(--tc-space-1); }
 
-    .reg-root {
-        min-height: 100vh;
-        display: flex;
-        background: #0d1117;
-        position: relative;
-        overflow: hidden;
-        font-family: 'Inter', sans-serif;
-    }
-
-    .bg-grid {
-        position: fixed;
-        inset: 0;
-        background-image:
-            linear-gradient(rgba(159,239,0,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(159,239,0,0.03) 1px, transparent 1px);
-        background-size: 40px 40px;
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    .scan-line {
-        position: fixed;
-        top: -2px;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #9fef00, transparent);
-        animation: scan 6s linear infinite;
-        opacity: 0.4;
-        z-index: 1;
-        pointer-events: none;
-    }
-
-    @@keyframes scan {
-        0%   { top: -2px; }
-        100% { top: 100vh; }
-    }
-
-    .corner {
-        position: fixed;
-        width: 20px;
-        height: 20px;
-        z-index: 2;
-        pointer-events: none;
-    }
-    .corner-tl { top: 16px; left: 16px; border-top: 2px solid #9fef00; border-left: 2px solid #9fef00; }
-    .corner-tr { top: 16px; right: 16px; border-top: 2px solid #9fef00; border-right: 2px solid #9fef00; }
-    .corner-bl { bottom: 16px; left: 16px; border-bottom: 2px solid #9fef00; border-left: 2px solid #9fef00; }
-    .corner-br { bottom: 16px; right: 16px; border-bottom: 2px solid #9fef00; border-right: 2px solid #9fef00; }
-
-    /* ── Left panel (form side) ── */
-    .left-panel {
-        width: 520px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 48px 40px;
-        position: relative;
-        z-index: 3;
-        border-right: 1px solid #21262d;
-    }
-
-    /* ── Form card ── */
-    .form-card {
-        width: 100%;
-        background: #161b22;
-        border: 1px solid #21262d;
-        border-radius: 8px;
-        overflow: hidden;
-        animation: fadeInUp 0.6s ease both;
-    }
-
-    @@keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .shake { animation: shake 0.4s ease !important; }
-
-    @@keyframes shake {
-        0%,100% { transform: translateX(0); }
-        20%     { transform: translateX(-8px); }
-        40%     { transform: translateX(8px); }
-        60%     { transform: translateX(-5px); }
-        80%     { transform: translateX(5px); }
-    }
-
-    /* ── Form header ── */
-    .form-header {
-        padding: 20px 28px 18px;
-        border-bottom: 1px solid #21262d;
-        background: #0d1117;
-    }
-
-    .back-link {
-        display: inline-block;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #4a5160;
-        text-decoration: none;
-        letter-spacing: 1px;
-        margin-bottom: 12px;
-        transition: color 0.15s;
-    }
-    .back-link:hover { color: #9fef00; }
-
-    .form-title-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 4px;
-    }
-
-    .form-prompt {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 17px;
-        color: #9fef00;
-        font-weight: 600;
-    }
-
-    .form-title {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 17px;
-        font-weight: 600;
-        color: #c9d1d9;
-    }
-
-    .form-cursor {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 17px;
-        color: #9fef00;
-        animation: blink 1s step-end infinite;
-    }
-
-    @@keyframes blink {
-        0%, 100% { opacity: 1; }
-        50%       { opacity: 0; }
-    }
-
-    .form-subtitle {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px;
-        color: #6e7681;
-    }
-
-    /* ── Error banner ── */
-    .error-banner {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 28px;
-        background: rgba(255,62,62,0.08);
-        border-bottom: 1px solid rgba(255,62,62,0.2);
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px;
-        color: #ff3e3e;
-    }
-    .error-icon { flex-shrink: 0; }
-
-    /* ── Form body ── */
-    .form-body {
-        padding: 24px 28px;
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-    }
-
-    /* ── Step bar ── */
-    .step-bar {
-        display: flex;
-        align-items: center;
-        gap: 0;
-        margin-bottom: 4px;
-    }
-
-    .step {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        flex-shrink: 0;
-    }
-
-    .step-num {
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        border: 1px solid #21262d;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #4a5160;
-        transition: all 0.3s;
-    }
-
-    .step.active .step-num {
-        border-color: #9fef00;
-        color: #9fef00;
-        background: rgba(159,239,0,0.08);
-    }
-
-    .step.done .step-num {
-        border-color: #9fef00;
-        background: #9fef00;
-        color: #0d1117;
-        font-weight: 700;
-    }
-
-    .step-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #4a5160;
-        letter-spacing: 1px;
-        transition: color 0.3s;
-    }
-
-    .step.active .step-label { color: #9fef00; }
-    .step.done .step-label { color: #6e7681; }
-
-    .step-line {
-        flex: 1;
-        height: 1px;
-        background: #21262d;
-        margin: 0 12px;
-        transition: background 0.3s;
-    }
-
-    .step-line.filled { background: #9fef00; }
-
-    /* ── Step content ── */
-    .step-content {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-        animation: stepIn 0.3s ease both;
-    }
-
-    @@keyframes stepIn {
-        from { opacity: 0; transform: translateX(12px); }
-        to   { opacity: 1; transform: translateX(0); }
-    }
-
-    /* ── Field groups ── */
-    .field-group { display: flex; flex-direction: column; gap: 7px; }
-
-    .field-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #6e7681;
-        letter-spacing: 2px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .label-index { color: #9fef00; opacity: 0.6; }
-
-    .input-wrapper {
-        display: flex;
-        align-items: center;
-        background: #0d1117;
-        border: 1px solid #21262d;
-        border-radius: 4px;
-        transition: border-color 0.15s, box-shadow 0.15s;
-        overflow: hidden;
-    }
-
-    .input-wrapper.focused {
-        border-color: #9fef00;
-        box-shadow: 0 0 0 3px rgba(159,239,0,0.08);
-    }
-
-    .input-wrapper.valid-state { border-color: rgba(159,239,0,0.4); }
-    .input-wrapper.invalid-state { border-color: rgba(255,62,62,0.4); }
-
-    .input-prefix {
-        padding: 0 12px;
-        font-size: 13px;
-        color: #4a5160;
-        border-right: 1px solid #21262d;
-        flex-shrink: 0;
-        user-select: none;
-        line-height: 44px;
-    }
-
-    .field-input {
-        flex: 1;
-        background: transparent;
-        border: none;
-        outline: none;
-        padding: 11px 14px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 13px;
-        color: #c9d1d9;
-        caret-color: #9fef00;
-    }
+    .reg-step { display: flex; align-items: center; gap: var(--tc-space-2); flex-shrink: 0; }
 
-    .field-input::placeholder { color: #4a5160; }
-    .field-input:disabled { opacity: 0.5; cursor: not-allowed; }
+    .reg-step__dot {
+        width: 28px; height: 28px; border-radius: 50%;
+        border: 1.5px solid var(--tc-border);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--tc-font-mono); font-size: var(--tc-text-2xs);
+        color: var(--tc-text-faint);
+        transition: all var(--tc-ease-smooth);
+    }
+    .reg-step.is-active .reg-step__dot {
+        border-color: var(--tc-accent); color: var(--tc-accent);
+        background: var(--tc-accent-subtle);
+        box-shadow: 0 0 16px rgba(159,239,0,0.2);
+    }
+    .reg-step.is-done .reg-step__dot {
+        border-color: var(--tc-accent); background: var(--tc-accent);
+        color: var(--tc-bg-base);
+        box-shadow: 0 0 16px rgba(159,239,0,0.3);
+    }
 
-    .input-status {
-        padding: 0 12px;
-        font-size: 14px;
-        font-weight: 700;
-        flex-shrink: 0;
+    .reg-step__label {
+        font-family: var(--tc-font-mono); font-size: var(--tc-text-2xs);
+        color: var(--tc-text-faint); letter-spacing: 1px;
+        transition: color var(--tc-ease-smooth);
     }
+    .reg-step.is-active .reg-step__label { color: var(--tc-accent); }
+    .reg-step.is-done .reg-step__label { color: var(--tc-text-muted); }
 
-    .input-status.valid  { color: #9fef00; }
-    .input-status.invalid { color: #ff3e3e; }
-
-    .field-error {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #ff3e3e;
-    }
-
-    .field-hint {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #4a5160;
-    }
-
-    .field-hint.valid { color: #9fef00; }
-
-    .toggle-pass {
-        background: none;
-        border: none;
-        border-left: 1px solid #21262d;
-        padding: 0 12px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 9px;
-        color: #4a5160;
-        cursor: pointer;
-        letter-spacing: 1px;
-        height: 100%;
-        transition: color 0.15s;
-    }
-    .toggle-pass:hover { color: #9fef00; }
-
-    /* ── Password strength ── */
-    .strength-bar {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 2px;
-    }
-
-    .strength-track {
-        flex: 1;
-        height: 3px;
-        background: #21262d;
-        border-radius: 2px;
-        overflow: hidden;
-    }
-
-    .strength-fill {
-        height: 100%;
-        border-radius: 2px;
-        transition: width 0.3s ease;
-    }
-
-    .strength-fill.s-weak   { background: #ff3e3e; }
-    .strength-fill.s-medium { background: #ffa500; }
-    .strength-fill.s-strong { background: #9fef00; }
-
-    .strength-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        letter-spacing: 1px;
-        flex-shrink: 0;
-    }
-
-    .s-text-weak   { color: #ff3e3e; }
-    .s-text-medium { color: #ffa500; }
-    .s-text-strong { color: #9fef00; }
-
-    /* ── Terms row ── */
-    .terms-row { padding: 4px 0; }
-
-    .checkbox-label {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        cursor: pointer;
-    }
-
-    .checkbox-input { display: none; }
-
-    .checkbox-box {
-        width: 16px;
-        height: 16px;
-        border: 1px solid #21262d;
-        border-radius: 3px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        font-weight: 700;
-        flex-shrink: 0;
-        margin-top: 1px;
-        transition: all 0.15s;
-        background: #0d1117;
-    }
-
-    .checkbox-box.checked {
-        background: #9fef00;
-        border-color: #9fef00;
-        color: #0d1117;
-    }
-
-    .terms-text {
-        font-size: 12px;
-        color: #6e7681;
-        line-height: 1.5;
-    }
-
-    /* ── Buttons ── */
-    .next-btn {
-        width: 100%;
-        padding: 13px 20px;
-        background: #9fef00;
-        border: none;
-        border-radius: 4px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px;
-        font-weight: 600;
-        color: #0d1117;
-        letter-spacing: 2px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
-    }
-
-    .next-btn:hover:not(:disabled) {
-        opacity: 0.92;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 20px rgba(159,239,0,0.3);
-    }
-
-    .next-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    .step2-btns {
-        display: flex;
-        gap: 10px;
-    }
-
-    .back-step-btn {
-        padding: 13px 18px;
-        background: transparent;
-        border: 1px solid #21262d;
-        border-radius: 4px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #6e7681;
-        cursor: pointer;
-        letter-spacing: 1px;
-        transition: border-color 0.15s, color 0.15s;
-        flex-shrink: 0;
+    .reg-steps__line {
+        flex: 1; height: 1px; background: var(--tc-border);
+        margin: 0 var(--tc-space-3);
+        transition: all var(--tc-ease-smooth);
     }
-    .back-step-btn:hover { border-color: #6e7681; color: #c9d1d9; }
-
-    .submit-btn {
-        flex: 1;
-        padding: 13px 16px;
-        background: #9fef00;
-        border: none;
-        border-radius: 4px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        font-weight: 600;
-        color: #0d1117;
-        letter-spacing: 1.5px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
-    }
-
-    .submit-btn:hover:not(:disabled) {
-        opacity: 0.92;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 20px rgba(159,239,0,0.3);
-    }
-
-    .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    .submit-btn.loading { background: #21262d; color: #6e7681; }
-
-    .btn-arrow { font-size: 14px; }
-
-    .btn-spinner {
-        width: 13px;
-        height: 13px;
-        border: 2px solid #4a5160;
-        border-top-color: #9fef00;
-        border-radius: 50%;
-        animation: spin 0.7s linear infinite;
-    }
-
-    @@keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Footer links ── */
-    .form-footer-links {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding-top: 4px;
-        border-top: 1px solid #21262d;
-        margin-top: 4px;
-        padding-top: 16px;
-    }
-
-    .footer-text { font-size: 13px; color: #6e7681; }
-
-    .footer-link {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px;
-        color: #9fef00;
-        text-decoration: none;
-        transition: opacity 0.15s;
-    }
-    .footer-link:hover { opacity: 0.75; }
-
-    /* ── Form meta ── */
-    .form-meta {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 14px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #4a5160;
-        letter-spacing: 1px;
-        animation: fadeInUp 0.6s ease 0.2s both;
-    }
-
-    .meta-item { display: flex; align-items: center; gap: 5px; }
-
-    .meta-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-    }
-
-    .meta-dot.green {
-        background: #9fef00;
-        box-shadow: 0 0 6px rgba(159,239,0,0.6);
-        animation: blink 2s ease-in-out infinite;
+    .reg-steps__line.is-filled {
+        background: var(--tc-accent);
+        box-shadow: 0 0 8px rgba(159,239,0,0.3);
     }
-
-    .meta-sep { color: #21262d; }
 
-    /* ── Right panel ── */
-    .right-panel {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 56px;
-        position: relative;
-        z-index: 3;
+    .reg-step-content {
+        display: flex; flex-direction: column; gap: var(--tc-space-5);
+        animation: tc-step-in 0.35s cubic-bezier(0.4,0,0.2,1) both;
     }
 
-    .right-content {
-        max-width: 400px;
-        width: 100%;
-        animation: fadeInRight 0.7s ease 0.15s both;
-    }
+    /* ── Terms ── */
+    .reg-terms { padding: var(--tc-space-1) 0; }
+    .reg-terms__text { font-size: var(--tc-text-sm); color: var(--tc-text-muted); line-height: 1.5; }
 
-    @@keyframes fadeInRight {
-        from { opacity: 0; transform: translateX(24px); }
-        to   { opacity: 1; transform: translateX(0); }
-    }
+    /* ── Step 2 buttons ── */
+    .reg-step2-btns { display: flex; gap: var(--tc-space-3); }
+    .reg-submit-btn { flex: 1; }
 
-    .brand-block {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 36px;
+    /* ── Footer ── */
+    .reg-form-footer {
+        display: flex; align-items: center; justify-content: center;
+        gap: var(--tc-space-2); font-size: var(--tc-text-sm); color: var(--tc-text-muted);
+        border-top: 1px solid rgba(33,38,45,0.4);
+        padding-top: var(--tc-space-5);
     }
-
-    .hex-icon {
-        font-size: 28px;
-        color: #9fef00;
-        filter: drop-shadow(0 0 10px rgba(159,239,0,0.5));
-        animation: pulse-glow 3s ease-in-out infinite;
+    .reg-form-footer a {
+        font-family: var(--tc-font-mono); font-size: var(--tc-text-sm);
+        color: var(--tc-accent); text-decoration: none; transition: opacity var(--tc-ease-fast);
     }
+    .reg-form-footer a:hover { opacity: 0.75; }
 
-    @@keyframes pulse-glow {
-        0%, 100% { filter: drop-shadow(0 0 8px rgba(159,239,0,0.5)); }
-        50%       { filter: drop-shadow(0 0 18px rgba(159,239,0,0.9)); }
+    /* ── Meta ── */
+    .reg-meta {
+        display: flex; align-items: center; justify-content: center; gap: var(--tc-space-3);
+        margin-top: var(--tc-space-4); font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-2xs); color: var(--tc-text-faint); letter-spacing: 1px;
     }
-
-    .brand-name {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 18px;
-        font-weight: 600;
-        color: #c9d1d9;
-        letter-spacing: 1px;
+    .reg-meta__status { display: flex; align-items: center; gap: 6px; }
+    .reg-meta__dot {
+        width: 5px; height: 5px; border-radius: 50%; background: var(--tc-accent);
+        box-shadow: 0 0 8px rgba(159,239,0,0.5); animation: tc-pulse 2.5s ease-in-out infinite;
     }
-    .brand-pk { color: #9fef00; }
+    .reg-meta__sep { color: var(--tc-border); }
 
-    .right-heading {
-        font-size: 38px;
-        font-weight: 700;
-        color: #e6edf3;
-        line-height: 1.15;
-        letter-spacing: -0.5px;
-        margin-bottom: 36px;
+    /* ── Right Panel (Info) ── */
+    .reg-info-panel {
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        padding: var(--tc-space-16) var(--tc-space-12);
+        position: relative; z-index: 3;
     }
+    .reg-info-content { max-width: 400px; width: 100%; }
 
-    /* ── Roles list ── */
-    .roles-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
-        margin-bottom: 32px;
+    .reg-brand { display: flex; align-items: center; gap: var(--tc-space-3); margin-bottom: var(--tc-space-10); }
+    .reg-brand__icon {
+        color: var(--tc-accent); display: flex;
+        filter: drop-shadow(0 0 12px rgba(159,239,0,0.5));
+        animation: login-glow 4s ease-in-out infinite;
     }
+    .reg-brand__text { font-family: var(--tc-font-mono); font-size: var(--tc-text-xl); font-weight: 600; color: var(--tc-text-secondary); }
 
-    .role-card {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 16px;
-        background: #161b22;
-        border: 1px solid #21262d;
-        border-radius: 6px;
-        transition: border-color 0.2s;
+    .reg-info-heading {
+        font-size: 2.4rem; font-weight: 700; color: var(--tc-text-primary);
+        line-height: 1.12; letter-spacing: -0.5px; margin-bottom: var(--tc-space-10);
     }
-    .role-card:hover { border-color: #9fef00; }
 
-    .role-connector {
-        width: 1px;
-        height: 16px;
-        background: #21262d;
-        margin-left: 27px;
-    }
+    /* ── Role cards ── */
+    .reg-roles { display: flex; flex-direction: column; margin-bottom: var(--tc-space-8); }
 
-    .role-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        flex-shrink: 0;
+    .reg-role {
+        display: flex; align-items: center; gap: var(--tc-space-4);
+        padding: var(--tc-space-4);
+        background: rgba(22,27,34,0.4);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(33,38,45,0.6);
+        border-radius: var(--tc-radius-md);
+        transition: all var(--tc-ease-smooth);
     }
-
-    .role-icon.public   { background: rgba(110,118,129,0.15); border: 1px solid rgba(110,118,129,0.2); }
-    .role-icon.reporter { background: rgba(159,239,0,0.1);   border: 1px solid rgba(159,239,0,0.2); }
-    .role-icon.admin    { background: rgba(255,165,0,0.1);   border: 1px solid rgba(255,165,0,0.2); }
-
-    .role-info { flex: 1; }
-
-    .role-name {
-        font-size: 13px;
-        font-weight: 600;
-        color: #c9d1d9;
-        margin-bottom: 2px;
+    .reg-role:hover {
+        border-color: rgba(159,239,0,0.25);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 24px rgba(159,239,0,0.04);
     }
 
-    .role-desc {
-        font-size: 12px;
-        color: #6e7681;
-        line-height: 1.4;
+    .reg-roles__connector {
+        width: 1px; height: 16px; background: var(--tc-border); margin-left: 27px;
     }
 
-    .role-badge {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 9px;
-        font-weight: 600;
-        letter-spacing: 1px;
-        padding: 3px 7px;
-        border-radius: 3px;
-        flex-shrink: 0;
+    .reg-role__icon {
+        width: 38px; height: 38px; border-radius: var(--tc-radius-md);
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-
-    .role-badge.default { background: rgba(110,118,129,0.15); color: #6e7681; border: 1px solid #21262d; }
-    .role-badge.request { background: rgba(159,239,0,0.1);   color: #9fef00; border: 1px solid rgba(159,239,0,0.3); }
-    .role-badge.invite  { background: rgba(255,165,0,0.1);   color: #ffa500; border: 1px solid rgba(255,165,0,0.3); }
+    .reg-role__icon--viewer   { background: rgba(110,118,129,0.12); border: 1px solid rgba(110,118,129,0.2); color: var(--tc-text-muted); }
+    .reg-role__icon--reporter { background: var(--tc-accent-subtle); border: 1px solid rgba(159,239,0,0.2); color: var(--tc-accent); }
+    .reg-role__icon--admin    { background: rgba(255,165,0,0.08);   border: 1px solid rgba(255,165,0,0.2);  color: var(--tc-warning); }
 
-    /* ── Right footnote ── */
-    .right-footnote {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        font-size: 12px;
-        color: #4a5160;
-        line-height: 1.6;
-    }
+    .reg-role__body { flex: 1; }
+    .reg-role__name { font-size: var(--tc-text-sm); font-weight: 600; color: var(--tc-text-secondary); margin-bottom: 2px; }
+    .reg-role__desc { font-size: var(--tc-text-xs); color: var(--tc-text-muted); line-height: 1.4; }
 
-    .fn-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #4a5160;
-        flex-shrink: 0;
-        margin-top: 5px;
+    .reg-footnote {
+        display: flex; align-items: flex-start; gap: var(--tc-space-3);
+        font-size: var(--tc-text-xs); color: var(--tc-text-faint); line-height: 1.6;
     }
-    .divider-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.divider-line {
-    flex: 1;
-    height: 1px;
-    background: #21262d;
-}
-
-.divider-text {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    color: #4a5160;
-    letter-spacing: 2px;
-    flex-shrink: 0;
-}
-
-.google-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-    padding: 12px 20px;
-    background: #0d1117;
-    border: 1px solid #21262d;
-    border-radius: 4px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
-    font-weight: 600;
-    color: #c9d1d9;
-    text-decoration: none;
-    letter-spacing: 1.5px;
-    transition: border-color 0.15s, background 0.15s;
-}
-
-.google-btn:hover {
-    border-color: #6e7681;
-    background: #161b22;
-}
+    .reg-footnote svg { flex-shrink: 0; margin-top: 2px; }
 
-.g-icon { flex-shrink: 0; }
     /* ── Responsive ── */
-    @@media (max-width: 960px) {
-        .right-panel { display: none; }
-        .left-panel { width: 100%; border-right: none; }
+    @@media (max-width: 1280px) {
+        .reg-info-panel { padding: var(--tc-space-10) var(--tc-space-8); }
+        .reg-info-heading { font-size: var(--tc-text-3xl); }
     }
-.next-btn.btn-disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-}
-
-.next-btn.btn-disabled:hover {
-    opacity: 0.35;
-    transform: none;
-    box-shadow: none;
-}
+    @@media (max-width: 1024px) {
+        .reg-form-panel { width: 480px; min-width: 380px; padding: var(--tc-space-8); }
+        .reg-info-panel { padding: var(--tc-space-8) var(--tc-space-6); }
+        .reg-info-content { max-width: 360px; }
+        .reg-info-heading { font-size: 1.75rem; }
+    }
+    @@media (max-width: 960px) {
+        .reg-page { flex-direction: column; align-items: center; justify-content: center; }
+        .reg-info-panel { display: none; }
+        .reg-form-panel { width: 100%; min-width: unset; max-width: 520px; padding: var(--tc-space-6); border-right: none; }
+    }
+    @@media (max-width: 640px) {
+        .reg-form-panel { max-width: 100%; padding: var(--tc-space-4); }
+        .reg-form-body { padding: var(--tc-space-5); }
+        .reg-form-header { padding: var(--tc-space-4) var(--tc-space-5); }
+        .reg-meta { flex-wrap: wrap; justify-content: center; }
+        .reg-step2-btns { flex-direction: column; }
+    }
+    @@media (max-width: 400px) {
+        .reg-form-body { padding: var(--tc-space-4); gap: var(--tc-space-4); }
+    }
 </style>
 
 @code {
@@ -1129,8 +592,6 @@
     private int _currentStep = 1;
     private string GoogleLoginUrl => $"{Configuration["ApiBaseUrl"]}/api/auth/google-login";
 
-    // ── Validation ──
-
     private bool IsUsernameValid()
     {
         if (string.IsNullOrWhiteSpace(_username)) return false;
@@ -1146,56 +607,56 @@
     }
 
     private void ValidateUsername()
-{
-    _usernameFocused = false;
-    if (string.IsNullOrWhiteSpace(_username)) { _usernameError = string.Empty; return; }
-    if (_username.Length < 3) { _usernameError = "Minimum 3 characters required"; return; }
-    if (_username.Length > 30) { _usernameError = "Maximum 30 characters allowed"; return; }
-    if (!System.Text.RegularExpressions.Regex.IsMatch(_username, @"^[a-zA-Z0-9_]+$"))
-    { _usernameError = "Letters, numbers, and underscores only"; return; }
-    _usernameError = string.Empty;
-    StateHasChanged();
-}
+    {
+        _usernameFocused = false;
+        if (string.IsNullOrWhiteSpace(_username)) { _usernameError = string.Empty; return; }
+        if (_username.Length < 3) { _usernameError = "Minimum 3 characters required"; return; }
+        if (_username.Length > 30) { _usernameError = "Maximum 30 characters allowed"; return; }
+        if (!System.Text.RegularExpressions.Regex.IsMatch(_username, @"^[a-zA-Z0-9_]+$"))
+        { _usernameError = "Letters, numbers, and underscores only"; return; }
+        _usernameError = string.Empty;
+        StateHasChanged();
+    }
 
     private void ValidateEmail()
-{
-    _emailFocused = false;
-    if (string.IsNullOrWhiteSpace(_email)) { _emailError = string.Empty; return; }
-    if (!IsEmailValid()) { _emailError = "Enter a valid email address"; return; }
-    _emailError = string.Empty;
-    StateHasChanged();
-}
+    {
+        _emailFocused = false;
+        if (string.IsNullOrWhiteSpace(_email)) { _emailError = string.Empty; return; }
+        if (!IsEmailValid()) { _emailError = "Enter a valid email address"; return; }
+        _emailError = string.Empty;
+        StateHasChanged();
+    }
 
     private string GetUsernameState()
     {
         if (string.IsNullOrEmpty(_username)) return string.Empty;
-        return IsUsernameValid() ? "valid-state" : "invalid-state";
+        return IsUsernameValid() ? "is-valid" : "is-invalid";
     }
 
     private string GetEmailState()
     {
         if (string.IsNullOrEmpty(_email)) return string.Empty;
-        return IsEmailValid() ? "valid-state" : "invalid-state";
+        return IsEmailValid() ? "is-valid" : "is-invalid";
     }
 
     private string GetConfirmState()
     {
         if (string.IsNullOrEmpty(_confirmPassword)) return string.Empty;
-        return _password == _confirmPassword ? "valid-state" : "invalid-state";
+        return _password == _confirmPassword ? "is-valid" : "is-invalid";
     }
 
     private bool CanGoToStep2()
-{
-    if (string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_email))
-        return false;
-    if (_username.Length < 3 || _username.Length > 30)
-        return false;
-    if (!System.Text.RegularExpressions.Regex.IsMatch(_username, @"^[a-zA-Z0-9_]+$"))
-        return false;
-    if (!_email.Contains('@') || !_email.Contains('.'))
-        return false;
-    return true;
-}
+    {
+        if (string.IsNullOrWhiteSpace(_username) || string.IsNullOrWhiteSpace(_email))
+            return false;
+        if (_username.Length < 3 || _username.Length > 30)
+            return false;
+        if (!System.Text.RegularExpressions.Regex.IsMatch(_username, @"^[a-zA-Z0-9_]+$"))
+            return false;
+        if (!_email.Contains('@') || !_email.Contains('.'))
+            return false;
+        return true;
+    }
 
     private bool CanSubmit()
         => CanGoToStep2()
@@ -1204,14 +665,12 @@
            && _termsAccepted;
 
     private void GoToStep2()
-{
-    ValidateUsername();
-    ValidateEmail();
-    if (!CanGoToStep2()) return;
-    _currentStep = 2;
-}
-
-    // ── Password strength ──
+    {
+        ValidateUsername();
+        ValidateEmail();
+        if (!CanGoToStep2()) return;
+        _currentStep = 2;
+    }
 
     private record StrengthResult(string Level, int Percent, string Label);
 
@@ -1219,7 +678,7 @@
     {
         var p = _password;
         int score = 0;
-        if (p.Length >= 8)  score++;
+        if (p.Length >= 8) score++;
         if (p.Length >= 12) score++;
         if (System.Text.RegularExpressions.Regex.IsMatch(p, @"[A-Z]")) score++;
         if (System.Text.RegularExpressions.Regex.IsMatch(p, @"[0-9]")) score++;
@@ -1227,37 +686,32 @@
 
         return score switch
         {
-            <= 2 => new("weak",   33,  "WEAK"),
-            <= 3 => new("medium", 66,  "MEDIUM"),
-            _    => new("strong", 100, "STRONG")
+            <= 2 => new("weak", 33, "WEAK"),
+            <= 3 => new("medium", 66, "MEDIUM"),
+            _ => new("strong", 100, "STRONG")
         };
     }
 
-    // ── Submit ──
-
     private async Task HandleRegister()
-{
-    _errorMessage = string.Empty;
-    if (!CanSubmit()) return;
-
-    _loading = true;
-    StateHasChanged();
-
-    var error = await AuthService.RegisterAsync(_username, _email, _password);
-
-    if (error == null)
     {
-        // Account created but needs email verification — send to login with that message
-        Navigation.NavigateTo("/login?registered=1&email=" + Uri.EscapeDataString(_email));
+        _errorMessage = string.Empty;
+        if (!CanSubmit()) return;
+
+        _loading = true;
+        StateHasChanged();
+
+        var error = await AuthService.RegisterAsync(_username, _email, _password);
+
+        if (error == null)
+        {
+            Navigation.NavigateTo("/login?registered=1&email=" + Uri.EscapeDataString(_email));
+        }
+        else
+        {
+            _loading = false;
+            await TriggerShake(error);
+        }
     }
-    else
-    {
-        _loading = false;
-        await TriggerShake(error);
-    }
-}
-    private string NextBtnClass() => 
-    CanGoToStep2() ? "next-btn" : "next-btn btn-disabled";
 
     private async Task TriggerShake(string message)
     {

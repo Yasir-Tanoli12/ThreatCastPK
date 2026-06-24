@@ -1,55 +1,53 @@
 ﻿/* ══════════════════════════════════════════════════════════════════════════
-   THREATCAST DESIGN SYSTEM v1.0
-   Centralized tokens, component styles, and utilities.
+   THREATCAST DESIGN SYSTEM v2.0
+   Glassmorphism · Animated Borders · Ambient Effects
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* ── 1. DESIGN TOKENS ─────────────────────────────────────────────────── */
+/* ── 1. ANIMATED BORDER PROPERTY ──────────────────────────────────────── */
+@property --tc-border-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+/* ── 2. DESIGN TOKENS ─────────────────────────────────────────────────── */
 :root {
-    /* Backgrounds */
     --tc-bg-base: #0d1117;
     --tc-bg-raised: #161b22;
     --tc-bg-overlay: #1c2128;
-    /* Borders */
     --tc-border: #21262d;
     --tc-border-emphasis: #30363d;
-    /* Accent */
     --tc-accent: #9fef00;
-    --tc-accent-subtle: rgba(159, 239, 0, 0.12);
-    --tc-accent-muted: rgba(159, 239, 0, 0.25);
-    /* Text */
+    --tc-accent-subtle: rgba(159,239,0,0.12);
+    --tc-accent-muted: rgba(159,239,0,0.25);
     --tc-text-primary: #e6edf3;
     --tc-text-secondary: #c9d1d9;
-    --tc-text-tertiary: #8b949e;
     --tc-text-muted: #6e7681;
     --tc-text-faint: #484f58;
-    /* Semantic */
     --tc-danger: #ff3e3e;
-    --tc-danger-subtle: rgba(255, 62, 62, 0.08);
-    --tc-danger-border: rgba(255, 62, 62, 0.2);
+    --tc-danger-subtle: rgba(255,62,62,0.08);
+    --tc-danger-border: rgba(255,62,62,0.2);
     --tc-warning: #ffa500;
-    --tc-warning-subtle: rgba(255, 165, 0, 0.06);
-    --tc-warning-border: rgba(255, 165, 0, 0.2);
+    --tc-warning-subtle: rgba(255,165,0,0.06);
+    --tc-warning-border: rgba(255,165,0,0.2);
     --tc-success: #9fef00;
-    --tc-success-subtle: rgba(159, 239, 0, 0.08);
-    --tc-success-border: rgba(159, 239, 0, 0.2);
-    /* Threat badge colors */
+    --tc-success-subtle: rgba(159,239,0,0.08);
+    --tc-success-border: rgba(159,239,0,0.2);
     --tc-threat-ddos: #00c8ff;
     --tc-threat-phish: #ffa500;
     --tc-threat-ransom: #ff3e3e;
-    /* Typography */
-    --tc-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --tc-font-mono: 'IBM Plex Mono', 'Fira Code', 'Cascadia Code', monospace;
-    --tc-text-2xs: 0.625rem; /* 10px */
-    --tc-text-xs: 0.6875rem; /* 11px */
-    --tc-text-sm: 0.8125rem; /* 13px */
-    --tc-text-base: 0.875rem; /* 14px */
-    --tc-text-md: 1rem; /* 16px */
-    --tc-text-lg: 1.125rem; /* 18px */
-    --tc-text-xl: 1.25rem; /* 20px */
-    --tc-text-2xl: 1.5rem; /* 24px */
-    --tc-text-3xl: 2rem; /* 32px */
-    --tc-text-4xl: 2.25rem; /* 36px */
-    /* Spacing scale (4px base) */
+    --tc-font-sans: 'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    --tc-font-mono: 'IBM Plex Mono','Fira Code','Cascadia Code',monospace;
+    --tc-text-2xs: 0.625rem;
+    --tc-text-xs: 0.6875rem;
+    --tc-text-sm: 0.8125rem;
+    --tc-text-base: 0.875rem;
+    --tc-text-md: 1rem;
+    --tc-text-lg: 1.125rem;
+    --tc-text-xl: 1.25rem;
+    --tc-text-2xl: 1.5rem;
+    --tc-text-3xl: 2rem;
+    --tc-text-4xl: 2.25rem;
     --tc-space-1: 4px;
     --tc-space-2: 8px;
     --tc-space-3: 12px;
@@ -61,33 +59,141 @@
     --tc-space-10: 40px;
     --tc-space-12: 48px;
     --tc-space-16: 64px;
-    /* Shadows */
-    --tc-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.3);
-    --tc-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
-    --tc-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-    --tc-shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
-    --tc-glow-accent: 0 0 24px rgba(159, 239, 0, 0.08);
-    /* Radius */
+    --tc-shadow-md: 0 4px 16px rgba(0,0,0,0.35);
+    --tc-shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+    --tc-shadow-xl: 0 16px 48px rgba(0,0,0,0.5);
+    --tc-glow: 0 0 30px rgba(159,239,0,0.08);
+    --tc-glow-strong: 0 0 50px rgba(159,239,0,0.12);
     --tc-radius-xs: 3px;
     --tc-radius-sm: 4px;
     --tc-radius-md: 6px;
     --tc-radius-lg: 8px;
     --tc-radius-xl: 12px;
     --tc-radius-full: 999px;
-    /* Transitions */
     --tc-ease-fast: 120ms ease;
     --tc-ease-base: 180ms ease;
-    --tc-ease-smooth: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    --tc-ease-smooth: 300ms cubic-bezier(0.4,0,0.2,1);
 }
 
-/* ── 2. BASE RESET ────────────────────────────────────────────────────── */
+/* ── 3. BASE ──────────────────────────────────────────────────────────── */
 *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
-    padding: 0;
+    padding: 0
 }
 
-/* ── 3. CARDS ─────────────────────────────────────────────────────────── */
+/* ── 4. PAGE SHELL ────────────────────────────────────────────────────── */
+.tc-page-dark {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    background: radial-gradient(ellipse at 70% 20%, rgba(159,239,0,0.03) 0%, transparent 50%), radial-gradient(ellipse at 30% 80%, rgba(0,180,255,0.02) 0%, transparent 50%), var(--tc-bg-base);
+    position: relative;
+    overflow: hidden;
+    font-family: var(--tc-font-sans);
+}
+
+/* ── 5. BACKGROUND EFFECTS ────────────────────────────────────────────── */
+.tc-bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(rgba(159,239,0,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(159,239,0,0.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.tc-scanline {
+    position: fixed;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(159,239,0,0.5) 50%, transparent 100%);
+    animation: tc-scanline 8s linear infinite;
+    opacity: 0.25;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.tc-corner {
+    position: fixed;
+    width: 16px;
+    height: 16px;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.35;
+}
+
+.tc-corner--tl {
+    top: 20px;
+    left: 20px;
+    border-top: 1.5px solid var(--tc-accent);
+    border-left: 1.5px solid var(--tc-accent)
+}
+
+.tc-corner--tr {
+    top: 20px;
+    right: 20px;
+    border-top: 1.5px solid var(--tc-accent);
+    border-right: 1.5px solid var(--tc-accent)
+}
+
+.tc-corner--bl {
+    bottom: 20px;
+    left: 20px;
+    border-bottom: 1.5px solid var(--tc-accent);
+    border-left: 1.5px solid var(--tc-accent)
+}
+
+.tc-corner--br {
+    bottom: 20px;
+    right: 20px;
+    border-bottom: 1.5px solid var(--tc-accent);
+    border-right: 1.5px solid var(--tc-accent)
+}
+
+/* Ambient Orbs */
+.tc-orb {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(100px);
+    background: var(--orb-color, rgba(159,239,0,0.06));
+    animation: tc-orb-drift 15s ease-in-out infinite alternate;
+}
+
+/* Floating Particles */
+.tc-particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+}
+
+    .tc-particles span {
+        position: absolute;
+        bottom: -10px;
+        width: 2px;
+        height: 2px;
+        background: var(--tc-accent);
+        border-radius: 50%;
+        box-shadow: 0 0 6px rgba(159,239,0,0.4);
+        animation: tc-particle-rise linear infinite;
+    }
+
+/* Cinematic Vignette */
+.tc-vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.35) 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── 6. CARDS ─────────────────────────────────────────────────────────── */
 .tc-card {
     background: var(--tc-bg-raised);
     border: 1px solid var(--tc-border);
@@ -95,15 +201,47 @@
     overflow: hidden;
 }
 
+/* Glassmorphism */
+.tc-card--glass {
+    background: rgba(22,27,34,0.55);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid rgba(159,239,0,0.08);
+    box-shadow: var(--tc-shadow-lg), 0 0 80px rgba(159,239,0,0.03), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+    .tc-card--glass {
+        background: rgba(22,27,34,0.92);
+    }
+}
+
 .tc-card--accent-top {
     border-top: 2px solid var(--tc-accent);
 }
 
-.tc-card--glow {
-    box-shadow: var(--tc-shadow-md), var(--tc-glow-accent);
+/* Animated Sweeping Border */
+.tc-card--sweep-border {
+    position: relative;
 }
 
-/* ── 4. BUTTONS ───────────────────────────────────────────────────────── */
+    .tc-card--sweep-border::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1.5px;
+        background: conic-gradient( from var(--tc-border-angle), transparent 0%, transparent 65%, rgba(159,239,0,0.15) 72%, rgba(159,239,0,0.5) 78%, rgba(159,239,0,0.8) 80%, rgba(159,239,0,0.5) 82%, rgba(159,239,0,0.15) 88%, transparent 95%, transparent 100% );
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        animation: tc-border-sweep 5s linear infinite;
+        pointer-events: none;
+        z-index: 10;
+    }
+
+/* ── 7. BUTTONS ───────────────────────────────────────────────────────── */
 .tc-btn {
     display: inline-flex;
     align-items: center;
@@ -118,8 +256,8 @@
     border: 1px solid transparent;
     border-radius: var(--tc-radius-sm);
     cursor: pointer;
-    transition: all var(--tc-ease-base);
     outline: none;
+    transition: all var(--tc-ease-smooth);
     line-height: 1.4;
 }
 
@@ -131,17 +269,32 @@
     width: 100%;
 }
 
+/* Primary — with shimmer */
 .tc-btn--primary {
     background: var(--tc-accent);
     color: var(--tc-bg-base);
     border-color: var(--tc-accent);
     padding: var(--tc-space-4) var(--tc-space-6);
+    position: relative;
+    overflow: hidden;
 }
 
+    .tc-btn--primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 60%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+        animation: tc-shimmer 4s ease-in-out infinite;
+        pointer-events: none;
+    }
+
     .tc-btn--primary:hover:not(:disabled) {
-        filter: brightness(1.08);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 24px rgba(159, 239, 0, 0.25);
+        filter: brightness(1.06);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 28px rgba(159,239,0,0.35), 0 0 60px rgba(159,239,0,0.12);
     }
 
     .tc-btn--primary:active:not(:disabled) {
@@ -150,7 +303,7 @@
     }
 
     .tc-btn--primary:disabled {
-        opacity: 0.5;
+        opacity: 0.4;
         cursor: not-allowed;
         filter: none;
         transform: none;
@@ -162,19 +315,39 @@
         color: var(--tc-text-muted);
     }
 
+        .tc-btn--primary.is-loading::before {
+            display: none;
+        }
+
+/* Outline */
 .tc-btn--outline {
-    background: var(--tc-bg-base);
+    background: rgba(13,17,23,0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: var(--tc-text-secondary);
     border-color: var(--tc-border);
-    padding: var(--tc-space-3) var(--tc-space-5);
 }
 
     .tc-btn--outline:hover {
         border-color: var(--tc-border-emphasis);
-        background: var(--tc-bg-raised);
+        background: rgba(22,27,34,0.8);
+        box-shadow: 0 0 20px rgba(159,239,0,0.04);
     }
 
-/* ── 5. INPUT FIELDS ──────────────────────────────────────────────────── */
+/* Ghost */
+.tc-btn--ghost {
+    background: transparent;
+    color: var(--tc-text-muted);
+    border-color: var(--tc-border);
+    padding: var(--tc-space-3) var(--tc-space-5);
+}
+
+    .tc-btn--ghost:hover {
+        border-color: var(--tc-text-muted);
+        color: var(--tc-text-secondary);
+    }
+
+/* ── 8. INPUT FIELDS ──────────────────────────────────────────────────── */
 .tc-field {
     display: flex;
     flex-direction: column;
@@ -209,26 +382,51 @@
         color: var(--tc-text-faint);
         text-decoration: none;
         transition: color var(--tc-ease-fast);
-        letter-spacing: 0.5px;
     }
 
         .tc-field__meta a:hover {
             color: var(--tc-accent);
         }
 
+.tc-field__hint {
+    font-family: var(--tc-font-mono);
+    font-size: var(--tc-text-xs);
+    color: var(--tc-text-faint);
+}
+
+.tc-field__hint--valid {
+    color: var(--tc-accent);
+}
+
+.tc-field__error {
+    font-family: var(--tc-font-mono);
+    font-size: var(--tc-text-xs);
+    color: var(--tc-danger);
+}
+
 .tc-input-group {
     display: flex;
     align-items: center;
-    background: var(--tc-bg-base);
+    background: rgba(13,17,23,0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--tc-border);
     border-radius: var(--tc-radius-sm);
-    transition: border-color var(--tc-ease-base), box-shadow var(--tc-ease-base);
+    transition: border-color var(--tc-ease-base), box-shadow var(--tc-ease-smooth);
     overflow: hidden;
 }
 
     .tc-input-group.is-focused {
-        border-color: var(--tc-accent);
-        box-shadow: 0 0 0 3px var(--tc-accent-subtle), var(--tc-glow-accent);
+        border-color: rgba(159,239,0,0.5);
+        box-shadow: 0 0 0 3px rgba(159,239,0,0.08), 0 0 24px rgba(159,239,0,0.08), inset 0 0 30px rgba(159,239,0,0.02);
+    }
+
+    .tc-input-group.is-valid {
+        border-color: rgba(159,239,0,0.4);
+    }
+
+    .tc-input-group.is-invalid {
+        border-color: rgba(255,62,62,0.4);
     }
 
 .tc-input-group__prefix {
@@ -261,6 +459,20 @@
         color: var(--tc-accent);
     }
 
+.tc-input-group__status {
+    padding: 0 var(--tc-space-3);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.tc-input-group__status--valid {
+    color: var(--tc-accent);
+}
+
+.tc-input-group__status--invalid {
+    color: var(--tc-danger);
+}
+
 .tc-input {
     flex: 1;
     background: transparent;
@@ -283,7 +495,7 @@
         cursor: not-allowed;
     }
 
-/* ── 6. BANNERS / ALERTS ──────────────────────────────────────────────── */
+/* ── 9. BANNERS ───────────────────────────────────────────────────────── */
 .tc-banner {
     display: flex;
     align-items: center;
@@ -332,10 +544,10 @@
 
     .tc-banner__action:hover {
         opacity: 1;
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(255,255,255,0.05);
     }
 
-/* ── 7. BADGES ────────────────────────────────────────────────────────── */
+/* ── 10. BADGES ───────────────────────────────────────────────────────── */
 .tc-badge {
     font-family: var(--tc-font-mono);
     font-size: var(--tc-text-xs);
@@ -350,32 +562,49 @@
 }
 
 .tc-badge--ddos {
-    background: rgba(0, 200, 255, 0.1);
+    background: rgba(0,200,255,0.1);
     color: var(--tc-threat-ddos);
-    border-color: rgba(0, 200, 255, 0.2);
+    border-color: rgba(0,200,255,0.2);
 }
 
 .tc-badge--phishing {
-    background: rgba(255, 165, 0, 0.1);
+    background: rgba(255,165,0,0.1);
     color: var(--tc-threat-phish);
-    border-color: rgba(255, 165, 0, 0.2);
+    border-color: rgba(255,165,0,0.2);
 }
 
 .tc-badge--ransomware {
-    background: rgba(255, 62, 62, 0.1);
+    background: rgba(255,62,62,0.1);
     color: var(--tc-threat-ransom);
-    border-color: rgba(255, 62, 62, 0.2);
+    border-color: rgba(255,62,62,0.2);
 }
 
-/* ── 8. DIVIDER ───────────────────────────────────────────────────────── */
+.tc-badge--default {
+    background: rgba(110,118,129,0.1);
+    color: var(--tc-text-muted);
+    border-color: var(--tc-border);
+}
+
+.tc-badge--accent {
+    background: var(--tc-accent-subtle);
+    color: var(--tc-accent);
+    border-color: rgba(159,239,0,0.3);
+}
+
+.tc-badge--warning {
+    background: rgba(255,165,0,0.1);
+    color: var(--tc-warning);
+    border-color: rgba(255,165,0,0.3);
+}
+
+/* ── 11. DIVIDER ──────────────────────────────────────────────────────── */
 .tc-divider {
     display: flex;
     align-items: center;
     gap: var(--tc-space-4);
 }
 
-    .tc-divider::before,
-    .tc-divider::after {
+    .tc-divider::before, .tc-divider::after {
         content: '';
         flex: 1;
         height: 1px;
@@ -390,7 +619,93 @@
         flex-shrink: 0;
     }
 
-/* ── 9. SPINNER ───────────────────────────────────────────────────────── */
+/* ── 12. CHECKBOX ─────────────────────────────────────────────────────── */
+.tc-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--tc-space-3);
+    cursor: pointer;
+}
+
+    .tc-checkbox-label input[type="checkbox"] {
+        display: none;
+    }
+
+.tc-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--tc-border);
+    border-radius: var(--tc-radius-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    background: rgba(13,17,23,0.6);
+    transition: all var(--tc-ease-base);
+}
+
+    .tc-checkbox.is-checked {
+        background: var(--tc-accent);
+        border-color: var(--tc-accent);
+        color: var(--tc-bg-base);
+        box-shadow: 0 0 14px rgba(159,239,0,0.3);
+    }
+
+/* ── 13. STRENGTH METER ───────────────────────────────────────────────── */
+.tc-strength {
+    display: flex;
+    align-items: center;
+    gap: var(--tc-space-3);
+}
+
+.tc-strength__track {
+    flex: 1;
+    height: 3px;
+    background: var(--tc-border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.tc-strength__fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease, background 0.3s ease;
+}
+
+.tc-strength__fill--weak {
+    background: var(--tc-danger);
+}
+
+.tc-strength__fill--medium {
+    background: var(--tc-warning);
+}
+
+.tc-strength__fill--strong {
+    background: var(--tc-accent);
+    box-shadow: 0 0 8px rgba(159,239,0,0.4);
+}
+
+.tc-strength__label {
+    font-family: var(--tc-font-mono);
+    font-size: var(--tc-text-2xs);
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+
+.tc-strength__label--weak {
+    color: var(--tc-danger);
+}
+
+.tc-strength__label--medium {
+    color: var(--tc-warning);
+}
+
+.tc-strength__label--strong {
+    color: var(--tc-accent);
+}
+
+/* ── 14. SPINNER ──────────────────────────────────────────────────────── */
 .tc-spinner {
     width: 14px;
     height: 14px;
@@ -400,11 +715,75 @@
     animation: tc-spin 0.7s linear infinite;
 }
 
-/* ── 10. ANIMATIONS ───────────────────────────────────────────────────── */
-@keyframes tc-fade-in-up {
+/* ── 15. ANIMATIONS ───────────────────────────────────────────────────── */
+@keyframes tc-scanline {
+    0% {
+        top: -2px;
+    }
+
+    100% {
+        top: 100vh;
+    }
+}
+
+@keyframes tc-orb-drift {
+    0% {
+        transform: translate(0,0) scale(1);
+    }
+
+    33% {
+        transform: translate(25px,-35px) scale(1.05);
+    }
+
+    66% {
+        transform: translate(-15px,20px) scale(0.96);
+    }
+
+    100% {
+        transform: translate(30px,-10px) scale(1.02);
+    }
+}
+
+@keyframes tc-particle-rise {
+    0% {
+        transform: translateY(0);
+        opacity: 0;
+    }
+
+    5% {
+        opacity: 0.6;
+    }
+
+    80% {
+        opacity: 0.25;
+    }
+
+    100% {
+        transform: translateY(-110vh);
+        opacity: 0;
+    }
+}
+
+@keyframes tc-border-sweep {
+    to {
+        --tc-border-angle: 360deg;
+    }
+}
+
+@keyframes tc-shimmer {
+    0%,100% {
+        left: -60%;
+    }
+
+    50% {
+        left: 100%;
+    }
+}
+
+@keyframes tc-fade-up {
     from {
         opacity: 0;
-        transform: translateY(16px);
+        transform: translateY(20px);
     }
 
     to {
@@ -413,10 +792,22 @@
     }
 }
 
-@keyframes tc-fade-in-left {
+@keyframes tc-fade-left {
     from {
         opacity: 0;
-        transform: translateX(-20px);
+        transform: translateX(-24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes tc-fade-right {
+    from {
+        opacity: 0;
+        transform: translateX(24px);
     }
 
     to {
@@ -426,7 +817,7 @@
 }
 
 @keyframes tc-pulse {
-    0%, 100% {
+    0%,100% {
         opacity: 1;
     }
 
@@ -442,7 +833,7 @@
 }
 
 @keyframes tc-shake {
-    0%, 100% {
+    0%,100% {
         transform: translateX(0);
     }
 
@@ -463,12 +854,28 @@
     }
 }
 
-.tc-animate-fade-up {
-    animation: tc-fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+@keyframes tc-step-in {
+    from {
+        opacity: 0;
+        transform: translateX(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
-.tc-animate-fade-left {
-    animation: tc-fade-in-left 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+.tc-anim-fade-up {
+    animation: tc-fade-up 0.6s cubic-bezier(0.4,0,0.2,1) both;
+}
+
+.tc-anim-fade-left {
+    animation: tc-fade-left 0.6s cubic-bezier(0.4,0,0.2,1) both;
+}
+
+.tc-anim-fade-right {
+    animation: tc-fade-right 0.6s cubic-bezier(0.4,0,0.2,1) both;
 }
 
 .tc-shake {
