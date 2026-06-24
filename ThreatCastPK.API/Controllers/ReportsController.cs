@@ -96,12 +96,14 @@ namespace ThreatCastPK.API.Controllers
             // Threat intelligence
             int abuseScore = 0;
             bool greyNoiseNoise = false;
+            string? greyNoiseClassification = null;
 
             if (!string.IsNullOrEmpty(dto.SourceIP))
             {
                 abuseScore = await _abuseIPDB.GetAbuseConfidenceScore(dto.SourceIP);
                 var gnResult = await _greyNoise.ClassifyAsync(dto.SourceIP);
                 greyNoiseNoise = gnResult.IsNoise;
+                greyNoiseClassification = gnResult.Classification;
             }
 
             // Auto-approval logic
@@ -129,6 +131,13 @@ namespace ThreatCastPK.API.Controllers
 
             if (autoApproved)
             {
+                var gnClassification = string.Empty;
+                if (!string.IsNullOrEmpty(dto.SourceIP))
+                {
+                    var gnResult2 = await _greyNoise.ClassifyAsync(dto.SourceIP);
+                    gnClassification = gnResult2.Classification;
+                }
+
                 var attackEvent = new AttackEvent
                 {
                     Id = Guid.NewGuid(),
@@ -139,8 +148,11 @@ namespace ThreatCastPK.API.Controllers
                     Severity = dto.Severity,
                     OccurredAt = DateTime.UtcNow,
                     ConfidenceTier = ConfidenceTier.CommunityReported,
-                    Source = EventSource.Community
+                    Source = EventSource.Community,
+                    SourceIP = dto.SourceIP,
+                    GreyNoiseClassification = greyNoiseClassification,
                 };
+
 
                 _context.AttackEvents.Add(attackEvent);
 
@@ -153,7 +165,6 @@ namespace ThreatCastPK.API.Controllers
                     sector,
                     dto.Severity);
 
-                _context.Notifications.AddRange(notificationsToSend.Select(n => n.Notification));
 
                 await _context.SaveChangesAsync();
 
@@ -167,30 +178,21 @@ namespace ThreatCastPK.API.Controllers
                     )
                 );
 
-                foreach (var notification in notificationsToSend)
-                {
-                    await _hubContext.Clients.Group($"user_{notification.UserId}")
-                        .SendAsync("NewNotification", new
-                        {
-                            id = notification.Notification.Id,
-                            message = notification.Notification.Message,
-                            createdAt = notification.Notification.CreatedAt,
-                            notificationType = notification.Notification.NotificationType
-                        });
-                }
+
 
                 await _hubContext.Clients.Group("all_viewers")
-                    .SendAsync("NewAttackEvent", new
-                    {
-                        id = attackEvent.Id,
-                        city = dto.City,
-                        attackType = attackType.ToString(),
-                        targetSector = sector.ToString(),
-                        severity = dto.Severity,
-                        occurredAt = attackEvent.OccurredAt,
-                        confidenceTier = "CommunityReported",
-                        source = "Community"
-                    });
+    .SendAsync("NewAttackEvent", new
+    {
+        id = attackEvent.Id,
+        city = dto.City,
+        attackType = attackType.ToString(),
+        targetSector = sector.ToString(),
+        severity = dto.Severity,
+        occurredAt = attackEvent.OccurredAt,
+        confidenceTier = "CommunityReported",
+        source = "Community",
+        greyNoiseClassification = greyNoiseClassification
+    });
 
                 return Ok(new
                 {

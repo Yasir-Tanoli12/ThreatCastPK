@@ -3,14 +3,49 @@
 @inject SignalRService SignalRService
 @inject NotificationService NotificationService
 @inject NavigationManager Navigation
+@implements IAsyncDisposable
 
 <CascadingAuthenticationState>
     <NavBar />
-    <SignalRConnector />
     <main style="padding-top: 56px;">
         @Body
     </main>
 </CascadingAuthenticationState>
 
 @code {
+    private bool _initialized = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _initialized) return;
+        _initialized = true;
+
+        // Initialize auth state from localStorage
+        await AuthService.InitializeAsync();
+
+        // Wire notification handler BEFORE starting SignalR
+        SignalRService.OnNewNotification += HandleNewNotification;
+
+        // Start SignalR — this also calls JoinUserGroupAsync if logged in
+        await SignalRService.StartAsync();
+
+        // If auth initialized after SignalR started, join user group now
+        if (AuthService.IsLoggedIn && !string.IsNullOrEmpty(AuthService.UserId))
+        {
+            await SignalRService.JoinUserGroupAsync(AuthService.UserId);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task HandleNewNotification(NotificationPayload payload)
+    {
+        NotificationService.AddNotification(payload);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        SignalRService.OnNewNotification -= HandleNewNotification;
+    }
 }

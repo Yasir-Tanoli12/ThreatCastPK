@@ -18,11 +18,11 @@ public class EventsController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetEvents(
-        [FromQuery] string timeWindow = "24h",
-        [FromQuery] string? city = null,
-        [FromQuery] string? attackType = null,
-        [FromQuery] string? sector = null,
-        [FromQuery] int? severity = null)
+    [FromQuery] string timeWindow = "24h",
+    [FromQuery] string? city = null,
+    [FromQuery] string? attackType = null,
+    [FromQuery] string? sector = null,
+    [FromQuery] int? severity = null)
     {
         var cutoff = timeWindow switch
         {
@@ -33,6 +33,8 @@ public class EventsController : ControllerBase
         };
 
         var query = _context.AttackReports
+            .Include(r => r.AttackEvent)
+            .Include(r => r.Location)
             .Where(r => r.SubmittedAt >= cutoff &&
                         r.Status == ReportStatus.Approved);
 
@@ -57,12 +59,17 @@ public class EventsController : ControllerBase
                 r.Id,
                 r.City,
                 r.LocationId,
+                lat = r.Location.Latitude,
+                lng = r.Location.Longitude,
                 r.AttackType,
                 r.TargetSector,
                 r.Severity,
                 r.ConfidenceTier,
                 r.SubmittedAt,
-                r.Description
+                r.Description,
+                greyNoiseClassification = r.AttackEvent != null
+                    ? r.AttackEvent.GreyNoiseClassification
+                    : null
             })
             .ToListAsync();
 

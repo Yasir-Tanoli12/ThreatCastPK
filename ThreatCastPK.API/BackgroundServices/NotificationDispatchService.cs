@@ -122,7 +122,13 @@ public class NotificationDispatchService : BackgroundService
             {
                 await _hubContext.Clients
                     .Group($"user_{userId}")
-                    .SendAsync("NewNotification", notif.Message);
+                    .SendAsync("NewNotification", new
+                    {
+                        id = notif.Id,
+                        message = notif.Message,
+                        createdAt = notif.CreatedAt,
+                        notificationType = notif.NotificationType ?? "AttackEvent"
+                    });
             }
         }
 

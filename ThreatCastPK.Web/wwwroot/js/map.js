@@ -157,17 +157,24 @@ window.tcpkMap = {
         const rgb = this._hexToRgb(color);
         const dateStr = eventData.occurredAt ? new Date(eventData.occurredAt).toLocaleTimeString() : new Date().toLocaleTimeString();
 
+        const classification = (eventData.greyNoiseClassification || '').toLowerCase();
+        const isBackgroundNoise = classification === 'benign';
+        const noiseBadge = isBackgroundNoise
+            ? `<div style="margin-top: 8px; padding: 3px 6px; background: rgba(100, 116, 139, 0.15); border: 1px solid rgba(100, 116, 139, 0.35); border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #94a3b8; letter-spacing: 0.5px;">🔊 BACKGROUND NOISE — Internet Scanner</div>`
+            : '';
+
         const popupContent = `
-            <div style="font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.5; color: #c9d1d9; min-width: 170px; padding: 2px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #21262d; padding-bottom: 6px; margin-bottom: 8px;">
-                    <strong style="color: ${color}; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.5px;">${attackType.toUpperCase()}</strong>
-                    <span style="background: rgba(${rgb}, 0.15); color: ${color}; border: 1px solid rgba(${rgb}, 0.3); padding: 1px 6px; border-radius: 3px; font-weight: bold; font-size: 9px; font-family: 'IBM Plex Mono', monospace;">SEV ${severity}</span>
-                </div>
-                <div style="margin-bottom: 4px;"><span style="color: #8b949e;">Location:</span> <strong>${eventData.city || 'Unknown'}</strong></div>
-                <div style="margin-bottom: 4px;"><span style="color: #8b949e;">Target Sector:</span> <strong>${eventData.targetSector || 'N/A'}</strong></div>
-                <div><span style="color: #8b949e;">Time:</span> <strong>${dateStr}</strong></div>
+        <div style="font-family: 'Inter', sans-serif; font-size: 12px; line-height: 1.5; color: #c9d1d9; min-width: 170px; padding: 2px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #21262d; padding-bottom: 6px; margin-bottom: 8px;">
+                <strong style="color: ${color}; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.5px;">${attackType.toUpperCase()}</strong>
+                <span style="background: rgba(${rgb}, 0.15); color: ${color}; border: 1px solid rgba(${rgb}, 0.3); padding: 1px 6px; border-radius: 3px; font-weight: bold; font-size: 9px; font-family: 'IBM Plex Mono', monospace;">SEV ${severity}</span>
             </div>
-        `;
+            <div style="margin-bottom: 4px;"><span style="color: #8b949e;">Location:</span> <strong>${eventData.city || 'Unknown'}</strong></div>
+            <div style="margin-bottom: 4px;"><span style="color: #8b949e;">Target Sector:</span> <strong>${eventData.targetSector || 'N/A'}</strong></div>
+            <div><span style="color: #8b949e;">Time:</span> <strong>${dateStr}</strong></div>
+            ${noiseBadge}
+        </div>
+    `;
         marker.bindPopup(popupContent);
     },
 
@@ -210,7 +217,8 @@ window.tcpkMap = {
                 attackType: p.attackType,
                 city: p.city || 'Unknown',
                 targetSector: p.targetSector || 'N/A',
-                occurredAt: p.occurredAt
+                occurredAt: p.occurredAt,
+                greyNoiseClassification: p.greyNoiseClassification || null
             };
 
             const icon = this._getMarkerIcon(eventData, zoom);
@@ -251,8 +259,9 @@ window.tcpkMap = {
             severity: severity,
             attackType: attackType,
             city: city || 'Unknown',
-            occurredAt: new Date().toISOString()
-        };
+            occurredAt: new Date().toISOString(),
+            greyNoiseClassification: greyNoiseClassification || null
+        };;
 
         const icon = this._getMarkerIcon(eventData, zoom);
         const marker = L.marker([eventLat, eventLng], { icon: icon }).addTo(this._map);

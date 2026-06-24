@@ -39,7 +39,7 @@ public class NotificationService
         {
             Id = payload.Id,
             Message = payload.Message,
-            ReceivedAt = payload.CreatedAt,
+            ReceivedAt = payload.CreatedAt == default ? DateTime.UtcNow : payload.CreatedAt,
             IsRead = false
         });
 

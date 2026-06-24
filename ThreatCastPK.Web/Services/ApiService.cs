@@ -495,6 +495,7 @@ public class MapEventResponse
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public string Source { get; set; } = string.Empty;
+    public string? GreyNoiseClassification { get; set; }
 }
 
 public class NotificationResponseDTO

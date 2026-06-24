@@ -140,7 +140,7 @@ namespace ThreatCastPK.API.Controllers
                 report.TargetSector,
                 report.Severity);
 
-            _context.Notifications.AddRange(notificationsToSend.Select(n => n.Notification));
+           
 
             var auditLog = new AuditLog
             {
@@ -167,17 +167,7 @@ namespace ThreatCastPK.API.Controllers
                 )
             );
 
-            foreach (var notification in notificationsToSend)
-            {
-                await _hubContext.Clients.Group($"user_{notification.UserId}")
-                    .SendAsync("NewNotification", new
-                    {
-                        id = notification.Notification.Id,
-                        message = notification.Notification.Message,
-                        createdAt = notification.Notification.CreatedAt,
-                        notificationType = notification.Notification.NotificationType
-                    });
-            }
+            
 
             await _hubContext.Clients.Group("all_viewers")
                   .SendAsync("NewAttackEvent", new

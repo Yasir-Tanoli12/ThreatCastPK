@@ -1163,7 +1163,8 @@
                     attackType = e.AttackType,
                     city = e.City,
                     targetSector = e.TargetSector,
-                    occurredAt = e.OccurredAt
+                    occurredAt = e.OccurredAt,
+                    greyNoiseClassification = e.GreyNoiseClassification
                 }).ToList();
 
                 await JS.InvokeVoidAsync("tcpkMap.setHeatmapData", heatPoints);
@@ -1245,7 +1246,8 @@
         try
         {
             await JS.InvokeVoidAsync("tcpkMap.addHeatPoint",
-    payload.Latitude, payload.Longitude, payload.Severity, payload.AttackType, payload.City);
+    payload.Latitude, payload.Longitude, payload.Severity, payload.AttackType, payload.City,
+    payload.GreyNoiseClassification);
         }
         catch { }
 
