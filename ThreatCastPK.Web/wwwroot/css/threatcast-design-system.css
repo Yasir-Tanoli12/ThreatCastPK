@@ -910,3 +910,28 @@
 .tc-shake {
     animation: tc-shake 0.4s ease !important;
 }
+/* ── SKELETON SHIMMER ── */
+.tc-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: var(--tc-border);
+    border-radius: var(--tc-radius-xs);
+}
+
+    .tc-skeleton::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100% );
+        animation: tc-shimmer-sweep 1.8s ease-in-out infinite;
+    }
+
+@keyframes tc-shimmer-sweep {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}

@@ -126,14 +126,10 @@
         }
 
     </aside>
-
-    @* ═══════ MAP AREA ═══════ *@
-    <main class="dash-map">
-
-        @* ── Floating controls (glass) ── *@
+    @* ── Floating controls (glass) ── *@
         <div class="map-bar">
             <div class="map-bar__left">
-                <span class="map-bar__title">PAKISTAN CYBER THREAT MAP</span>
+                <span class="map-bar__title">    PAKISTAN CYBER THREAT MAP</span>
                 <div class="map-bar__filters">
                     @foreach (var f in new[] { "1h", "6h", "24h", "7d" })
                     {
@@ -162,6 +158,10 @@
                 }
             </div>
         </div>
+    @* ═══════ MAP AREA ═══════ *@
+    <main class="dash-map">
+
+        
 
         @* ── Leaflet container ── *@
         <div id="threatmap" class="dash-map__canvas"></div>

@@ -9,99 +9,124 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-<div class="analytics-root">
-    <div class="bg-grid"></div>
-    <div class="scan-line"></div>
-    <div class="corner corner-tl"></div>
-    <div class="corner corner-tr"></div>
-    <div class="corner corner-bl"></div>
-    <div class="corner corner-br"></div>
+<div class="analytics">
 
-    <div class="analytics-inner">
+    @* ── Background effects ── *@
+    <div class="tc-bg-grid" aria-hidden="true"></div>
+    <div class="tc-scanline" aria-hidden="true"></div>
+    <div class="tc-corner tc-corner--tl" aria-hidden="true"></div>
+    <div class="tc-corner tc-corner--tr" aria-hidden="true"></div>
+    <div class="tc-corner tc-corner--bl" aria-hidden="true"></div>
+    <div class="tc-corner tc-corner--br" aria-hidden="true"></div>
+    <div class="tc-orb" style="width:550px;height:550px;top:5%;right:-8%;--orb-color:rgba(159,239,0,0.05)" aria-hidden="true"></div>
+    <div class="tc-orb" style="width:420px;height:420px;bottom:10%;left:-5%;--orb-color:rgba(0,180,255,0.035);animation-delay:5s;animation-direction:alternate-reverse;animation-duration:22s" aria-hidden="true"></div>
+    <div class="tc-particles" aria-hidden="true">
+        <span style="left:10%;animation-duration:24s;animation-delay:0s"></span>
+        <span style="left:28%;animation-duration:20s;animation-delay:5s"></span>
+        <span style="left:55%;animation-duration:26s;animation-delay:2s"></span>
+        <span style="left:78%;animation-duration:22s;animation-delay:7s"></span>
+        <span style="left:92%;animation-duration:18s;animation-delay:3s"></span>
+    </div>
+    <div class="tc-vignette" aria-hidden="true"></div>
 
-        @* ── Header ── *@
-        <div class="page-header">
-            <div class="ph-left">
-                <div class="ph-label">// THREAT INTELLIGENCE DASHBOARD</div>
-                <h1 class="ph-title">
-                    Threat <span class="ph-accent">Analytics</span>
+    @* ── Content ── *@
+    <div class="an-inner">
+
+        @* ═══ HEADER ═══ *@
+        <header class="an-header">
+            <div class="an-header__left">
+                <span class="an-header__label">THREAT INTELLIGENCE DASHBOARD</span>
+                <h1 class="an-header__title">
+                    Threat <span class="an-header__accent">Analytics</span>
                 </h1>
-                <p class="ph-sub">
+                <p class="an-header__sub">
                     Aggregated cyber threat data across Pakistan's critical infrastructure.
                 </p>
             </div>
-            <div class="ph-right">
-                <div class="live-badge">
-                    <span class="live-dot"></span>
-                    <span class="live-text">LIVE DATA</span>
+            <div class="an-header__right">
+                <div class="an-live-badge">
+                    <span class="an-live-badge__dot"></span>
+                    LIVE DATA
                 </div>
             </div>
-        </div>
+        </header>
 
-        @* ── Stat cards ── *@
-        <div class="stat-cards">
+        @* ═══ STAT CARDS ═══ *@
+        <div class="an-stats">
             @if (_statsLoading)
             {
                 @for (int i = 0; i < 4; i++)
                 {
-                    <div class="stat-card skeleton-card">
-                        <div class="sk-line sk-val"></div>
-                        <div class="sk-line sk-lbl"></div>
+                    <div class="an-stat an-stat--skeleton">
+                        <div class="tc-skeleton" style="width:32px;height:32px;border-radius:8px"></div>
+                        <div class="tc-skeleton" style="width:55%;height:28px;margin-top:8px"></div>
+                        <div class="tc-skeleton" style="width:70%;height:10px;margin-top:6px"></div>
+                        <div class="tc-skeleton" style="width:45%;height:10px;margin-top:4px"></div>
                     </div>
                 }
             }
             else
             {
-                <div class="stat-card">
-                    <div class="sc-icon">📡</div>
-                    <div class="sc-value green">@_totalToday</div>
-                    <div class="sc-label">EVENTS TODAY</div>
-                    <div class="sc-sub">Active threats</div>
+                <div class="an-stat an-stat--green">
+                    <div class="an-stat__icon an-stat__icon--green">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+                    </div>
+                    <span class="an-stat__value an-stat__value--green">@_totalToday</span>
+                    <span class="an-stat__label">EVENTS TODAY</span>
+                    <span class="an-stat__sub">Active threats</span>
                 </div>
-                <div class="stat-card">
-                    <div class="sc-icon">📍</div>
-                    <div class="sc-value blue">@_topCity</div>
-                    <div class="sc-label">TOP TARGET CITY</div>
-                    <div class="sc-sub">Most attacked</div>
+
+                <div class="an-stat an-stat--cyan">
+                    <div class="an-stat__icon an-stat__icon--cyan">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
+                    <span class="an-stat__value an-stat__value--cyan">@_topCity</span>
+                    <span class="an-stat__label">TOP TARGET CITY</span>
+                    <span class="an-stat__sub">Most attacked</span>
                 </div>
-                <div class="stat-card">
-                    <div class="sc-icon">⚡</div>
-                    <div class="sc-value orange">@_topType</div>
-                    <div class="sc-label">DOMINANT ATTACK</div>
-                    <div class="sc-sub">Most common type</div>
+
+                <div class="an-stat an-stat--orange">
+                    <div class="an-stat__icon an-stat__icon--orange">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>
+                    </div>
+                    <span class="an-stat__value an-stat__value--orange">@_topType</span>
+                    <span class="an-stat__label">DOMINANT ATTACK</span>
+                    <span class="an-stat__sub">Most common type</span>
                 </div>
-                <div class="stat-card">
-                    <div class="sc-icon">🎯</div>
-                    <div class="sc-value red">@_topSector</div>
-                    <div class="sc-label">HIGHEST RISK SECTOR</div>
-                    <div class="sc-sub">Critical exposure</div>
+
+                <div class="an-stat an-stat--red">
+                    <div class="an-stat__icon an-stat__icon--red">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                    </div>
+                    <span class="an-stat__value an-stat__value--red">@_topSector</span>
+                    <span class="an-stat__label">HIGHEST RISK SECTOR</span>
+                    <span class="an-stat__sub">Critical exposure</span>
                 </div>
             }
         </div>
 
-        @* ── Charts row 1 ── *@
-        <div class="charts-row-2">
+        @* ═══ CHARTS ROW — city bar + donut ═══ *@
+        <div class="an-charts-row">
 
-            @* Bar chart — attacks by city *@
-            <div class="chart-card">
-                <div class="cc-header">
-                    <div class="cc-title-block">
-                        <span class="cc-label">// ATTACKS BY CITY</span>
-                        <span class="cc-sub">Last 7 days</span>
+            <div class="an-chart-card">
+                <div class="an-chart-card__header">
+                    <div class="an-chart-card__titles">
+                        <span class="an-chart-card__label">ATTACKS BY CITY</span>
+                        <span class="an-chart-card__sub">Last 7 days</span>
                     </div>
                     @if (_chartsLoading)
                     {
-                        <div class="cc-loading-dot"></div>
+                        <div class="an-chart-card__loader"></div>
                     }
                 </div>
-                <div class="chart-area">
+                <div class="an-chart-card__body">
                     @if (_chartsLoading)
                     {
-                        <div class="chart-skeleton">
+                        <div class="an-skel-bars">
                             @for (int i = 0; i < 8; i++)
                             {
-                                var h = (i % 3 + 1) * 25;
-                                <div class="sk-bar" style="height:@(h)px"></div>
+                                var h = 40 + (i % 4) * 30;
+                                <div class="an-skel-bar tc-skeleton" style="height:@(h)px"></div>
                             }
                         </div>
                     }
@@ -112,18 +137,17 @@
                 </div>
             </div>
 
-            @* Donut chart — attack type distribution *@
-            <div class="chart-card chart-card-sm">
-                <div class="cc-header">
-                    <div class="cc-title-block">
-                        <span class="cc-label">// ATTACK DISTRIBUTION</span>
-                        <span class="cc-sub">By type</span>
+            <div class="an-chart-card an-chart-card--sm">
+                <div class="an-chart-card__header">
+                    <div class="an-chart-card__titles">
+                        <span class="an-chart-card__label">ATTACK DISTRIBUTION</span>
+                        <span class="an-chart-card__sub">By type</span>
                     </div>
                 </div>
-                <div class="chart-area chart-area-donut">
+                <div class="an-chart-card__body an-chart-card__body--center">
                     @if (_chartsLoading)
                     {
-                        <div class="donut-skeleton"></div>
+                        <div class="an-skel-donut tc-skeleton"></div>
                     }
                     else
                     {
@@ -132,13 +156,13 @@
                 </div>
                 @if (!_chartsLoading)
                 {
-                    <div class="donut-legend">
+                    <div class="an-donut-legend">
                         @foreach (var item in _typeData)
                         {
-                            <div class="dl-item">
-                                <span class="dl-dot" style="background:@item.Color"></span>
-                                <span class="dl-name">@item.Label</span>
-                                <span class="dl-val">@item.Value</span>
+                            <div class="an-donut-legend__item">
+                                <span class="an-donut-legend__dot" style="background:@item.Color;box-shadow:0 0 6px @(item.Color)44"></span>
+                                <span class="an-donut-legend__name">@item.Label</span>
+                                <span class="an-donut-legend__val">@item.Value</span>
                             </div>
                         }
                     </div>
@@ -146,20 +170,18 @@
             </div>
         </div>
 
-        @* ── Line chart — 30 day trend ── *@
-        <div class="chart-card chart-card-full">
-            <div class="cc-header">
-                <div class="cc-title-block">
-                    <span class="cc-label">// ATTACK TREND</span>
-                    <span class="cc-sub">Last 30 days — daily event count</span>
+        @* ═══ TREND CHART ═══ *@
+        <div class="an-chart-card an-chart-card--full">
+            <div class="an-chart-card__header">
+                <div class="an-chart-card__titles">
+                    <span class="an-chart-card__label">ATTACK TREND</span>
+                    <span class="an-chart-card__sub">Last 30 days — daily event count</span>
                 </div>
             </div>
-            <div class="chart-area">
+            <div class="an-chart-card__body">
                 @if (_chartsLoading)
                 {
-                    <div class="line-skeleton">
-                        <div class="ls-wave"></div>
-                    </div>
+                    <div class="an-skel-wave tc-skeleton" style="height:140px;border-radius:6px"></div>
                 }
                 else
                 {
@@ -168,105 +190,111 @@
             </div>
         </div>
 
-        @* ── Sector risk scorecard ── *@
-        <div class="sector-section">
-            <div class="section-header">
-                <span class="sh-label">// SECTOR RISK LEVELS</span>
-                <span class="sh-sub">Updated every 30 minutes by ML analysis</span>
+        @* ═══ SECTOR RISK ═══ *@
+        <section class="an-sector-section">
+            <div class="an-section-header">
+                <span class="an-section-header__label">SECTOR RISK LEVELS</span>
+                <span class="an-section-header__sub">Updated every 30 minutes by ML analysis</span>
             </div>
 
-            @if (_sectorLoading)
-            {
-                <div class="sector-grid">
+            <div class="an-sector-grid">
+                @if (_sectorLoading)
+                {
                     @for (int i = 0; i < 7; i++)
                     {
-                        <div class="sector-card skeleton-sector">
-                            <div class="sk-line sk-icon"></div>
-                            <div class="sk-line sk-sname"></div>
-                            <div class="sk-line sk-risk"></div>
+                        <div class="an-sector an-sector--skeleton">
+                            <div class="tc-skeleton" style="width:28px;height:28px;border-radius:6px"></div>
+                            <div class="tc-skeleton" style="width:65%;height:14px;margin-top:8px"></div>
+                            <div class="tc-skeleton" style="width:100%;height:3px;margin-top:8px;border-radius:2px"></div>
+                            <div class="tc-skeleton" style="width:50%;height:10px;margin-top:4px"></div>
                         </div>
                     }
-                </div>
-            }
-            else
-            {
-                <div class="sector-grid">
+                }
+                else
+                {
                     @foreach (var sector in _sectorData)
                     {
-                        <div class="sector-card risk-@sector.Risk.ToLower()">
-                            <div class="sec-top">
-                                <span class="sec-icon">@sector.Icon</span>
-                                <span class="sec-risk-badge risk-badge-@sector.Risk.ToLower()">
+                        <div class="an-sector an-sector--@sector.Risk.ToLower()">
+                            <div class="an-sector__top">
+                                <span class="an-sector__icon an-sector-icon--@sector.Name.ToLower()">
+                                    @GetSectorSvg(sector.Name)
+                                </span>
+                                <span class="an-sector__risk-badge an-risk-badge--@sector.Risk.ToLower()">
                                     @sector.Risk.ToUpper()
                                 </span>
                             </div>
-                            <div class="sec-name">@sector.Name</div>
-                            <div class="sec-bar-track">
-                                <div class="sec-bar-fill risk-fill-@sector.Risk.ToLower()"
+                            <span class="an-sector__name">@sector.Name</span>
+                            <div class="an-sector__bar">
+                                <div class="an-sector__bar-fill an-bar-fill--@sector.Risk.ToLower()"
                                      style="width:@sector.FillPercent%"></div>
                             </div>
-                            <div class="sec-events">@sector.EventCount events (24h)</div>
+                            <span class="an-sector__events">@sector.EventCount events (24h)</span>
                         </div>
                     }
-                </div>
-            }
-        </div>
+                }
+            </div>
+        </section>
 
-        @* ── Top incidents table ── *@
-        <div class="chart-card">
-            <div class="cc-header">
-                <div class="cc-title-block">
-                    <span class="cc-label">// RECENT HIGH-SEVERITY EVENTS</span>
-                    <span class="cc-sub">Severity 4+ in last 24 hours</span>
+        @* ═══ HIGH-SEVERITY TABLE ═══ *@
+        <div class="an-chart-card">
+            <div class="an-chart-card__header">
+                <div class="an-chart-card__titles">
+                    <span class="an-chart-card__label">RECENT HIGH-SEVERITY EVENTS</span>
+                    <span class="an-chart-card__sub">Severity 4+ in last 24 hours</span>
                 </div>
             </div>
+
             @if (_chartsLoading)
             {
-                <div class="table-skeleton">
+                <div class="an-table-skel">
                     @for (int i = 0; i < 4; i++)
                     {
-                        <div class="tsk-row">
-                            <div class="sk-line sk-td1"></div>
-                            <div class="sk-line sk-td2"></div>
-                            <div class="sk-line sk-td3"></div>
-                            <div class="sk-line sk-td4"></div>
+                        <div class="an-table-skel__row">
+                            <div class="tc-skeleton" style="width:60px;height:12px"></div>
+                            <div class="tc-skeleton" style="width:100px;height:18px;border-radius:3px"></div>
+                            <div class="tc-skeleton" style="width:70px;height:12px"></div>
+                            <div class="tc-skeleton" style="width:80px;height:12px"></div>
+                            <div class="tc-skeleton" style="width:26px;height:26px;border-radius:4px"></div>
                         </div>
                     }
                 </div>
             }
             else if (_recentEvents.Count == 0)
             {
-                <div class="no-events">
-                    <span class="ne-icon">✓</span>
+                <div class="an-no-events">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" />
+                    </svg>
                     <span>No high-severity events in the last 24 hours</span>
                 </div>
             }
             else
             {
-                <div class="events-table">
-                    <div class="et-header">
-                        <span class="eth">TIME</span>
-                        <span class="eth">ATTACK</span>
-                        <span class="eth">CITY</span>
-                        <span class="eth">SECTOR</span>
-                        <span class="eth">SEV</span>
-                        <span class="eth">SOURCE</span>
+                <div class="an-table">
+                    <div class="an-table__header">
+                        <span class="an-table__th">TIME</span>
+                        <span class="an-table__th">ATTACK</span>
+                        <span class="an-table__th">CITY</span>
+                        <span class="an-table__th an-table__th--hide-sm">SECTOR</span>
+                        <span class="an-table__th">SEV</span>
+                        <span class="an-table__th an-table__th--hide-sm">SOURCE</span>
                     </div>
                     @foreach (var ev in _recentEvents)
                     {
-                        <div class="et-row">
-                            <span class="etd mono time-val">@ev.Time</span>
-                            <span class="etd">
-                                <span class="type-chip chip-@ev.Type.ToLower().Replace(" ","")">
-                                    @ev.TypeIcon @ev.Type
+                        <div class="an-table__row">
+                            <span class="an-table__td an-table__td--time">@ev.Time</span>
+                            <span class="an-table__td">
+                                <span class="an-type-chip an-type-chip--@ev.Type.ToLower().Replace(" ","")">
+                                    @GetAttackSvg(ev.Type) @ev.Type
                                 </span>
                             </span>
-                            <span class="etd city-val">@ev.City</span>
-                            <span class="etd sector-val">@ev.Sector</span>
-                            <span class="etd">
-                                <span class="sev-badge sev-@ev.Severity">@ev.Severity</span>
+                            <span class="an-table__td an-table__td--city">@ev.City</span>
+                            <span class="an-table__td an-table__td--sector an-table__td--hide-sm">@ev.Sector</span>
+                            <span class="an-table__td">
+                                <span class="an-sev-badge an-sev--@ev.Severity">@ev.Severity</span>
                             </span>
-                            <span class="etd source-val">@ev.Source</span>
+                            <span class="an-table__td an-table__td--source an-table__td--hide-sm">@ev.Source</span>
                         </div>
                     }
                 </div>
@@ -277,378 +305,600 @@
 </div>
 
 <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ══════════════════════════════════════════════════════════════════
+       ANALYTICS PAGE — ThreatCast PK
+       Glassmorphism · Staggered Reveals · Premium Cards
+       ══════════════════════════════════════════════════════════════════ */
 
-    .analytics-root {
-        min-height: 100vh; background: #0d1117;
-        font-family: 'Inter', sans-serif;
+    .analytics {
+        min-height: 100vh;
+        background:
+            radial-gradient(ellipse at 70% 15%, rgba(159,239,0,0.025) 0%, transparent 50%),
+            radial-gradient(ellipse at 25% 75%, rgba(0,180,255,0.018) 0%, transparent 50%),
+            var(--tc-bg-base);
+        font-family: var(--tc-font-sans);
         padding: 76px 32px 64px;
-        position: relative; overflow-x: hidden;
+        position: relative;
+        overflow-x: hidden;
     }
 
-    .bg-grid {
-        position: fixed; inset: 0;
-        background-image:
-            linear-gradient(rgba(159,239,0,0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(159,239,0,0.025) 1px, transparent 1px);
-        background-size: 40px 40px;
-        pointer-events: none; z-index: 0;
+    .an-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
-    .scan-line {
-        position: fixed; top: -2px; left: 0; right: 0; height: 2px;
-        background: linear-gradient(90deg, transparent, #9fef00, transparent);
-        animation: scan 8s linear infinite; opacity: 0.3;
-        z-index: 1; pointer-events: none;
+    /* ── Staggered entrance ── */
+    .an-inner > * {
+        animation: tc-fade-up 0.5s cubic-bezier(0.4,0,0.2,1) both;
     }
-    @@keyframes scan { 0% { top: -2px; } 100% { top: 100vh; } }
+    .an-inner > *:nth-child(1) { animation-delay: 0s; }
+    .an-inner > *:nth-child(2) { animation-delay: 0.06s; }
+    .an-inner > *:nth-child(3) { animation-delay: 0.12s; }
+    .an-inner > *:nth-child(4) { animation-delay: 0.18s; }
+    .an-inner > *:nth-child(5) { animation-delay: 0.24s; }
+    .an-inner > *:nth-child(6) { animation-delay: 0.30s; }
+    .an-inner > *:nth-child(7) { animation-delay: 0.36s; }
 
-    .corner { position: fixed; width: 18px; height: 18px; z-index: 2; pointer-events: none; }
-    .corner-tl { top: 14px; left: 14px; border-top: 2px solid #9fef00; border-left: 2px solid #9fef00; }
-    .corner-tr { top: 14px; right: 14px; border-top: 2px solid #9fef00; border-right: 2px solid #9fef00; }
-    .corner-bl { bottom: 14px; left: 14px; border-bottom: 2px solid #9fef00; border-left: 2px solid #9fef00; }
-    .corner-br { bottom: 14px; right: 14px; border-bottom: 2px solid #9fef00; border-right: 2px solid #9fef00; }
-
-    .analytics-inner {
-        max-width: 1200px; margin: 0 auto;
-        position: relative; z-index: 3;
-        animation: fadeInUp 0.5s ease both;
-        display: flex; flex-direction: column; gap: 20px;
-    }
-
-    @@keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(16px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Header ── */
-    .page-header {
-        display: flex; align-items: flex-end;
-        justify-content: space-between; flex-wrap: wrap; gap: 16px;
-        margin-top: 50px;
+    /* ══════════════════════════════════════════════════════════════════
+       HEADER
+       ══════════════════════════════════════════════════════════════════ */
+    .an-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        padding-top: 40px;
+        padding-bottom: 8px;
     }
 
-    .ph-label {
-        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
-        color: #9fef00; letter-spacing: 2px; opacity: 0.7; margin-bottom: 10px;
+    .an-header__label {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-xs);
+        color: var(--tc-accent);
+        letter-spacing: 2.5px;
+        opacity: 0.6;
+        margin-bottom: var(--tc-space-3);
+        display: block;
     }
 
-    .ph-title {
-        font-size: 40px; font-weight: 700; color: #e6edf3;
-        line-height: 1.1; letter-spacing: -1px; margin-bottom: 10px;
+    .an-header__title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--tc-text-primary);
+        line-height: 1.1;
+        letter-spacing: -1px;
+        margin-bottom: var(--tc-space-3);
     }
 
-    .ph-accent { color: #9fef00; }
-    .ph-sub { font-size: 14px; color: #6e7681; }
+    .an-header__accent { color: var(--tc-accent); }
 
-    .live-badge {
-        display: flex; align-items: center; gap: 8px;
-        padding: 8px 16px; background: rgba(159,239,0,0.06);
-        border: 1px solid rgba(159,239,0,0.2); border-radius: 4px;
+    .an-header__sub {
+        font-size: var(--tc-text-base);
+        color: var(--tc-text-muted);
+        line-height: 1.5;
     }
 
-    .live-dot {
-        width: 8px; height: 8px; border-radius: 50%; background: #9fef00;
-        animation: blink 1.5s ease-in-out infinite;
-        box-shadow: 0 0 8px rgba(159,239,0,0.6);
-    }
-    @@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
-
-    .live-text {
-        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
-        color: #9fef00; letter-spacing: 2px;
-    }
-
-    /* ── Stat cards ── */
-    .stat-cards {
-        display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    .an-live-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 14px;
+        background: rgba(159,239,0,0.05);
+        border: 1px solid rgba(159,239,0,0.2);
+        border-radius: var(--tc-radius-full);
+        font-family: var(--tc-font-mono);
+        font-size: 9px;
+        color: var(--tc-accent);
+        letter-spacing: 2px;
     }
 
-    .stat-card {
-        background: #161b22; border: 1px solid #21262d;
-        border-radius: 8px; padding: 20px;
-        display: flex; flex-direction: column; gap: 4px;
-        transition: border-color 0.2s;
-        position: relative; overflow: hidden;
-    }
-    .stat-card:hover { border-color: #30363d; }
-
-    .stat-card::before {
-        content: ''; position: absolute;
-        top: 0; left: 0; right: 0; height: 2px;
-        background: linear-gradient(90deg, #9fef00, transparent);
-        opacity: 0; transition: opacity 0.2s;
-    }
-    .stat-card:hover::before { opacity: 1; }
-
-    .sc-icon { font-size: 20px; margin-bottom: 6px; }
-
-    .sc-value {
-        font-family: 'IBM Plex Mono', monospace; font-size: 28px;
-        font-weight: 600; line-height: 1;
-    }
-    .sc-value.green  { color: #9fef00; text-shadow: 0 0 12px rgba(159,239,0,0.3); }
-    .sc-value.blue   { color: #00c8ff; text-shadow: 0 0 12px rgba(0,200,255,0.3); }
-    .sc-value.orange { color: #ffa500; text-shadow: 0 0 12px rgba(255,165,0,0.3); }
-    .sc-value.red    { color: #ff3e3e; text-shadow: 0 0 12px rgba(255,62,62,0.3); }
-
-    .sc-label {
-        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
-        color: #6e7681; letter-spacing: 2px; margin-top: 4px;
+    .an-live-badge__dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: var(--tc-accent);
+        box-shadow: 0 0 10px rgba(159,239,0,0.7);
+        animation: tc-pulse 1.3s ease-in-out infinite;
     }
 
-    .sc-sub { font-size: 11px; color: #4a5160; }
-
-    /* ── Chart cards ── */
-    .chart-card {
-        background: #161b22; border: 1px solid #21262d;
-        border-radius: 8px; overflow: hidden;
-        transition: border-color 0.2s;
-    }
-    .chart-card:hover { border-color: #30363d; }
-
-    .chart-card-full { width: 100%; }
-
-    .charts-row-2 {
-        display: grid; grid-template-columns: 1fr 320px; gap: 20px;
+    /* ══════════════════════════════════════════════════════════════════
+       STAT CARDS
+       ══════════════════════════════════════════════════════════════════ */
+    .an-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
     }
 
-    .cc-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 14px 20px; background: #0d1117;
-        border-bottom: 1px solid #21262d;
+    .an-stat {
+        background: rgba(22,27,34,0.55);
+        backdrop-filter: blur(16px) saturate(1.3);
+        -webkit-backdrop-filter: blur(16px) saturate(1.3);
+        border: 1px solid rgba(33,38,45,0.6);
+        border-radius: var(--tc-radius-lg);
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        transition: all var(--tc-ease-smooth);
+        position: relative;
+        overflow: hidden;
+        border-left: 3px solid transparent;
     }
 
-    .cc-title-block { display: flex; flex-direction: column; gap: 3px; }
-
-    .cc-label {
-        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
-        color: #9fef00; letter-spacing: 2px; opacity: 0.8;
+    .an-stat:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 28px rgba(0,0,0,0.35), var(--tc-glow);
     }
 
-    .cc-sub { font-size: 11px; color: #4a5160; }
+    .an-stat--green  { border-left-color: rgba(159,239,0,0.4); }
+    .an-stat--cyan   { border-left-color: rgba(0,200,255,0.4); }
+    .an-stat--orange { border-left-color: rgba(255,165,0,0.4); }
+    .an-stat--red    { border-left-color: rgba(255,62,62,0.4); }
+    .an-stat--skeleton { border-left-color: var(--tc-border); padding: 20px; }
 
-    .cc-loading-dot {
-        width: 8px; height: 8px; border-radius: 50%;
-        border: 2px solid #21262d; border-top-color: #9fef00;
-        animation: spin 0.8s linear infinite;
+    /* Hover accent glow line at top */
+    .an-stat::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, var(--tc-accent), transparent);
+        opacity: 0;
+        transition: opacity var(--tc-ease-smooth);
     }
-    @@keyframes spin { to { transform: rotate(360deg); } }
+    .an-stat:hover::after { opacity: 0.5; }
 
-    .chart-area { padding: 20px; }
-
-    .chart-area-donut {
+    .an-stat__icon {
+        width: 36px; height: 36px;
+        border-radius: var(--tc-radius-md);
         display: flex; align-items: center; justify-content: center;
+        margin-bottom: var(--tc-space-3);
     }
 
-    .donut-legend {
+    .an-stat__icon--green  { background: rgba(159,239,0,0.1);  color: var(--tc-accent);  border: 1px solid rgba(159,239,0,0.2); }
+    .an-stat__icon--cyan   { background: rgba(0,200,255,0.1);  color: #00c8ff;           border: 1px solid rgba(0,200,255,0.2); }
+    .an-stat__icon--orange { background: rgba(255,165,0,0.1);  color: var(--tc-warning);  border: 1px solid rgba(255,165,0,0.2); }
+    .an-stat__icon--red    { background: rgba(255,62,62,0.1);  color: var(--tc-danger);   border: 1px solid rgba(255,62,62,0.2); }
+
+    .an-stat__value {
+        font-family: var(--tc-font-mono);
+        font-size: 1.65rem;
+        font-weight: 600;
+        line-height: 1;
+    }
+
+    .an-stat__value--green  { color: var(--tc-accent);  text-shadow: 0 0 18px rgba(159,239,0,0.25); }
+    .an-stat__value--cyan   { color: #00c8ff;           text-shadow: 0 0 18px rgba(0,200,255,0.25); }
+    .an-stat__value--orange { color: var(--tc-warning);  text-shadow: 0 0 18px rgba(255,165,0,0.25); }
+    .an-stat__value--red    { color: var(--tc-danger);   text-shadow: 0 0 18px rgba(255,62,62,0.25); }
+
+    .an-stat__label {
+        font-family: var(--tc-font-mono);
+        font-size: 8px;
+        color: var(--tc-text-muted);
+        letter-spacing: 2px;
+        margin-top: var(--tc-space-2);
+    }
+
+    .an-stat__sub {
+        font-size: var(--tc-text-xs);
+        color: var(--tc-text-muted);
+        margin-top: 2px;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       CHART CARDS — GLASS
+       ══════════════════════════════════════════════════════════════════ */
+    .an-charts-row {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 16px;
+    }
+
+    .an-chart-card {
+        background: rgba(22,27,34,0.55);
+        backdrop-filter: blur(16px) saturate(1.3);
+        -webkit-backdrop-filter: blur(16px) saturate(1.3);
+        border: 1px solid rgba(33,38,45,0.6);
+        border-radius: var(--tc-radius-lg);
+        overflow: hidden;
+        transition: border-color var(--tc-ease-smooth), box-shadow var(--tc-ease-smooth);
+    }
+
+    .an-chart-card:hover {
+        border-color: rgba(33,38,45,0.9);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+
+    .an-chart-card--full { width: 100%; }
+
+    .an-chart-card__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px;
+        background: rgba(13,17,23,0.4);
+        border-bottom: 1px solid rgba(33,38,45,0.5);
+    }
+
+    .an-chart-card__titles {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .an-chart-card__label {
+        font-family: var(--tc-font-mono);
+        font-size: 9px;
+        color: var(--tc-accent);
+        letter-spacing: 2px;
+        opacity: 0.7;
+    }
+
+    .an-chart-card__sub {
+        font-size: var(--tc-text-xs);
+        color: var(--tc-text-muted);
+    }
+
+    .an-chart-card__loader {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        border: 2px solid var(--tc-border);
+        border-top-color: var(--tc-accent);
+        animation: tc-spin 0.8s linear infinite;
+    }
+
+    .an-chart-card__body {
+        padding: 20px;
+    }
+
+    .an-chart-card__body--center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* ── Donut legend ── */
+    .an-donut-legend {
         padding: 0 20px 16px;
-        display: flex; flex-direction: column; gap: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
     }
 
-    .dl-item {
-        display: flex; align-items: center; gap: 8px;
+    .an-donut-legend__item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 0;
     }
 
-    .dl-dot {
-        width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    .an-donut-legend__dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
     }
 
-    .dl-name { font-size: 12px; color: #6e7681; flex: 1; }
-
-    .dl-val {
-        font-family: 'IBM Plex Mono', monospace; font-size: 12px;
-        color: #c9d1d9; font-weight: 600;
+    .an-donut-legend__name {
+        font-size: var(--tc-text-sm);
+        color: var(--tc-text-muted);
+        flex: 1;
     }
 
-    /* ── Sector section ── */
-    .section-header {
-        display: flex; align-items: baseline; gap: 12px;
-        margin-bottom: 12px; flex-wrap: wrap;
+    .an-donut-legend__val {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-sm);
+        color: var(--tc-text-secondary);
+        font-weight: 600;
     }
 
-    .sh-label {
-        font-family: 'IBM Plex Mono', monospace; font-size: 10px;
-        color: #9fef00; letter-spacing: 2px; opacity: 0.8;
+    /* ── Skeletons ── */
+    .an-skel-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        height: 200px;
+        padding: 10px 0;
     }
 
-    .sh-sub { font-size: 11px; color: #4a5160; }
-
-    .sector-grid {
-        display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    .an-skel-bar {
+        flex: 1;
+        border-radius: 3px 3px 0 0;
     }
 
-    .sector-card {
-        background: #161b22; border: 1px solid #21262d;
-        border-radius: 8px; padding: 16px;
-        display: flex; flex-direction: column; gap: 8px;
-        transition: border-color 0.2s, transform 0.2s;
-        border-left-width: 3px;
-    }
-    .sector-card:hover { transform: translateY(-2px); }
-
-    .risk-low      { border-left-color: #9fef00; }
-    .risk-medium   { border-left-color: #ffa500; }
-    .risk-high     { border-left-color: #ff6b35; }
-    .risk-critical { border-left-color: #ff3e3e; }
-
-    .sec-top { display: flex; align-items: center; justify-content: space-between; }
-
-    .sec-icon { font-size: 20px; }
-
-    .sec-risk-badge {
-        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
-        font-weight: 700; padding: 2px 7px; border-radius: 3px;
-        letter-spacing: 1px;
-    }
-    .risk-badge-low      { background: rgba(159,239,0,0.1); color: #9fef00; border: 1px solid rgba(159,239,0,0.25); }
-    .risk-badge-medium   { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.25); }
-    .risk-badge-high     { background: rgba(255,107,53,0.1); color: #ff6b35; border: 1px solid rgba(255,107,53,0.25); }
-    .risk-badge-critical { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid rgba(255,62,62,0.25); }
-
-    .sec-name { font-size: 13px; font-weight: 600; color: #c9d1d9; }
-
-    .sec-bar-track {
-        height: 3px; background: #21262d; border-radius: 2px; overflow: hidden;
+    .an-skel-donut {
+        width: 170px;
+        height: 170px;
+        border-radius: 50%;
     }
 
-    .sec-bar-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
-    .risk-fill-low      { background: #9fef00; }
-    .risk-fill-medium   { background: #ffa500; }
-    .risk-fill-high     { background: #ff6b35; }
-    .risk-fill-critical { background: #ff3e3e; }
+    .an-table-skel {
+        padding: 4px 0;
+    }
 
-    .sec-events { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #4a5160; }
+    .an-table-skel__row {
+        display: flex;
+        gap: 20px;
+        padding: 12px 20px;
+        border-bottom: 1px solid rgba(33,38,45,0.4);
+        align-items: center;
+    }
 
-    /* ── Events table ── */
-    .et-header {
+    /* ══════════════════════════════════════════════════════════════════
+       SECTOR RISK
+       ══════════════════════════════════════════════════════════════════ */
+    .an-section-header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 4px;
+    }
+
+    .an-section-header__label {
+        font-family: var(--tc-font-mono);
+        font-size: 9px;
+        color: var(--tc-accent);
+        letter-spacing: 2px;
+        opacity: 0.7;
+    }
+
+    .an-section-header__sub {
+        font-size: var(--tc-text-xs);
+        color: var(--tc-text-muted);
+    }
+
+    .an-sector-grid {
         display: grid;
-        grid-template-columns: 80px 140px 100px 110px 48px 1fr;
-        gap: 0; padding: 8px 20px;
-        background: #0d1117; border-bottom: 1px solid #21262d;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
     }
 
-    .eth {
-        font-family: 'IBM Plex Mono', monospace; font-size: 9px;
-        color: #4a5160; letter-spacing: 2px; font-weight: 600;
+    .an-sector {
+        background: rgba(22,27,34,0.5);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(33,38,45,0.6);
+        border-radius: var(--tc-radius-lg);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: all var(--tc-ease-smooth);
+        border-left: 3px solid transparent;
     }
 
-    .et-row {
-        display: grid;
-        grid-template-columns: 80px 140px 100px 110px 48px 1fr;
-        gap: 0; padding: 12px 20px;
-        border-bottom: 1px solid #21262d; align-items: center;
-        transition: background 0.1s;
+    .an-sector:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(0,0,0,0.3);
     }
-    .et-row:last-child { border-bottom: none; }
-    .et-row:hover { background: rgba(159,239,0,0.02); }
 
-    .etd { font-size: 12px; color: #c9d1d9; display: flex; align-items: center; }
-    .etd.mono { font-family: 'IBM Plex Mono', monospace; }
-    .time-val   { font-family: 'IBM Plex Mono', monospace; color: #6e7681; font-size: 11px; }
-    .city-val   { color: #00c8ff; font-size: 12px; }
-    .sector-val { color: #6e7681; font-size: 11px; font-family: 'IBM Plex Mono', monospace; }
-    .source-val { color: #4a5160; font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+    .an-sector--skeleton { border-left-color: var(--tc-border); }
+    .an-sector--low      { border-left-color: rgba(159,239,0,0.4); }
+    .an-sector--medium   { border-left-color: rgba(255,165,0,0.4); }
+    .an-sector--high     { border-left-color: rgba(255,107,53,0.4); }
+    .an-sector--critical { border-left-color: rgba(255,62,62,0.5); box-shadow: 0 0 16px rgba(255,62,62,0.06); }
 
-    .type-chip {
-        font-family: 'IBM Plex Mono', monospace; font-size: 11px;
-        padding: 3px 7px; border-radius: 3px;
-        display: inline-flex; align-items: center; gap: 4px;
+    .an-sector:hover.an-sector--low      { border-left-color: var(--tc-accent); }
+    .an-sector:hover.an-sector--medium   { border-left-color: var(--tc-warning); }
+    .an-sector:hover.an-sector--high     { border-left-color: #ff6b35; }
+    .an-sector:hover.an-sector--critical { border-left-color: var(--tc-danger); box-shadow: 0 0 24px rgba(255,62,62,0.1), 0 6px 24px rgba(0,0,0,0.3); }
+
+    .an-sector__top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
-    .chip-ransomware    { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid rgba(255,62,62,0.2); }
-    .chip-phishing      { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
-    .chip-ddos          { background: rgba(0,200,255,0.1); color: #00c8ff; border: 1px solid rgba(0,200,255,0.2); }
-    .chip-malware       { background: rgba(191,64,191,0.1); color: #bf40bf; border: 1px solid rgba(191,64,191,0.2); }
-    .chip-identitytheft { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
-    .chip-other         { background: rgba(110,118,129,0.1); color: #6e7681; border: 1px solid rgba(110,118,129,0.2); }
 
-    .sev-badge {
-        width: 26px; height: 26px; border-radius: 4px;
+    .an-sector__icon {
+        width: 30px; height: 30px;
+        border-radius: var(--tc-radius-md);
         display: flex; align-items: center; justify-content: center;
-        font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700;
-    }
-    .sev-1 { background: rgba(159,239,0,0.12); color: #9fef00; }
-    .sev-2 { background: rgba(125,199,0,0.12); color: #7dc700; }
-    .sev-3 { background: rgba(255,165,0,0.12); color: #ffa500; }
-    .sev-4 { background: rgba(255,107,53,0.12); color: #ff6b35; }
-    .sev-5 { background: rgba(255,62,62,0.12); color: #ff3e3e; }
-
-    .no-events {
-        display: flex; align-items: center; gap: 10px;
-        padding: 24px 20px;
-        font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9fef00;
-    }
-    .ne-icon { font-size: 16px; }
-
-    /* ── Skeleton animations ── */
-    .skeleton-card { animation: shimmer 1.5s ease-in-out infinite; }
-    @@keyframes shimmer { 0%,100% { opacity: 0.7; } 50% { opacity: 0.3; } }
-
-    .sk-line { background: #21262d; border-radius: 2px; }
-    .sk-val  { height: 32px; width: 60%; margin-bottom: 8px; }
-    .sk-lbl  { height: 10px; width: 40%; }
-    .sk-icon { height: 24px; width: 24px; border-radius: 50%; margin-bottom: 8px; }
-    .sk-sname { height: 14px; width: 70%; margin-bottom: 6px; }
-    .sk-risk  { height: 10px; width: 40%; }
-
-    .chart-skeleton {
-        display: flex; align-items: flex-end; gap: 8px;
-        height: 180px; padding: 10px;
-        animation: shimmer 1.5s ease-in-out infinite;
+        flex-shrink: 0;
     }
 
-    .sk-bar { flex: 1; background: #21262d; border-radius: 2px 2px 0 0; }
+    .an-sector-icon--banking    { background: rgba(0,200,255,0.08);  color: #00c8ff;           border: 1px solid rgba(0,200,255,0.15); }
+    .an-sector-icon--telecom    { background: rgba(159,239,0,0.08);  color: var(--tc-accent);  border: 1px solid rgba(159,239,0,0.15); }
+    .an-sector-icon--healthcare { background: rgba(255,62,62,0.08);  color: var(--tc-danger);  border: 1px solid rgba(255,62,62,0.15); }
+    .an-sector-icon--education  { background: rgba(255,165,0,0.08);  color: var(--tc-warning); border: 1px solid rgba(255,165,0,0.15); }
+    .an-sector-icon--government { background: rgba(191,64,191,0.08); color: #bf40bf;           border: 1px solid rgba(191,64,191,0.15); }
+    .an-sector-icon--energy     { background: rgba(255,207,0,0.08);  color: #ffc800;           border: 1px solid rgba(255,207,0,0.15); }
+    .an-sector-icon--other      { background: rgba(110,118,129,0.08);color: var(--tc-text-muted);border: 1px solid rgba(110,118,129,0.15); }
 
-    .donut-skeleton {
-        width: 160px; height: 160px; border-radius: 50%;
-        background: conic-gradient(#21262d 0%, #161b22 100%);
-        animation: shimmer 1.5s ease-in-out infinite;
+    .an-sector__risk-badge {
+        font-family: var(--tc-font-mono);
+        font-size: 7px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: var(--tc-radius-full);
+        letter-spacing: 1px;
+        border: 1px solid;
     }
 
-    .line-skeleton {
-        height: 120px; position: relative; overflow: hidden;
-        margin: 10px;
-        animation: shimmer 1.5s ease-in-out infinite;
+    .an-risk-badge--low      { background: rgba(159,239,0,0.08);  color: var(--tc-accent);  border-color: rgba(159,239,0,0.25); }
+    .an-risk-badge--medium   { background: rgba(255,165,0,0.08);  color: var(--tc-warning);  border-color: rgba(255,165,0,0.25); }
+    .an-risk-badge--high     { background: rgba(255,107,53,0.08); color: #ff6b35;            border-color: rgba(255,107,53,0.25); }
+    .an-risk-badge--critical { background: rgba(255,62,62,0.1);   color: var(--tc-danger);   border-color: rgba(255,62,62,0.3);
+                               box-shadow: 0 0 8px rgba(255,62,62,0.15); }
+
+    .an-sector__name {
+        font-size: var(--tc-text-sm);
+        font-weight: 600;
+        color: var(--tc-text-secondary);
     }
 
-    .ls-wave {
-        position: absolute; inset: 0;
-        background: linear-gradient(90deg,
-            transparent 0%, #21262d 30%, #161b22 50%, #21262d 70%, transparent 100%);
+    .an-sector__bar {
+        height: 3px;
+        background: rgba(33,38,45,0.8);
+        border-radius: 2px;
+        overflow: hidden;
     }
 
-    .table-skeleton { padding: 8px 0; }
-    .tsk-row {
-        display: flex; gap: 20px; padding: 12px 20px;
-        border-bottom: 1px solid #21262d;
-        animation: shimmer 1.5s ease-in-out infinite;
+    .an-sector__bar-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
     }
-    .sk-td1 { height: 12px; width: 70px; }
-    .sk-td2 { height: 12px; width: 120px; }
-    .sk-td3 { height: 12px; width: 80px; }
-    .sk-td4 { height: 12px; width: 90px; }
 
-    .skeleton-sector { animation: shimmer 1.5s ease-in-out infinite; }
+    .an-bar-fill--low      { background: var(--tc-accent); }
+    .an-bar-fill--medium   { background: var(--tc-warning); }
+    .an-bar-fill--high     { background: #ff6b35; }
+    .an-bar-fill--critical { background: var(--tc-danger); box-shadow: 0 0 6px rgba(255,62,62,0.4); }
 
-    /* ── Responsive ── */
+    .an-sector__events {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-2xs);
+        color: var(--tc-text-muted);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       EVENTS TABLE
+       ══════════════════════════════════════════════════════════════════ */
+    .an-table__header {
+        display: grid;
+        grid-template-columns: 80px 140px 100px 110px 48px 1fr;
+        padding: 8px 20px;
+        background: rgba(13,17,23,0.4);
+        border-bottom: 1px solid rgba(33,38,45,0.5);
+    }
+
+    .an-table__th {
+        font-family: var(--tc-font-mono);
+        font-size: 8px;
+        color: var(--tc-text-muted);
+        letter-spacing: 2px;
+        font-weight: 600;
+    }
+
+    .an-table__row {
+        display: grid;
+        grid-template-columns: 80px 140px 100px 110px 48px 1fr;
+        padding: 10px 20px;
+        border-bottom: 1px solid rgba(33,38,45,0.3);
+        align-items: center;
+        transition: background var(--tc-ease-fast);
+    }
+
+    .an-table__row:last-child { border-bottom: none; }
+    .an-table__row:hover { background: rgba(159,239,0,0.015); }
+
+    .an-table__td {
+        font-size: var(--tc-text-sm);
+        color: var(--tc-text-secondary);
+        display: flex;
+        align-items: center;
+    }
+
+    .an-table__td--time {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-xs);
+        color: var(--tc-text-muted);
+    }
+
+    .an-table__td--city {
+        color: #00c8ff;
+    }
+
+    .an-table__td--sector {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-xs);
+        color: var(--tc-text-muted);
+    }
+
+    .an-table__td--source {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-xs);
+        color: var(--tc-text-muted);
+    }
+
+    /* ── Type chips ── */
+    .an-type-chip {
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-xs);
+        padding: 3px 8px;
+        border-radius: var(--tc-radius-sm);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid;
+    }
+
+    .an-type-chip--ransomware    { background: rgba(255,62,62,0.08);  color: var(--tc-danger);  border-color: rgba(255,62,62,0.18); }
+    .an-type-chip--phishing      { background: rgba(255,165,0,0.08);  color: var(--tc-warning); border-color: rgba(255,165,0,0.18); }
+    .an-type-chip--ddos          { background: rgba(0,200,255,0.08);  color: #00c8ff;           border-color: rgba(0,200,255,0.18); }
+    .an-type-chip--malware       { background: rgba(191,64,191,0.08); color: #bf40bf;           border-color: rgba(191,64,191,0.18); }
+    .an-type-chip--identitytheft { background: rgba(255,165,0,0.08);  color: var(--tc-warning); border-color: rgba(255,165,0,0.18); }
+    .an-type-chip--other         { background: rgba(110,118,129,0.08);color: var(--tc-text-muted);border-color: rgba(110,118,129,0.18); }
+
+    /* ── Severity badges ── */
+    .an-sev-badge {
+        width: 26px; height: 26px;
+        border-radius: var(--tc-radius-sm);
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-sm);
+        font-weight: 700;
+    }
+
+    .an-sev--1 { background: rgba(159,239,0,0.1);  color: var(--tc-accent); }
+    .an-sev--2 { background: rgba(125,199,0,0.1);  color: #7dc700; }
+    .an-sev--3 { background: rgba(255,165,0,0.1);  color: var(--tc-warning); }
+    .an-sev--4 { background: rgba(255,107,53,0.12); color: #ff6b35; box-shadow: 0 0 8px rgba(255,107,53,0.15); }
+    .an-sev--5 { background: rgba(255,62,62,0.14); color: var(--tc-danger); box-shadow: 0 0 10px rgba(255,62,62,0.2); }
+
+    /* ── No events ── */
+    .an-no-events {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 28px 20px;
+        font-family: var(--tc-font-mono);
+        font-size: var(--tc-text-sm);
+        color: var(--tc-accent);
+    }
+
+    .an-no-events svg {
+        flex-shrink: 0;
+        filter: drop-shadow(0 0 6px rgba(159,239,0,0.3));
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       RESPONSIVE
+       ══════════════════════════════════════════════════════════════════ */
+    @@media (max-width: 1100px) {
+        .an-sector-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    }
+
     @@media (max-width: 1024px) {
-        .sector-grid { grid-template-columns: repeat(3, 1fr); }
+        .an-stats { grid-template-columns: repeat(2, 1fr); }
+        .an-charts-row { grid-template-columns: 1fr; }
     }
 
     @@media (max-width: 768px) {
-        .analytics-root { padding: 72px 16px 40px; }
-        .stat-cards { grid-template-columns: repeat(2, 1fr); }
-        .charts-row-2 { grid-template-columns: 1fr; }
-        .sector-grid { grid-template-columns: repeat(2, 1fr); }
-        .ph-title { font-size: 30px; }
-        .et-header, .et-row { grid-template-columns: 70px 120px 80px 48px; }
-        .eth:nth-child(4), .eth:nth-child(6),
-        .etd:nth-child(4), .etd:nth-child(6) { display: none; }
+        .analytics { padding: 72px 16px 40px; }
+        .an-header { padding-top: 24px; }
+        .an-header__title { font-size: 1.75rem; }
+        .an-sector-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+
+        .an-table__header { grid-template-columns: 65px 130px 80px 48px; }
+        .an-table__row    { grid-template-columns: 65px 130px 80px 48px; }
+        .an-table__th--hide-sm,
+        .an-table__td--hide-sm { display: none; }
     }
 
     @@media (max-width: 480px) {
-        .stat-cards { grid-template-columns: 1fr 1fr; }
-        .sector-grid { grid-template-columns: 1fr 1fr; }
+        .an-stats { grid-template-columns: 1fr 1fr; }
+        .an-stat { padding: 14px; }
+        .an-stat__value { font-size: 1.25rem; }
+        .an-sector-grid { grid-template-columns: 1fr 1fr; }
+        .an-header__title { font-size: 1.5rem; }
+        .an-chart-card__body { padding: 12px; }
     }
 </style>
 
@@ -671,6 +921,31 @@
     private record EventItem(string Time, string Type, string TypeIcon, string City, string Sector, int Severity, string Source);
     private List<EventItem> _recentEvents = new();
 
+    // ── SVG icon helpers ──
+
+    private static MarkupString GetAttackSvg(string type) => new(type switch
+    {
+        "Ransomware" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""12"" height=""12"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><rect width=""18"" height=""11"" x=""3"" y=""11"" rx=""2"" ry=""2""/><path d=""M7 11V7a5 5 0 0 1 10 0v4""/></svg>",
+        "Phishing" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""12"" height=""12"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><rect width=""20"" height=""16"" x=""2"" y=""4"" rx=""2""/><path d=""m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7""/></svg>",
+        "DDoS" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""12"" height=""12"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2""/></svg>",
+        "Malware" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""12"" height=""12"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""m8 2 1.88 1.88""/><path d=""M14.12 3.88 16 2""/><path d=""M9 7.13v-1a3.003 3.003 0 1 1 6 0v1""/><path d=""M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6""/><path d=""M12 20v-9""/><path d=""M6.53 9C4.6 8.8 3 7.1 3 5""/><path d=""M6 13H2""/><path d=""M3 21c0-2.1 1.7-3.9 3.8-4""/><path d=""M20.97 5c0 2.1-1.6 3.8-3.5 4""/><path d=""M22 13h-4""/><path d=""M17.2 17c2.1.1 3.8 1.9 3.8 4""/></svg>",
+        "IdentityTheft" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""12"" height=""12"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2""/><circle cx=""9"" cy=""7"" r=""4""/><line x1=""17"" x2=""22"" y1=""8"" y2=""13""/><line x1=""22"" x2=""17"" y1=""8"" y2=""13""/></svg>",
+        _ => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""12"" height=""12"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><circle cx=""12"" cy=""12"" r=""10""/><path d=""M12 16v-4""/><path d=""M12 8h.01""/></svg>"
+    });
+
+    private static MarkupString GetSectorSvg(string name) => new(name switch
+    {
+        "Banking" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""14"" height=""14"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><line x1=""3"" x2=""21"" y1=""22"" y2=""22""/><line x1=""6"" x2=""6"" y1=""18"" y2=""11""/><line x1=""10"" x2=""10"" y1=""18"" y2=""11""/><line x1=""14"" x2=""14"" y1=""18"" y2=""11""/><line x1=""18"" x2=""18"" y1=""18"" y2=""11""/><polygon points=""12 2 20 7 4 7""/></svg>",
+        "Telecom" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""14"" height=""14"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M4.9 19.1C1 15.2 1 8.8 4.9 4.9""/><path d=""M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.4""/><circle cx=""12"" cy=""12"" r=""2""/><path d=""M16.2 7.8c2.3 2.3 2.3 6.1 0 8.4""/><path d=""M19.1 4.9C23 8.8 23 15.1 19.1 19""/></svg>",
+        "Healthcare" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""14"" height=""14"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z""/><path d=""M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27""/></svg>",
+        "Education" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""14"" height=""14"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z""/><path d=""M22 10v6""/><path d=""M6 12.5V16c0 1 2.5 3 6 3s6-2 6-3v-3.5""/></svg>",
+        "Government" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""14"" height=""14"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><rect width=""16"" height=""20"" x=""4"" y=""2"" rx=""2""/><path d=""M9 22v-4h6v4""/><path d=""M8 6h.01""/><path d=""M16 6h.01""/><path d=""M12 6h.01""/><path d=""M12 10h.01""/><path d=""M12 14h.01""/><path d=""M16 10h.01""/><path d=""M16 14h.01""/><path d=""M8 10h.01""/><path d=""M8 14h.01""/></svg>",
+        "Energy" => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""14"" height=""14"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z""/></svg>",
+        _ => @"<svg xmlns=""http://www.w3.org/2000/svg"" width=""14"" height=""14"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2"" stroke-linecap=""round"" stroke-linejoin=""round""><path d=""M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z""/></svg>"
+    });
+
+    // ── Lifecycle ──
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -678,132 +953,121 @@
     }
 
     private async Task LoadData()
-{
-    _statsLoading = true;
-    StateHasChanged();
-
-    var (stats, _) = await ApiService.GetStatsAsync();
-    if (stats != null)
     {
-        _totalToday = stats.TotalToday;
-        _topCity    = stats.TopCity;
-        _topType    = stats.TopAttackType;
-        _topSector  = stats.TopSector;
+        _statsLoading = true;
+        StateHasChanged();
+
+        var (stats, _) = await ApiService.GetStatsAsync();
+        if (stats != null)
+        {
+            _totalToday = stats.TotalToday;
+            _topCity    = stats.TopCity;
+            _topType    = stats.TopAttackType;
+            _topSector  = stats.TopSector;
+        }
+
+        _statsLoading = false;
+        StateHasChanged();
+
+        _chartsLoading = true;
+        StateHasChanged();
+
+        var (typeData, _)   = await ApiService.GetByTypeAsync();
+        var (recentData, _) = await ApiService.GetRecentEventsAsync();
+
+        var typeColors = new Dictionary<string, string>
+        {
+            ["Ransomware"]    = "#ff3e3e",
+            ["Phishing"]      = "#ffa500",
+            ["DDoS"]          = "#00c8ff",
+            ["Malware"]       = "#bf40bf",
+            ["IdentityTheft"] = "#ff6b35",
+            ["Other"]         = "#6e7681"
+        };
+
+        _typeData = (typeData ?? new()).Select(t => new TypeDataItem(
+            t.AttackType,
+            t.Count,
+            typeColors.GetValueOrDefault(t.AttackType, "#6e7681")
+        )).ToList();
+
+        foreach (var (key, color) in typeColors)
+            if (!_typeData.Any(t => t.Label == key))
+                _typeData.Add(new TypeDataItem(key, 0, color));
+
+        _recentEvents = (recentData ?? new()).Select(e => new EventItem(
+            e.Time, e.AttackType, "",
+            e.City, e.TargetSector, e.Severity, e.Source
+        )).ToList();
+
+        _chartsLoading = false;
+        StateHasChanged();
+
+        await Task.Delay(100);
+
+        var (cityData, _)  = await ApiService.GetByCityAsync();
+        var (trendData, _) = await ApiService.GetTrendAsync();
+
+        var allCities = new[] { "Karachi","Lahore","Islamabad","Rawalpindi",
+                                "Faisalabad","Peshawar","Multan","Quetta" };
+
+        var cityValues = allCities
+            .Select(c => cityData?.FirstOrDefault(x => x.City == c)?.Count ?? 0)
+            .ToArray();
+
+        var trendLabels = Enumerable.Range(0, 30)
+            .Select(i => DateTime.UtcNow.AddDays(-29 + i).ToString("MMM d"))
+            .ToArray();
+
+        var trendValues = trendLabels
+            .Select(label => trendData?.FirstOrDefault(x => x.Date == label)?.Count ?? 0)
+            .ToArray();
+
+        await RenderCharts(allCities, cityValues, trendLabels, trendValues);
+
+        _sectorLoading = true;
+        StateHasChanged();
+
+        var (sectorData, _) = await ApiService.GetSectorRiskAsync();
+
+        var sectorIcons = new Dictionary<string, string>
+        {
+            ["Banking"] = "", ["Telecom"] = "", ["Healthcare"] = "",
+            ["Education"] = "", ["Government"] = "",
+            ["Energy"] = "", ["Other"] = ""
+        };
+
+        var fillMap = new Dictionary<string, int>
+        {
+            ["Low"] = 15, ["Medium"] = 45, ["High"] = 75, ["Critical"] = 100
+        };
+
+        _sectorData = (sectorData ?? new()).Select(s => new SectorDataItem(
+            s.Sector,
+            sectorIcons.GetValueOrDefault(s.Sector, ""),
+            s.RiskLevel,
+            s.EventCount,
+            fillMap.GetValueOrDefault(s.RiskLevel, 15)
+        )).ToList();
+
+        _sectorLoading = false;
+        StateHasChanged();
     }
-
-    _statsLoading = false;
-    StateHasChanged();
-
-    _chartsLoading = true;
-    StateHasChanged();
-
-    var (typeData, _)   = await ApiService.GetByTypeAsync();
-    var (recentData, _) = await ApiService.GetRecentEventsAsync();
-
-    var typeColors = new Dictionary<string, string>
-    {
-        ["Ransomware"]    = "#ff3e3e",
-        ["Phishing"]      = "#ffa500",
-        ["DDoS"]          = "#00c8ff",
-        ["Malware"]       = "#bf40bf",
-        ["IdentityTheft"] = "#ff6b35",
-        ["Other"]         = "#6e7681"
-    };
-
-    _typeData = (typeData ?? new()).Select(t => new TypeDataItem(
-        t.AttackType,
-        t.Count,
-        typeColors.GetValueOrDefault(t.AttackType, "#6e7681")
-    )).ToList();
-
-    // Fill in zeros for missing types
-    foreach (var (key, color) in typeColors)
-        if (!_typeData.Any(t => t.Label == key))
-            _typeData.Add(new TypeDataItem(key, 0, color));
-
-    var typeIconMap = new Dictionary<string, string>
-    {
-        ["Ransomware"]    = "🔐", ["Phishing"] = "🎣",
-        ["DDoS"]          = "🌊", ["Malware"]  = "🦠",
-        ["IdentityTheft"] = "👤", ["Other"]    = "⚠"
-    };
-
-    _recentEvents = (recentData ?? new()).Select(e => new EventItem(
-        e.Time, e.AttackType,
-        typeIconMap.GetValueOrDefault(e.AttackType, "⚠"),
-        e.City, e.TargetSector, e.Severity, e.Source
-    )).ToList();
-
-    _chartsLoading = false;
-    StateHasChanged();
-
-    await Task.Delay(100);
-
-    // Fetch city and trend data for charts
-    var (cityData, _)  = await ApiService.GetByCityAsync();
-    var (trendData, _) = await ApiService.GetTrendAsync();
-
-    var allCities = new[] { "Karachi","Lahore","Islamabad","Rawalpindi",
-                            "Faisalabad","Peshawar","Multan","Quetta" };
-
-    var cityValues = allCities
-        .Select(c => cityData?.FirstOrDefault(x => x.City == c)?.Count ?? 0)
-        .ToArray();
-
-    var trendLabels = Enumerable.Range(0, 30)
-        .Select(i => DateTime.UtcNow.AddDays(-29 + i).ToString("MMM d"))
-        .ToArray();
-
-    var trendValues = trendLabels
-        .Select(label => trendData?.FirstOrDefault(x => x.Date == label)?.Count ?? 0)
-        .ToArray();
-
-    await RenderCharts(allCities, cityValues, trendLabels, trendValues);
-
-    // Sector risk
-    _sectorLoading = true;
-    StateHasChanged();
-
-    var (sectorData, _) = await ApiService.GetSectorRiskAsync();
-
-    var sectorIcons = new Dictionary<string, string>
-    {
-        ["Banking"] = "🏦", ["Telecom"] = "📡", ["Healthcare"] = "🏥",
-        ["Education"] = "🎓", ["Government"] = "🏛",
-        ["Energy"] = "⚡", ["Other"] = "◈"
-    };
-
-    var fillMap = new Dictionary<string, int>
-    {
-        ["Low"] = 15, ["Medium"] = 45, ["High"] = 75, ["Critical"] = 100
-    };
-
-    _sectorData = (sectorData ?? new()).Select(s => new SectorDataItem(
-        s.Sector,
-        sectorIcons.GetValueOrDefault(s.Sector, "◈"),
-        s.RiskLevel,
-        s.EventCount,
-        fillMap.GetValueOrDefault(s.RiskLevel, 15)
-    )).ToList();
-
-    _sectorLoading = false;
-    StateHasChanged();
-}
 
     private async Task RenderCharts(string[] cityLabels, int[] cityData,
-    string[] trendLabels, int[] trendData)
-{
-    try
+        string[] trendLabels, int[] trendData)
     {
-        var typeLabels = _typeData.Select(t => t.Label).ToArray();
-        var typeValues = _typeData.Select(t => t.Value).ToArray();
-        var typeColors = _typeData.Select(t => t.Color).ToArray();
+        try
+        {
+            var typeLabels = _typeData.Select(t => t.Label).ToArray();
+            var typeValues = _typeData.Select(t => t.Value).ToArray();
+            var typeColors = _typeData.Select(t => t.Color).ToArray();
 
-        await JS.InvokeVoidAsync("tcpkCharts.renderAll",
-            cityLabels, cityData,
-            typeLabels, typeValues, typeColors,
-            trendLabels, trendData);
+            await JS.InvokeVoidAsync("tcpkCharts.renderAll",
+                cityLabels, cityData,
+                typeLabels, typeValues, typeColors,
+                trendLabels, trendData);
+        }
+        catch { }
     }
-    catch { }
-}
 }
