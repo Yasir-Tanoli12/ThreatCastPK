@@ -44,6 +44,11 @@ public class CampaignResponse
 
     [JsonPropertyName("message")]
     public string Message { get; set; } = string.Empty;
+    [JsonPropertyName("affected_cities")]
+    public string AffectedCities { get; set; } = string.Empty;
+
+    [JsonPropertyName("affected_sectors")]
+    public string AffectedSectors { get; set; } = string.Empty;
 }
 
 public class MLService
@@ -79,6 +84,27 @@ public class MLService
         {
             _logger.LogError(ex, "[MLService] Error connecting to ML FastAPI service.");
             return GetFallbackResponse(events.Count);
+        }
+    }
+    public async Task<CampaignResponse?> DetectCampaignAutoAsync(int hours = 6)
+    {
+        try
+        {
+            var response = await _http.GetAsync($"/detect-campaign/auto?hours={hours}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("[MLService] Auto detect failed: {Code}", response.StatusCode);
+                return null;
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<CampaignResponse>();
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[MLService] Error calling auto detect endpoint.");
+            return null;
         }
     }
 

@@ -75,7 +75,7 @@ window.tcpkMap = {
             zoom: 6,
             minZoom: 5,
             maxZoom: 12,
-            zoomControl: true,
+            zoomControl: false,
             attributionControl: true,
         });
 

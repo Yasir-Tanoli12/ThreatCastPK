@@ -42,96 +42,35 @@ public class CampaignDetectionBackgroundService : BackgroundService
         try
         {
             using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ThreatCastDbContext>();
             var ml = scope.ServiceProvider.GetRequiredService<MLService>();
 
-            // Get events from last 6 hours
-            var cutoff = DateTime.UtcNow.AddHours(-6);
-            var recentEvents = await db.AttackEvents
-                .Include(e => e.Location)
-                .Where(e => e.OccurredAt >= cutoff)
-                .ToListAsync(ct);
+            // Call the auto endpoint — ML service queries DB itself
+            var result = await ml.DetectCampaignAutoAsync();
 
-            if (recentEvents.Count < 5)
+            if (result == null)
             {
-                _logger.LogDebug("[CampaignDetection] Not enough events ({Count}) for detection.", recentEvents.Count);
+                _logger.LogDebug("[CampaignDetection] ML service returned null.");
                 return;
             }
 
-            // Build ML input from real events
-            var mlInputs = recentEvents.Select(e => new AttackEventInput
+            if (!result.IsCampaign)
             {
-                AttackType = e.AttackType.ToString(),
-                AnomalyScore = e.Severity / 5.0,      // normalize severity to 0-1
-                PacketLength = 500,                    // default — we don't store this
-                Protocol = "TCP",                  // default
-                GeoLocation = e.Location?.CityName ?? "Unknown",
-                NetworkSegment = e.TargetSector.ToString()
-            }).ToList();
-
-            var result = await ml.DetectCampaignAsync(mlInputs);
-
-            if (result == null || !result.IsCampaign)
-            {
-                _logger.LogDebug("[CampaignDetection] No campaign detected.");
+                _logger.LogDebug("[CampaignDetection] No campaign. Level: {Level}", result.AlertLevel);
                 return;
             }
 
-            _logger.LogWarning("[CampaignDetection] Campaign detected! Level: {Level}, Anomalies: {Count}/{Total}",
+            _logger.LogWarning("[CampaignDetection] Campaign! Level: {Level}, Anomalies: {Count}/{Total}",
                 result.AlertLevel, result.AnomalyCount, result.TotalEvents);
 
-            // Get anomalous events
-            var anomalousEvents = recentEvents
-                .Where((e, i) => i < result.AnomalyFlags.Count && result.AnomalyFlags[i])
-                .ToList();
-
-            var affectedCities = string.Join(",",
-                anomalousEvents.Select(e => e.Location?.CityName ?? "")
-                               .Where(c => !string.IsNullOrEmpty(c))
-                               .Distinct());
-
-            var affectedSectors = string.Join(",",
-                anomalousEvents.Select(e => e.TargetSector.ToString()).Distinct());
-
-            // Parse alert level
-            var alertLevel = result.AlertLevel switch
-            {
-                "CRITICAL" => AlertLevel.Critical,
-                "HIGH" => AlertLevel.High,
-                _ => AlertLevel.Medium
-            };
-
-            // Check if we already recorded a campaign in the last hour
-            // to avoid spamming duplicate records
-            var recentCampaign = await db.ThreatCampaigns
-                .AnyAsync(c => c.DetectedAt >= DateTime.UtcNow.AddHours(-1), ct);
-
-            if (!recentCampaign)
-            {
-                var campaign = new ThreatCampaign
-                {
-                    Id = Guid.NewGuid(),
-                    IpRange = "Multiple",
-                    DetectedAt = DateTime.UtcNow,
-                    AffectedCities = affectedCities,
-                    AffectedSectors = affectedSectors,
-                    ReportCount = result.AnomalyCount,
-                    AlertLevel = alertLevel
-                };
-
-                db.ThreatCampaigns.Add(campaign);
-                await db.SaveChangesAsync(ct);
-            }
-
-            // Broadcast campaign banner to ALL connected clients via SignalR
+            // Broadcast to all connected clients
             await _hubContext.Clients.Group("all_viewers")
                 .SendAsync("CampaignDetected", new
                 {
                     alertLevel = result.AlertLevel,
                     anomalyCount = result.AnomalyCount,
                     totalEvents = result.TotalEvents,
-                    affectedCities = affectedCities,
-                    affectedSectors = affectedSectors,
+                    affectedCities = result.AffectedCities,
+                    affectedSectors = result.AffectedSectors,
                     message = result.Message,
                     detectedAt = DateTime.UtcNow
                 }, ct);
