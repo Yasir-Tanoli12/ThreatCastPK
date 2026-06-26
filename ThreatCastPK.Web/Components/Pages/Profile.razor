@@ -10,341 +10,307 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
 <AuthGuard>
-    <div class="profile-root">
-        <div class="bg-grid"></div>
-        <div class="scan-line"></div>
-        <div class="corner corner-tl"></div>
-        <div class="corner corner-tr"></div>
-        <div class="corner corner-bl"></div>
-        <div class="corner corner-br"></div>
+<div class="pr-root">
 
-        @if (_loading)
+    <div class="pr-bg-grid" aria-hidden="true"></div>
+    <div class="pr-scan-line" aria-hidden="true"></div>
+    <div class="pr-corner pr-corner--tl" aria-hidden="true"></div>
+    <div class="pr-corner pr-corner--tr" aria-hidden="true"></div>
+    <div class="pr-corner pr-corner--bl" aria-hidden="true"></div>
+    <div class="pr-corner pr-corner--br" aria-hidden="true"></div>
+
+    @if (_loading)
+    {
+        <div class="pr-fullscreen-center" role="status" aria-label="Loading profile">
+            <div class="pr-spinner"></div>
+            <div class="pr-loading-label">LOADING OPERATOR PROFILE...</div>
+        </div>
+    }
+    else if (_profile == null)
+    {
+        <div class="pr-fullscreen-center" role="alert">
+            <div class="pr-error-card">
+                <div class="pr-error-icon" aria-hidden="true">@IcoWarning(24)</div>
+                <div class="pr-error-title">FAILED TO LOAD PROFILE</div>
+                <div class="pr-error-sub">@_loadError</div>
+                <button class="pr-btn pr-btn--accent" @onclick="LoadProfile">
+                    @IcoRefresh(14)
+                    <span>Retry</span>
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* ── Toast ── *@
+        @if (!string.IsNullOrEmpty(_toastMessage))
         {
-            <div class="loading-screen">
-                <div class="loading-spinner"></div>
-                <div class="loading-text">LOADING OPERATOR PROFILE...</div>
+            <div class="pr-toast pr-toast--@(_toastType) @(_toastVisible ? "is-visible" : "")"
+                 role="status" aria-live="polite">
+                @if (_toastType == "success")
+                {
+                    @IcoCheck(14)
+                }
+                else
+                {
+                    @IcoWarning(14)
+                }
+                <span>@_toastMessage</span>
             </div>
         }
-        else if (_profile == null)
-        {
-            <div class="access-denied">
-                <div class="denied-card">
-                    <div class="denied-icon">⚠</div>
-                    <div class="denied-title">FAILED TO LOAD PROFILE</div>
-                    <div class="denied-sub">@_loadError</div>
-                    <button class="denied-btn" @onclick="LoadProfile">↺ Retry</button>
-                </div>
-            </div>
-        }
-        else
-        {
-        <div class="profile-layout">
 
-            @* ── Left column ── *@
-            <div class="left-col">
+        <div class="pr-layout">
+
+            @* ══════════════════════════════════
+               LEFT COLUMN
+            ══════════════════════════════════ *@
+            <aside class="pr-left" aria-label="Operator identity">
 
                 @* Identity card *@
-                <div class="identity-card card">
-                    <div class="card-header">
-                        <span class="card-label">// OPERATOR IDENTITY</span>
+                <div class="pr-card">
+                    <div class="pr-card__header">
+                        <span class="pr-card__eyebrow">// OPERATOR IDENTITY</span>
                     </div>
 
-                    <div class="avatar-section">
-                        <div class="avatar-ring">
-                            <div class="profile-avatar-circle" style="background: @GetAvatarColor(_profile.Username)">
-                                <span class="avatar-initials">@GetInitials(_profile.Username)</span>
-                            </div>
-                            <div class="avatar-glow" style="background: @GetAvatarColor(_profile.Username)"></div>
+                    <div class="pr-identity">
+                        <div class="pr-avatar" style="background:@GetAvatarColor(_profile.Username)" aria-hidden="true">
+                            <span class="pr-avatar__initials">@GetInitials(_profile.Username)</span>
                         </div>
-                        <div class="avatar-info">
-                            <div class="avatar-username">@_profile.Username</div>
-                            <div class="avatar-email">@_profile.Email</div>
-                        </div>
-                    </div>
+                        <div class="pr-identity__name">@_profile.Username</div>
+                        <div class="pr-identity__email">@_profile.Email</div>
 
-                    <div class="role-row">
-                        <span class="role-label">ACCESS LEVEL</span>
-                        <span class="role-badge role-@_profile.Role.ToLower()">
-                            @GetRoleIcon(_profile.Role) @_profile.Role.ToUpper()
-                        </span>
-                    </div>
-
-                    <div class="rep-section">
-                        <div class="rep-header">
-                            <span class="rep-label">REPUTATION SCORE</span>
-                            <span class="rep-value">@_profile.ReputationScore</span>
-                        </div>
-                        <div class="rep-track">
-                            <div class="rep-fill" style="width: @Math.Min(_profile.ReputationScore, 100)%"></div>
-                        </div>
-                        <div class="rep-tiers">
-                            <span class="rep-tier">0</span>
-                            <span class="rep-tier tier-mid">75 AUTO-APPROVE</span>
-                            <span class="rep-tier">100+</span>
+                        <div class="pr-role-badge pr-role-badge--@_profile.Role.ToLower()">
+                            @GetRoleIcon(_profile.Role)
+                            <span>@_profile.Role.ToUpper()</span>
                         </div>
                     </div>
 
-                    <div class="meta-list">
-                        <div class="meta-row">
-                            <span class="meta-key">MEMBER SINCE</span>
-                            <span class="meta-val">@_profile.JoinDate.ToString("MMM dd, yyyy")</span>
+                    @* Reputation *@
+                    <div class="pr-rep">
+                        <div class="pr-rep__header">
+                            <span class="pr-label">REPUTATION SCORE</span>
+                            <span class="pr-rep__value">@_profile.ReputationScore</span>
                         </div>
-                        <div class="meta-row">
-                            <span class="meta-key">USER ID</span>
-                            <span class="meta-val mono truncate">@_profile.Id.ToString()[..8]…</span>
+                        <div class="pr-rep__track" role="progressbar"
+                             aria-valuenow="@_profile.ReputationScore"
+                             aria-valuemin="0" aria-valuemax="100"
+                             aria-label="Reputation score @_profile.ReputationScore out of 100">
+                            <div class="pr-rep__fill" style="width:@Math.Min(_profile.ReputationScore, 100)%"></div>
+                            <div class="pr-rep__marker" title="75 — Auto-approve threshold"></div>
                         </div>
-                        <div class="meta-row">
-                            <span class="meta-key">REPORTS</span>
-                            <a href="/my-reports" class="meta-link">View history →</a>
-                        </div>
-                        <div class="meta-row">
-                            <span class="meta-key">SUBSCRIPTIONS</span>
-                            <a href="/subscriptions" class="meta-link">Manage →</a>
+                        <div class="pr-rep__tiers">
+                            <span>0</span>
+                            <span class="pr-rep__tier-mid">75 AUTO-APPROVE</span>
+                            <span>100+</span>
                         </div>
                     </div>
+
+                    @* Meta list *@
+                    <ul class="pr-meta" role="list">
+                        <li class="pr-meta__row">
+                            <span class="pr-label">TRUST TIER</span>
+                            <span class="pr-meta__val pr-tier-badge pr-tier-badge--@GetRepTier(_profile.ReputationScore).ToLower()">
+                                @GetRepTier(_profile.ReputationScore)
+                            </span>
+                        </li>
+                        <li class="pr-meta__row">
+                            <span class="pr-label">MEMBER SINCE</span>
+                            <span class="pr-meta__val">@_profile.JoinDate.ToString("MMM dd, yyyy")</span>
+                        </li>
+                        <li class="pr-meta__row">
+                            <span class="pr-label">USER ID</span>
+                            <span class="pr-meta__val pr-mono pr-truncate" title="@_profile.Id.ToString()">
+                                @_profile.Id.ToString()[..8]…
+                            </span>
+                        </li>
+                        <li class="pr-meta__row">
+                            <span class="pr-label">REPORTS</span>
+                            <a href="/my-reports" class="pr-meta__link">
+                                View history
+                                @IcoArrow(12)
+                            </a>
+                        </li>
+                        <li class="pr-meta__row">
+                            <span class="pr-label">SUBSCRIPTIONS</span>
+                            <a href="/subscriptions" class="pr-meta__link">
+                                Manage
+                                @IcoArrow(12)
+                            </a>
+                        </li>
+                    </ul>
 
                     @* Reporter request *@
                     @if (_profile.Role == "Registered")
                     {
-                        <div class="reporter-section">
+                        <div class="pr-reporter-section">
                             @if (_profile.ReporterRequestPending)
                             {
-                                <div class="reporter-pending">
-                                    <span class="pending-dot"></span>
-                                    <span>Reporter request pending admin review</span>
+                                <div class="pr-reporter-pending" role="status">
+                                    <span class="pr-pending-dot" aria-hidden="true"></span>
+                                    Reporter request pending admin review
                                 </div>
                             }
                             else
                             {
-                                <button class="reporter-btn @(_requestLoading ? "loading" : "")"
+                                <button class="pr-btn pr-btn--outline pr-btn--full @(_requestLoading ? "is-loading" : "")"
                                         @onclick="RequestReporter"
-                                        disabled="@_requestLoading">
+                                        disabled="@_requestLoading"
+                                        aria-label="Request reporter access">
                                     @if (_requestLoading)
                                     {
-                                        <span class="btn-spinner-sm"></span>
+                                        <span class="pr-spinner pr-spinner--sm" aria-hidden="true"></span>
                                         <span>REQUESTING...</span>
                                     }
                                     else
                                     {
-                                        <span>📡 REQUEST REPORTER ACCESS</span>
+                                        @IcoBroadcast(14)
+                                        <span>REQUEST REPORTER ACCESS</span>
                                     }
                                 </button>
-                                <div class="reporter-hint">
-                                    Reporters can submit attack events to the live map
-                                </div>
+                                <p class="pr-reporter-hint">Reporters can submit live attack events to the map</p>
                             }
                         </div>
                     }
                 </div>
 
-                @* Quick stats *@
-                <div class="stats-card card">
-                    <div class="card-header">
-                        <span class="card-label">// ACTIVITY</span>
+                @* Stats card *@
+                <div class="pr-card">
+                    <div class="pr-card__header">
+                        <span class="pr-card__eyebrow">// ACTIVITY</span>
                     </div>
-                    <div class="stats-grid">
-                        <div class="stat-box">
-                            <span class="stat-num green">@_profile.ReputationScore</span>
-                            <span class="stat-desc">Reputation</span>
+                    <div class="pr-stats-grid">
+                        <div class="pr-stat">
+                            <span class="pr-stat__num pr-stat__num--green">@_profile.ReputationScore</span>
+                            <span class="pr-stat__label">Reputation</span>
                         </div>
-                        <div class="stat-box">
-                            <span class="stat-num blue">@GetRepTier(_profile.ReputationScore)</span>
-                            <span class="stat-desc">Trust Tier</span>
+                        <div class="pr-stat">
+                            <span class="pr-stat__num pr-stat__num--blue">@GetRepTier(_profile.ReputationScore)</span>
+                            <span class="pr-stat__label">Trust Tier</span>
                         </div>
                     </div>
                 </div>
 
-            </div>
+            </aside>
 
-            @* ── Right column ── *@
-            <div class="right-col">
+            @* ══════════════════════════════════
+               RIGHT COLUMN
+            ══════════════════════════════════ *@
+            <div class="pr-right">
 
-                @* Toast notification *@
-                @if (!string.IsNullOrEmpty(_toastMessage))
-                {
-                    <div class="toast @(_toastType) @(_toastVisible ? "toast-show" : "toast-hide")">
-                        <span class="toast-icon">@(_toastType == "toast-success" ? "✓" : "⚠")</span>
-                        <span>@_toastMessage</span>
-                    </div>
-                }
-
-                @* Edit profile card *@
-                <div class="edit-card card">
-                    <div class="card-header">
-                        <span class="card-label">// ACCOUNT SETTINGS</span>
+                @* ── Account Settings card ── *@
+                <div class="pr-card">
+                    <div class="pr-card__header">
+                        <span class="pr-card__eyebrow">// ACCOUNT SETTINGS</span>
                         @if (!_editMode)
                         {
-                            <button class="edit-toggle-btn" @onclick="EnterEditMode">
-                                ✎ EDIT
+                            <button class="pr-btn pr-btn--ghost pr-btn--sm"
+                                    @onclick="EnterEditMode"
+                                    aria-label="Edit profile">
+                                @IcoPencil(13)
+                                <span>EDIT</span>
                             </button>
                         }
                         else
                         {
-                            <button class="cancel-btn" @onclick="CancelEdit">
-                                ✕ CANCEL
+                            <button class="pr-btn pr-btn--ghost-muted pr-btn--sm"
+                                    @onclick="CancelEdit"
+                                    aria-label="Cancel editing">
+                                @IcoX(13)
+                                <span>CANCEL</span>
                             </button>
                         }
                     </div>
 
-                    <div class="edit-body">
+                    <div class="pr-card__body">
                         @if (!_editMode)
                         {
-                            @* View mode *@
-                            <div class="view-fields">
-                                <div class="view-field">
-                                    <span class="vf-label">USERNAME</span>
-                                    <span class="vf-value mono">@_profile.Username</span>
-                                </div>
-                                <div class="view-field">
-                                    <span class="vf-label">EMAIL ADDRESS</span>
-                                    <span class="vf-value">@_profile.Email</span>
-                                </div>
-                                <div class="view-field">
-    <span class="vf-label">PASSWORD</span>
-    @if (_profile.IsGoogleLinked)
-    {
-        <span class="vf-value" style="color:#6e7681;font-size:11px;">Managed by Google</span>
-    }
-    else
-    {
-        <span class="vf-value">••••••••••••</span>
-    }
-</div>
-                                <div class="view-field">
-                                    <span class="vf-label">ROLE</span>
-                                    <span class="vf-value">
-                                        <span class="role-badge-sm role-@_profile.Role.ToLower()">
-                                            @_profile.Role
-                                        </span>
+                            <ul class="pr-view-fields" role="list">
+                                <li class="pr-vf">
+                                    <span class="pr-label">USERNAME</span>
+                                    <span class="pr-vf__val pr-mono">@_profile.Username</span>
+                                </li>
+                                <li class="pr-vf">
+                                    <span class="pr-label">EMAIL ADDRESS</span>
+                                    <span class="pr-vf__val">@_profile.Email</span>
+                                </li>
+                                <li class="pr-vf">
+                                    <span class="pr-label">PASSWORD</span>
+                                    @if (_profile.IsGoogleLinked)
+                                    {
+                                        <span class="pr-vf__val pr-vf__val--muted">Managed by Google</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="pr-vf__val pr-mono">••••••••••</span>
+                                    }
+                                </li>
+                                <li class="pr-vf">
+                                    <span class="pr-label">ROLE</span>
+                                    <span class="pr-role-badge pr-role-badge--sm pr-role-badge--@_profile.Role.ToLower()">
+                                        @_profile.Role
                                     </span>
-                                </div>
-                            </div>
+                                </li>
+                            </ul>
                         }
                         else
                         {
-                            @* Edit mode *@
-                            <div class="edit-fields">
+                            <div class="pr-edit-fields">
 
-                                <div class="field-group">
-                                    <label class="field-label">
-                                        <span class="label-idx">01</span>
+                                <div class="pr-field-group">
+                                    <label class="pr-field-label" for="pr-username">
+                                        <span class="pr-field-idx" aria-hidden="true">01</span>
                                         USERNAME
                                     </label>
-                                    <div class="input-wrapper @(_userFocused ? "focused" : "")">
-                                        <span class="input-pre">◈</span>
-                                        <input type="text" class="field-input"
-                                               @bind="_editUsername"
-                                               @bind:event="oninput"
+                                    <div class="pr-input-wrap @(_userFocused ? "is-focused" : "")">
+                                        <span class="pr-input-pre" aria-hidden="true">@IcoUser(14)</span>
+                                        <input id="pr-username" type="text" class="pr-input"
+                                               @bind="_editUsername" @bind:event="oninput"
                                                @onfocus="() => _userFocused = true"
                                                @onblur="() => _userFocused = false"
                                                placeholder="@_profile.Username"
-                                               disabled="@_saveLoading" />
+                                               disabled="@_saveLoading"
+                                               autocomplete="username" />
                                     </div>
                                 </div>
 
-                                <div class="field-group">
-                                    <label class="field-label">
-                                        <span class="label-idx">02</span>
+                                <div class="pr-field-group">
+                                    <label class="pr-field-label" for="pr-email">
+                                        <span class="pr-field-idx" aria-hidden="true">02</span>
                                         EMAIL ADDRESS
                                     </label>
-                                    <div class="input-wrapper @(_emailFocused ? "focused" : "")">
-                                        <span class="input-pre">@@</span>
-                                        <input type="email" class="field-input"
-                                               @bind="_editEmail"
-                                               @bind:event="oninput"
+                                    <div class="pr-input-wrap @(_emailFocused ? "is-focused" : "")">
+                                        <span class="pr-input-pre" aria-hidden="true">@IcoAt(14)</span>
+                                        <input id="pr-email" type="email" class="pr-input"
+                                               @bind="_editEmail" @bind:event="oninput"
                                                @onfocus="() => _emailFocused = true"
                                                @onblur="() => _emailFocused = false"
                                                placeholder="@_profile.Email"
-                                               disabled="@_saveLoading" />
+                                               disabled="@_saveLoading"
+                                               autocomplete="email" />
                                     </div>
                                 </div>
 
-                                @if (!_profile!.IsGoogleLinked)
-{
-    <div class="field-group">
-        <label class="field-label">
-            <span class="label-idx">03</span>
-            CURRENT PASSWORD
-        </label>
-        <div class="input-wrapper @(_pwFocusCurrent ? "focused" : "")">
-            <span class="input-pre">🔒</span>
-            <input type="password" class="field-input"
-       value="@_pwCurrent"
-       @oninput="e => { _pwCurrent = e.Value?.ToString() ?? string.Empty; }"
-       @onfocus="() => _pwFocusCurrent = true"
-       @onblur="() => _pwFocusCurrent = false"
-       placeholder="Leave blank to keep current"
-       disabled="@_pwLoading" />
-        </div>
-    </div>
-
-    <div class="field-group">
-        <label class="field-label">
-            <span class="label-idx">04</span>
-            NEW PASSWORD
-        </label>
-        <div class="input-wrapper @(_pwFocusNew ? "focused" : "")">
-            <span class="input-pre">◈</span>
-            <input type="password" class="field-input"
-       value="@_pwNew"
-       @oninput="e => { _pwNew = e.Value?.ToString() ?? string.Empty; }"
-       @onfocus="() => _pwFocusNew = true"
-       @onblur="() => _pwFocusNew = false"
-       placeholder="At least 8 characters"
-       disabled="@_pwLoading" />
-        </div>
-        @if (!string.IsNullOrEmpty(_pwNew))
-        {
-            var (css, label) = GetPwStrengthDisplay(_pwNew);
-            <div class="pw-strength-row">
-                <div class="pw-strength-track">
-                    <div class="pw-strength-fill @css"></div>
-                </div>
-                <span class="pw-strength-label @css">@label</span>
-            </div>
-        }
-    </div>
-
-    <div class="field-group">
-        <label class="field-label">
-            <span class="label-idx">05</span>
-            CONFIRM NEW PASSWORD
-        </label>
-        <div class="input-wrapper @(_pwFocusConfirm ? "focused" : "") @(!string.IsNullOrEmpty(_pwConfirm) && _pwNew != _pwConfirm ? "input-mismatch" : "")">
-            <span class="input-pre">◈</span>
-            <input type="password" class="field-input"
-       value="@_pwConfirm"
-       @oninput="e => { _pwConfirm = e.Value?.ToString() ?? string.Empty; }"
-       @onfocus="() => _pwFocusConfirm = true"
-       @onblur="() => _pwFocusConfirm = false"
-       placeholder="Repeat new password"
-       disabled="@_pwLoading" />
-        </div>
-        @if (!string.IsNullOrEmpty(_pwConfirm) && _pwNew != _pwConfirm)
-        {
-            <span class="field-error-hint">⚠ Passwords do not match</span>
-        }
-    </div>
-}
-
                                 @if (!string.IsNullOrEmpty(_saveError))
                                 {
-                                    <div class="save-error">
-                                        <span>⚠ @_saveError</span>
+                                    <div class="pr-alert pr-alert--error" role="alert">
+                                        @IcoWarning(13)
+                                        <span>@_saveError</span>
                                     </div>
                                 }
 
-                                <button class="save-btn @(_saveLoading ? "loading" : "")"
+                                <button class="pr-btn pr-btn--accent pr-btn--full @(_saveLoading ? "is-loading" : "")"
                                         @onclick="SaveProfile"
-                                        disabled="@_saveLoading">
+                                        disabled="@_saveLoading"
+                                        aria-label="Save profile changes">
                                     @if (_saveLoading)
                                     {
-                                        <span class="btn-spinner-sm"></span>
+                                        <span class="pr-spinner pr-spinner--sm" aria-hidden="true"></span>
                                         <span>SAVING...</span>
                                     }
                                     else
                                     {
-                                        <span>→ SAVE CHANGES</span>
+                                        @IcoCheck(14)
+                                        <span>SAVE CHANGES</span>
                                     }
                                 </button>
 
@@ -353,863 +319,941 @@
                     </div>
                 </div>
 
-                @* Security card *@
-                <div class="security-card card">
-                    <div class="card-header">
-                        <span class="card-label">// SECURITY</span>
+                @* ── Security card (replaces the old one) ── *@
+                <div class="pr-card">
+                    <div class="pr-card__header">
+                        <span class="pr-card__eyebrow">// SECURITY</span>
                     </div>
-                    <div class="security-body">
-                        <div class="sec-row">
-                            <div class="sec-info">
-                                <div class="sec-title">Authentication Method</div>
-                                <div class="sec-desc">Password-based with BCrypt hashing</div>
-                            </div>
-                            <div class="sec-badge active">ACTIVE</div>
+
+                    @* Auth method row *@
+                    <div class="pr-sec-row">
+                        <div class="pr-sec-row__icon" aria-hidden="true">
+                            @IcoShield(16)
                         </div>
-                        <div class="sec-row">
-                            <div class="sec-info">
-                                <div class="sec-title">JWT Session Token</div>
-                                <div class="sec-desc">Expires 1 hour after login</div>
+                        <div class="pr-sec-row__body">
+                            <div class="pr-sec-row__title">Authentication Method</div>
+                            <div class="pr-sec-row__desc">
+                                @if (_profile.IsGoogleLinked)
+                                {
+                                    <span>Google OAuth — credentials managed by Google</span>
+                                }
+                                else
+                                {
+                                    <span>Password-based with BCrypt hashing</span>
+                                }
                             </div>
-                            <div class="sec-badge active">ACTIVE</div>
                         </div>
-                        <div class="sec-row">
-                            <div class="sec-info">
-                                <div class="sec-title">Google OAuth</div>
-                                <div class="sec-desc">Link your Google account for one-click login</div>
-                            </div>
-                            <div class="sec-badge active">ACTIVE</div>
+                        <span class="pr-status-badge pr-status-badge--active">ACTIVE</span>
+                    </div>
+
+                    @* JWT row *@
+                    <div class="pr-sec-row">
+                        <div class="pr-sec-row__icon" aria-hidden="true">@IcoKey(16)</div>
+                        <div class="pr-sec-row__body">
+                            <div class="pr-sec-row__title">JWT Session Token</div>
+                            <div class="pr-sec-row__desc">Expires 1 hour after login</div>
+                        </div>
+                        <span class="pr-status-badge pr-status-badge--active">ACTIVE</span>
+                    </div>
+
+                    @* Change Password / Forgot Password row *@
+                    <div class="pr-sec-row pr-sec-row--action">
+                        <div class="pr-sec-row__icon" aria-hidden="true">@IcoLock(16)</div>
+                        <div class="pr-sec-row__body">
+                            <div class="pr-sec-row__title">Password</div>
+                            @if (_profile.IsGoogleLinked)
+                            {
+                                <div class="pr-sec-row__desc">Managed by your Google account</div>
+                            }
+                            else if (_pwExpanded)
+                            {
+                                <div class="pr-sec-row__desc">Enter your current and new password below</div>
+                            }
+                            else
+                            {
+                                <div class="pr-sec-row__desc">Last changed: unknown</div>
+                            }
                         </div>
 
+                        @if (_profile.IsGoogleLinked)
+                        {
+                            <a href="/forgot-password" class="pr-sec-action-link">
+                                Forgot password
+                                @IcoArrow(12)
+                            </a>
+                        }
+                        else
+                        {
+                            <button class="pr-btn pr-btn--ghost pr-btn--sm"
+                                    @onclick="TogglePwExpand"
+                                    aria-expanded="@(_pwExpanded ? "true" : "false")"
+                                    aria-controls="pr-pw-form">
+                                @if (_pwExpanded)
+                                {
+                                    @IcoX(13)
+                                    <span>CANCEL</span>
+                                }
+                                else
+                                {
+                                    @IcoPencil(13)
+                                    <span>CHANGE</span>
+                                }
+                            </button>
+                        }
                     </div>
+
+                    @* Inline password change form *@
+                    @if (_pwExpanded && !_profile.IsGoogleLinked)
+                    {
+                        <div class="pr-pw-form" id="pr-pw-form" role="region" aria-label="Change password">
+
+                            <div class="pr-field-group">
+                                <label class="pr-field-label" for="pr-pw-current">
+                                    <span class="pr-field-idx" aria-hidden="true">01</span>
+                                    CURRENT PASSWORD
+                                </label>
+                                <div class="pr-input-wrap @(_pwFocusCurrent ? "is-focused" : "")">
+                                    <span class="pr-input-pre" aria-hidden="true">@IcoLock(14)</span>
+                                    <input id="pr-pw-current" type="password" class="pr-input"
+                                           value="@_pwCurrent"
+                                           @oninput="e => _pwCurrent = e.Value?.ToString() ?? string.Empty"
+                                           @onfocus="() => _pwFocusCurrent = true"
+                                           @onblur="() => _pwFocusCurrent = false"
+                                           placeholder="Your current password"
+                                           disabled="@_pwLoading"
+                                           autocomplete="current-password" />
+                                </div>
+                            </div>
+
+                            <div class="pr-field-group">
+                                <label class="pr-field-label" for="pr-pw-new">
+                                    <span class="pr-field-idx" aria-hidden="true">02</span>
+                                    NEW PASSWORD
+                                </label>
+                                <div class="pr-input-wrap @(_pwFocusNew ? "is-focused" : "")">
+                                    <span class="pr-input-pre" aria-hidden="true">@IcoKey(14)</span>
+                                    <input id="pr-pw-new" type="password" class="pr-input"
+                                           value="@_pwNew"
+                                           @oninput="e => _pwNew = e.Value?.ToString() ?? string.Empty"
+                                           @onfocus="() => _pwFocusNew = true"
+                                           @onblur="() => _pwFocusNew = false"
+                                           placeholder="At least 8 characters"
+                                           disabled="@_pwLoading"
+                                           autocomplete="new-password" />
+                                </div>
+                                @if (!string.IsNullOrEmpty(_pwNew))
+                                {
+                                    var (css, lbl) = GetPwStrengthDisplay(_pwNew);
+                                    <div class="pr-pw-strength">
+                                        <div class="pr-pw-strength__track">
+                                            <div class="pr-pw-strength__fill pr-pw-strength__fill--@css"></div>
+                                        </div>
+                                        <span class="pr-pw-strength__label pr-pw-strength__label--@css">@lbl</span>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="pr-field-group">
+                                <label class="pr-field-label" for="pr-pw-confirm">
+                                    <span class="pr-field-idx" aria-hidden="true">03</span>
+                                    CONFIRM NEW PASSWORD
+                                </label>
+                                <div class="pr-input-wrap @(_pwFocusConfirm ? "is-focused" : "") @(!string.IsNullOrEmpty(_pwConfirm) && _pwNew != _pwConfirm ? "is-error" : "")">
+                                    <span class="pr-input-pre" aria-hidden="true">@IcoKey(14)</span>
+                                    <input id="pr-pw-confirm" type="password" class="pr-input"
+                                           value="@_pwConfirm"
+                                           @oninput="e => _pwConfirm = e.Value?.ToString() ?? string.Empty"
+                                           @onfocus="() => _pwFocusConfirm = true"
+                                           @onblur="() => _pwFocusConfirm = false"
+                                           placeholder="Repeat new password"
+                                           disabled="@_pwLoading"
+                                           autocomplete="new-password"
+                                           aria-describedby="@(!string.IsNullOrEmpty(_pwConfirm) && _pwNew != _pwConfirm ? "pr-pw-mismatch" : null)" />
+                                </div>
+                                @if (!string.IsNullOrEmpty(_pwConfirm) && _pwNew != _pwConfirm)
+                                {
+                                    <span id="pr-pw-mismatch" class="pr-field-error" role="alert">
+                                        @IcoWarning(11)
+                                        Passwords do not match
+                                    </span>
+                                }
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(_pwError))
+                            {
+                                <div class="pr-alert pr-alert--error" role="alert">
+                                    @IcoWarning(13)
+                                    <span>@_pwError</span>
+                                </div>
+                            }
+
+                            <div class="pr-pw-form__actions">
+                                <a href="/forgot-password" class="pr-forgot-link">
+                                    @IcoKey(12)
+                                    <span>Forgot current password?</span>
+                                </a>
+                                <button class="pr-btn pr-btn--accent @(_pwLoading ? "is-loading" : "")"
+                                        @onclick="HandleChangePassword"
+                                        disabled="@(!CanSubmitPwChange() || _pwLoading)"
+                                        aria-label="Save new password">
+                                    @if (_pwLoading)
+                                    {
+                                        <span class="pr-spinner pr-spinner--sm" aria-hidden="true"></span>
+                                        <span>SAVING...</span>
+                                    }
+                                    else
+                                    {
+                                        @IcoCheck(14)
+                                        <span>UPDATE PASSWORD</span>
+                                    }
+                                </button>
+                            </div>
+
+                        </div>
+                    }
+
                 </div>
 
-                @* Danger zone *@
-                <div class="danger-card card">
-                    <div class="card-header">
-                        <span class="card-label danger-label">// DANGER ZONE</span>
+                @* ── Danger zone ── *@
+                <div class="pr-card pr-card--danger">
+                    <div class="pr-card__header">
+                        <span class="pr-card__eyebrow pr-card__eyebrow--danger">// DANGER ZONE</span>
                     </div>
-                    <div class="danger-body">
-                        <div class="danger-row">
-                            <div class="danger-info">
-                                <div class="danger-title">Sign out of all sessions</div>
-                                <div class="danger-desc">Invalidates your current JWT token</div>
-                            </div>
-                            <button class="danger-btn" @onclick="Logout">
-                                LOGOUT
-                            </button>
+                    <div class="pr-danger-row">
+                        <div class="pr-danger-row__body">
+                            <div class="pr-danger-row__title">Sign out of all sessions</div>
+                            <div class="pr-danger-row__desc">Invalidates your current JWT token immediately</div>
                         </div>
+                        <button class="pr-btn pr-btn--danger"
+                                @onclick="Logout"
+                                aria-label="Log out of all sessions">
+                            @IcoLogout(14)
+                            <span>LOGOUT</span>
+                        </button>
                     </div>
                 </div>
 
             </div>
         </div>
     }
+
 </div>
 </AuthGuard>
 
+@* ══════════════════════════════════════════════
+   INLINE SVG ICON HELPERS
+   All icons are pure SVG paths — no emoji, no
+   external font dependency, no network request.
+══════════════════════════════════════════════ *@
+@code {
+
+    RenderFragment IcoWarning(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/><line x1='12' y1='9' x2='12' y2='13'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>");
+
+    RenderFragment IcoCheck(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polyline points='20 6 9 17 4 12'/></svg>");
+
+    RenderFragment IcoX(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M18 6 6 18'/><path d='m6 6 12 12'/></svg>");
+
+    RenderFragment IcoRefresh(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polyline points='23 4 23 10 17 10'/><path d='M20.49 15a9 9 0 1 1-2.12-9.36L23 10'/></svg>");
+
+    RenderFragment IcoPencil(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/><path d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/></svg>");
+
+    RenderFragment IcoArrow(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M5 12h14'/><path d='m12 5 7 7-7 7'/></svg>");
+
+    RenderFragment IcoUser(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>");
+
+    RenderFragment IcoAt(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='4'/><path d='M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94'/></svg>");
+
+    RenderFragment IcoShield(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/><path d='m9 12 2 2 4-4'/></svg>");
+
+    RenderFragment IcoKey(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='7.5' cy='15.5' r='5.5'/><path d='M21 2 11.5 11.5'/><path d='M15 6 19 2l2 2-2 4'/><path d='M11 15 10 20'/><path d='M13 17 12 22'/></svg>");
+
+    RenderFragment IcoLock(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='11' width='18' height='11' rx='2' ry='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/></svg>");
+
+    RenderFragment IcoLogout(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'/><polyline points='16 17 21 12 16 7'/><line x1='21' y1='12' x2='9' y2='12'/></svg>");
+
+    RenderFragment IcoBroadcast(int size) => b =>
+        b.AddMarkupContent(0, $"<svg width='{size}' height='{size}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='2'/><path d='M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14'/></svg>");
+
+    RenderFragment GetRoleIcon(string role) => b =>
+    {
+        var svg = role switch
+        {
+            "Admin"      => $"<svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>",
+            "Reporter"   => $"<svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='2'/><path d='M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14'/></svg>",
+            "Registered" => $"<svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>",
+            _            => $"<svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg>",
+        };
+        b.AddMarkupContent(0, svg);
+    };
+}
+
 <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ══════════════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════════════ */
+:root {
+    --pr-bg:            #0d1117;
+    --pr-surface:       #161b22;
+    --pr-surface-2:     #1c2230;
+    --pr-border:        #21262d;
+    --pr-border-hover:  #30363d;
 
-    .profile-root {
-        min-height: 100vh;
-        background: #0d1117;
-        font-family: 'Inter', sans-serif;
-        padding: 80px 32px 48px;
-        position: relative;
-        overflow-x: hidden;
-    }
+    --pr-text:          #e6edf3;
+    --pr-text-2:        #8b949e;
+    --pr-text-3:        #4a5160;
 
-    .bg-grid {
-        position: fixed;
-        inset: 0;
-        background-image:
-            linear-gradient(rgba(159,239,0,0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(159,239,0,0.025) 1px, transparent 1px);
-        background-size: 40px 40px;
-        pointer-events: none;
-        z-index: 0;
-    }
+    --pr-accent:        #9fef00;
+    --pr-accent-dim:    rgba(159,239,0,0.10);
+    --pr-accent-dimmer: rgba(159,239,0,0.04);
+    --pr-accent-border: rgba(159,239,0,0.22);
 
-    .scan-line {
-        position: fixed;
-        top: -2px; left: 0; right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #9fef00, transparent);
-        animation: scan 8s linear infinite;
-        opacity: 0.3;
-        z-index: 1;
-        pointer-events: none;
-    }
+    --pr-blue:          #00c8ff;
+    --pr-blue-dim:      rgba(0,200,255,0.10);
+    --pr-orange:        #ffa500;
+    --pr-orange-dim:    rgba(255,165,0,0.08);
+    --pr-red:           #ff3e3e;
+    --pr-red-dim:       rgba(255,62,62,0.08);
 
-    @@keyframes scan {
-        0%   { top: -2px; }
-        100% { top: 100vh; }
-    }
+    --pr-radius:        6px;
+    --pr-radius-sm:     4px;
+    --pr-radius-lg:     8px;
 
-    .corner {
-        position: fixed;
-        width: 18px; height: 18px;
-        z-index: 2; pointer-events: none;
-    }
-    .corner-tl { top: 14px; left: 14px; border-top: 2px solid #9fef00; border-left: 2px solid #9fef00; }
-    .corner-tr { top: 14px; right: 14px; border-top: 2px solid #9fef00; border-right: 2px solid #9fef00; }
-    .corner-bl { bottom: 14px; left: 14px; border-bottom: 2px solid #9fef00; border-left: 2px solid #9fef00; }
-    .corner-br { bottom: 14px; right: 14px; border-bottom: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+    --pr-font:          'Inter', system-ui, sans-serif;
+    --pr-mono:          'IBM Plex Mono', 'Fira Code', monospace;
 
-    /* ── Access denied / loading ── */
-    .access-denied, .loading-screen {
-        min-height: 80vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        z-index: 3;
-    }
-
-    .denied-card {
-        background: #161b22;
-        border: 1px solid #21262d;
-        border-radius: 8px;
-        padding: 48px 56px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        animation: fadeInUp 0.5s ease both;
-    }
-
-    .denied-icon { font-size: 40px; margin-bottom: 4px; }
-
-    .denied-title {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 14px;
-        font-weight: 600;
-        color: #ff3e3e;
-        letter-spacing: 2px;
-    }
-
-    .denied-sub { font-size: 13px; color: #6e7681; }
-
-    .denied-btn {
-        margin-top: 8px;
-        padding: 10px 24px;
-        background: #9fef00;
-        color: #0d1117;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px;
-        font-weight: 600;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        text-decoration: none;
-        letter-spacing: 1px;
-        transition: opacity 0.15s;
-    }
-    .denied-btn:hover { opacity: 0.85; }
-
-    .loading-spinner {
-        width: 36px; height: 36px;
-        border: 3px solid #21262d;
-        border-top-color: #9fef00;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        margin-bottom: 16px;
-    }
-
-    .loading-text {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #6e7681;
-        letter-spacing: 2px;
-    }
-
-    @@keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Layout ── */
-    .profile-layout {
-        max-width: 1100px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 320px 1fr;
-        gap: 20px;
-        position: relative;
-        z-index: 3;
-        animation: fadeInUp 0.5s ease both;
-    }
-
-    @@keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(16px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Card base ── */
-    .card {
-        background: #161b22;
-        border: 1px solid #21262d;
-        border-radius: 8px;
-        overflow: hidden;
-        transition: border-color 0.2s;
-    }
-    .card:hover { border-color: #30363d; }
-
-    .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 20px;
-        border-bottom: 1px solid #21262d;
-        background: #0d1117;
-    }
-
-    .card-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #9fef00;
-        letter-spacing: 2px;
-        opacity: 0.8;
-    }
-
-    /* ── Left column ── */
-    .left-col {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-    /* ── Password strength meter ── */
-.pw-strength-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 6px;
+    --pr-dur:           150ms;
+    --pr-ease:          cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.pw-strength-track {
-    flex: 1;
-    height: 3px;
-    background: #21262d;
-    border-radius: 2px;
+/* ══════════════════════════════════════════════
+   RESET
+══════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+button { font-family: inherit; cursor: pointer; }
+a { text-decoration: none; }
+ul, ol { list-style: none; }
+svg { display: block; flex-shrink: 0; }
+
+/* ══════════════════════════════════════════════
+   ROOT
+══════════════════════════════════════════════ */
+.pr-root {
+    min-height: 100vh;
+    background: var(--pr-bg);
+    font-family: var(--pr-font);
+    padding: 84px 32px 56px;
+    position: relative;
+    overflow-x: hidden;
+    color: var(--pr-text);
+}
+
+/* ══════════════════════════════════════════════
+   AMBIENT DECORATORS
+══════════════════════════════════════════════ */
+.pr-bg-grid {
+    position: fixed; inset: 0;
+    background-image:
+        linear-gradient(rgba(159,239,0,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(159,239,0,0.022) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+}
+
+.pr-scan-line {
+    position: fixed; top: -2px; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--pr-accent), transparent);
+    animation: pr-scan 10s linear infinite; opacity: 0.22;
+    z-index: 1; pointer-events: none;
+}
+
+.pr-corner {
+    position: fixed; width: 16px; height: 16px;
+    z-index: 2; pointer-events: none;
+}
+.pr-corner--tl { top: 12px; left: 12px;  border-top: 1.5px solid var(--pr-accent); border-left:  1.5px solid var(--pr-accent); }
+.pr-corner--tr { top: 12px; right: 12px; border-top: 1.5px solid var(--pr-accent); border-right: 1.5px solid var(--pr-accent); }
+.pr-corner--bl { bottom: 12px; left: 12px;  border-bottom: 1.5px solid var(--pr-accent); border-left:  1.5px solid var(--pr-accent); }
+.pr-corner--br { bottom: 12px; right: 12px; border-bottom: 1.5px solid var(--pr-accent); border-right: 1.5px solid var(--pr-accent); }
+
+@@keyframes pr-scan { 0% { top: -2px; } 100% { top: 100vh; } }
+
+@@media (prefers-reduced-motion: reduce) {
+    .pr-scan-line { animation: none; display: none; }
+    .pr-spinner   { animation: none; }
+    .pr-pending-dot { animation: none; }
+}
+
+/* ══════════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════════ */
+.pr-layout {
+    max-width: 1120px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    grid-template-areas: "left right";
+    gap: 20px;
+    position: relative; z-index: 3;
+    animation: pr-fade-up 0.4s var(--pr-ease) both;
+}
+
+.pr-left  { grid-area: left;  display: flex; flex-direction: column; gap: 16px; }
+.pr-right { grid-area: right; display: flex; flex-direction: column; gap: 16px; }
+
+@@keyframes pr-fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════════
+   FULLSCREEN STATES (loading / error)
+══════════════════════════════════════════════ */
+.pr-fullscreen-center {
+    min-height: 80vh;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 3;
+}
+
+.pr-error-card {
+    background: var(--pr-surface); border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius-lg);
+    padding: 48px 56px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    animation: pr-fade-up 0.4s var(--pr-ease) both;
+}
+.pr-error-icon { color: var(--pr-red); margin-bottom: 4px; }
+.pr-error-title {
+    font-family: var(--pr-mono); font-size: 13px; font-weight: 600;
+    color: var(--pr-red); letter-spacing: 2px;
+}
+.pr-error-sub { font-size: 13px; color: var(--pr-text-3); }
+
+/* ══════════════════════════════════════════════
+   SPINNER
+══════════════════════════════════════════════ */
+.pr-spinner {
+    width: 34px; height: 34px;
+    border: 2.5px solid var(--pr-border);
+    border-top-color: var(--pr-accent);
+    border-radius: 50%;
+    animation: pr-spin 0.8s linear infinite;
+    margin-bottom: 14px;
+}
+.pr-spinner--sm { width: 13px; height: 13px; border-width: 2px; margin: 0; }
+.pr-loading-label {
+    font-family: var(--pr-mono); font-size: 10px; letter-spacing: 2.5px;
+    color: var(--pr-text-3);
+}
+@@keyframes pr-spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════ */
+.pr-toast {
+    position: fixed; top: 88px; right: 24px; z-index: 100;
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 18px;
+    border-radius: var(--pr-radius);
+    font-family: var(--pr-mono); font-size: 12px;
+    border: 1px solid;
+    opacity: 0; transform: translateY(-8px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+}
+.pr-toast.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.pr-toast--success { background: rgba(159,239,0,0.07); border-color: var(--pr-accent-border); color: var(--pr-accent); }
+.pr-toast--error   { background: var(--pr-red-dim);   border-color: rgba(255,62,62,0.22);    color: var(--pr-red); }
+
+/* ══════════════════════════════════════════════
+   CARD
+══════════════════════════════════════════════ */
+.pr-card {
+    background: var(--pr-surface);
+    border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius-lg);
     overflow: hidden;
+    transition: border-color var(--pr-dur);
+}
+.pr-card:hover { border-color: var(--pr-border-hover); }
+.pr-card--danger { border-color: rgba(255,62,62,0.15); }
+.pr-card--danger:hover { border-color: rgba(255,62,62,0.3); }
+
+.pr-card__header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--pr-border);
+    background: rgba(0,0,0,0.18);
+}
+.pr-card__eyebrow {
+    font-family: var(--pr-mono); font-size: 9.5px;
+    color: var(--pr-accent); letter-spacing: 2.5px; opacity: 0.8;
+}
+.pr-card__eyebrow--danger { color: var(--pr-red); }
+
+.pr-card__body { padding: 20px; }
+
+/* ══════════════════════════════════════════════
+   IDENTITY BLOCK
+══════════════════════════════════════════════ */
+.pr-identity {
+    padding: 28px 20px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--pr-border);
 }
 
-.pw-strength-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.3s ease, background 0.3s ease;
+.pr-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid rgba(159,239,0,0.3);
+    margin-bottom: 4px;
+}
+.pr-avatar__initials {
+    font-family: var(--pr-mono); font-size: 26px; font-weight: 600;
+    color: #fff;
 }
 
-.pw-strength-fill.pw-weak   { width: 25%; background: #ff3e3e; }
-.pw-strength-fill.pw-fair   { width: 50%; background: #ffa500; }
-.pw-strength-fill.pw-good   { width: 75%; background: #00c8ff; }
-.pw-strength-fill.pw-strong { width: 100%; background: #9fef00; }
+.pr-identity__name {
+    font-size: 17px; font-weight: 700;
+    color: var(--pr-text); letter-spacing: -0.3px;
+}
+.pr-identity__email {
+    font-family: var(--pr-mono); font-size: 11px; color: var(--pr-text-3);
+}
 
-.pw-strength-label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 1px;
+/* ══════════════════════════════════════════════
+   ROLE BADGE
+══════════════════════════════════════════════ */
+.pr-role-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--pr-mono); font-size: 10.5px; font-weight: 600;
+    padding: 4px 10px; border-radius: var(--pr-radius-sm); letter-spacing: 1px;
+    border: 1px solid;
+}
+.pr-role-badge--sm { font-size: 9.5px; padding: 3px 8px; }
+
+.pr-role-badge--public     { background: rgba(110,118,129,0.12); color: #8b949e;        border-color: var(--pr-border); }
+.pr-role-badge--registered { background: var(--pr-blue-dim);    color: var(--pr-blue);  border-color: rgba(0,200,255,0.22); }
+.pr-role-badge--reporter   { background: var(--pr-accent-dim);  color: var(--pr-accent);border-color: var(--pr-accent-border); }
+.pr-role-badge--admin      { background: var(--pr-orange-dim);  color: var(--pr-orange);border-color: rgba(255,165,0,0.22); }
+
+/* ══════════════════════════════════════════════
+   REPUTATION BAR
+══════════════════════════════════════════════ */
+.pr-rep {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--pr-border);
+}
+.pr-rep__header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+}
+.pr-rep__value {
+    font-family: var(--pr-mono); font-size: 22px; font-weight: 600;
+    color: var(--pr-accent);
+}
+.pr-rep__track {
+    position: relative;
+    height: 3px; background: var(--pr-border); border-radius: 2px;
+    overflow: visible; margin-bottom: 7px;
+}
+.pr-rep__fill {
+    height: 100%; background: var(--pr-accent);
+    border-radius: 2px; transition: width 0.8s var(--pr-ease);
+}
+/* The 75-point threshold marker */
+.pr-rep__marker {
+    position: absolute; top: -4px; left: 75%;
+    width: 1px; height: 11px;
+    background: var(--pr-orange); opacity: 0.6;
+}
+.pr-rep__tiers {
+    display: flex; justify-content: space-between;
+    font-family: var(--pr-mono); font-size: 9px; color: var(--pr-text-3);
+}
+.pr-rep__tier-mid { color: var(--pr-orange); }
+
+/* ══════════════════════════════════════════════
+   SHARED LABEL
+══════════════════════════════════════════════ */
+.pr-label {
+    font-family: var(--pr-mono); font-size: 9.5px;
+    color: var(--pr-text-3); letter-spacing: 1.5px;
+}
+
+/* ══════════════════════════════════════════════
+   META LIST
+══════════════════════════════════════════════ */
+.pr-meta { padding: 6px 20px 14px; }
+.pr-meta__row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 0; border-bottom: 1px solid rgba(33,38,45,0.7);
+    transition: background var(--pr-dur);
+}
+.pr-meta__row:last-child { border-bottom: none; }
+.pr-meta__val {
+    font-size: 12px; color: var(--pr-text);
+}
+.pr-mono { font-family: var(--pr-mono); }
+.pr-truncate { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.pr-tier-badge {
+    font-family: var(--pr-mono); font-size: 9px; font-weight: 600;
+    padding: 2px 7px; border-radius: 3px; letter-spacing: 1px; border: 1px solid;
+}
+.pr-tier-badge--trusted { color: var(--pr-accent); background: var(--pr-accent-dim); border-color: var(--pr-accent-border); }
+.pr-tier-badge--active  { color: var(--pr-blue);   background: var(--pr-blue-dim);   border-color: rgba(0,200,255,0.22); }
+.pr-tier-badge--novice  { color: var(--pr-orange);  background: var(--pr-orange-dim); border-color: rgba(255,165,0,0.22); }
+.pr-tier-badge--new     { color: var(--pr-text-3); background: rgba(74,81,96,0.1);   border-color: var(--pr-border); }
+
+.pr-meta__link {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--pr-mono); font-size: 11px; color: var(--pr-accent);
+    transition: opacity var(--pr-dur);
+}
+.pr-meta__link:hover { opacity: 0.7; }
+.pr-meta__link:focus-visible { outline: 2px solid var(--pr-accent); outline-offset: 2px; border-radius: 2px; }
+
+/* ══════════════════════════════════════════════
+   REPORTER SECTION
+══════════════════════════════════════════════ */
+.pr-reporter-section {
+    padding: 14px 20px;
+    border-top: 1px solid var(--pr-border);
+    display: flex; flex-direction: column; gap: 8px;
+}
+.pr-reporter-pending {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--pr-mono); font-size: 11px; color: var(--pr-orange);
+    padding: 10px 12px;
+    background: var(--pr-orange-dim);
+    border: 1px solid rgba(255,165,0,0.22);
+    border-radius: var(--pr-radius-sm);
+}
+.pr-pending-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--pr-orange); flex-shrink: 0;
+    animation: pr-blink 1.3s ease-in-out infinite;
+}
+@@keyframes pr-blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+.pr-reporter-hint { font-size: 11px; color: var(--pr-text-3); text-align: center; }
+
+/* ══════════════════════════════════════════════
+   STATS
+══════════════════════════════════════════════ */
+.pr-stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+}
+.pr-stat {
+    padding: 20px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    border-right: 1px solid var(--pr-border);
+}
+.pr-stat:last-child { border-right: none; }
+.pr-stat__num {
+    font-family: var(--pr-mono); font-size: 26px; font-weight: 600;
+}
+.pr-stat__num--green { color: var(--pr-accent); }
+.pr-stat__num--blue  { color: var(--pr-blue); font-size: 16px; letter-spacing: 1px; }
+.pr-stat__label { font-size: 11px; color: var(--pr-text-3); }
+
+/* ══════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════ */
+.pr-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    border-radius: var(--pr-radius-sm);
+    font-family: var(--pr-mono); font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+    padding: 8px 16px; border: 1px solid transparent;
+    transition: background var(--pr-dur), border-color var(--pr-dur),
+                color var(--pr-dur), opacity var(--pr-dur), transform var(--pr-dur);
+    white-space: nowrap;
+}
+.pr-btn:focus-visible { outline: 2px solid var(--pr-accent); outline-offset: 2px; }
+.pr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pr-btn--sm { padding: 4px 11px; font-size: 10px; }
+.pr-btn--full { width: 100%; }
+
+/* Accent (green CTA) */
+.pr-btn--accent {
+    background: var(--pr-accent); color: var(--pr-bg);
+    border-color: transparent;
+}
+.pr-btn--accent:hover:not(:disabled) {
+    opacity: 0.88; transform: translateY(-1px);
+}
+.pr-btn--accent.is-loading { background: var(--pr-surface-2); color: var(--pr-text-3); }
+
+/* Outline */
+.pr-btn--outline {
+    background: transparent; color: var(--pr-accent);
+    border-color: var(--pr-accent-border);
+}
+.pr-btn--outline:hover:not(:disabled) { background: var(--pr-accent-dim); border-color: var(--pr-accent); }
+
+/* Ghost (small secondary) */
+.pr-btn--ghost {
+    background: var(--pr-accent-dim); color: var(--pr-accent);
+    border-color: var(--pr-accent-border);
+}
+.pr-btn--ghost:hover:not(:disabled) { background: rgba(159,239,0,0.16); }
+
+/* Ghost muted (cancel) */
+.pr-btn--ghost-muted {
+    background: transparent; color: var(--pr-text-3);
+    border-color: var(--pr-border);
+}
+.pr-btn--ghost-muted:hover:not(:disabled) { color: var(--pr-text); border-color: var(--pr-border-hover); }
+
+/* Danger */
+.pr-btn--danger {
+    background: var(--pr-red-dim); color: var(--pr-red);
+    border-color: rgba(255,62,62,0.22);
+}
+.pr-btn--danger:hover:not(:disabled) { background: rgba(255,62,62,0.14); border-color: var(--pr-red); }
+
+/* ══════════════════════════════════════════════
+   ALERT BANNERS
+══════════════════════════════════════════════ */
+.pr-alert {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 13px; border-radius: var(--pr-radius-sm);
+    font-family: var(--pr-mono); font-size: 12px; border: 1px solid;
+}
+.pr-alert--error { background: var(--pr-red-dim); border-color: rgba(255,62,62,0.22); color: var(--pr-red); }
+
+/* ══════════════════════════════════════════════
+   VIEW FIELDS (read-only)
+══════════════════════════════════════════════ */
+.pr-view-fields { padding: 4px 0; }
+.pr-vf {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--pr-border);
+    transition: background var(--pr-dur);
+}
+.pr-vf:last-child { border-bottom: none; }
+.pr-vf:hover { background: rgba(159,239,0,0.012); }
+.pr-vf__val { font-size: 13px; color: var(--pr-text); }
+.pr-vf__val--muted { font-size: 11px; color: var(--pr-text-3); font-family: var(--pr-mono); }
+
+/* ══════════════════════════════════════════════
+   EDIT FIELDS
+══════════════════════════════════════════════ */
+.pr-edit-fields { display: flex; flex-direction: column; gap: 18px; }
+.pr-field-group { display: flex; flex-direction: column; gap: 7px; }
+.pr-field-label {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--pr-mono); font-size: 9.5px;
+    color: var(--pr-text-3); letter-spacing: 2px;
+}
+.pr-field-idx { color: var(--pr-accent); opacity: 0.55; }
+
+.pr-input-wrap {
+    display: flex; align-items: center;
+    background: var(--pr-bg); border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius-sm); overflow: hidden;
+    transition: border-color var(--pr-dur), box-shadow var(--pr-dur);
+}
+.pr-input-wrap.is-focused {
+    border-color: var(--pr-accent);
+    box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+}
+.pr-input-wrap.is-error {
+    border-color: rgba(255,62,62,0.5);
+    box-shadow: 0 0 0 3px rgba(255,62,62,0.05);
+}
+.pr-input-pre {
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 12px; color: var(--pr-text-3);
+    border-right: 1px solid var(--pr-border);
+    align-self: stretch; flex-shrink: 0;
+}
+.pr-input {
+    flex: 1; background: none; border: none; outline: none;
+    padding: 11px 13px;
+    font-family: var(--pr-mono); font-size: 13px;
+    color: var(--pr-text); caret-color: var(--pr-accent);
+}
+.pr-input::placeholder { color: var(--pr-text-3); }
+.pr-input:disabled { opacity: 0.45; }
+
+.pr-field-error {
+    display: flex; align-items: center; gap: 5px;
+    font-family: var(--pr-mono); font-size: 10px; color: var(--pr-red);
+    margin-top: 3px;
+}
+
+/* ══════════════════════════════════════════════
+   PASSWORD STRENGTH
+══════════════════════════════════════════════ */
+.pr-pw-strength {
+    display: flex; align-items: center; gap: 10px; margin-top: 6px;
+}
+.pr-pw-strength__track {
+    flex: 1; height: 2.5px; background: var(--pr-border); border-radius: 2px; overflow: hidden;
+}
+.pr-pw-strength__fill {
+    height: 100%; border-radius: 2px;
+    transition: width 0.3s var(--pr-ease), background 0.3s;
+}
+.pr-pw-strength__fill--weak   { width: 25%; background: var(--pr-red); }
+.pr-pw-strength__fill--fair   { width: 50%; background: var(--pr-orange); }
+.pr-pw-strength__fill--good   { width: 75%; background: var(--pr-blue); }
+.pr-pw-strength__fill--strong { width: 100%; background: var(--pr-accent); }
+
+.pr-pw-strength__label {
+    font-family: var(--pr-mono); font-size: 9px; font-weight: 600;
+    letter-spacing: 1px; flex-shrink: 0;
+}
+.pr-pw-strength__label--weak   { color: var(--pr-red); }
+.pr-pw-strength__label--fair   { color: var(--pr-orange); }
+.pr-pw-strength__label--good   { color: var(--pr-blue); }
+.pr-pw-strength__label--strong { color: var(--pr-accent); }
+
+/* ══════════════════════════════════════════════
+   SECURITY CARD ROWS
+══════════════════════════════════════════════ */
+.pr-sec-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--pr-border);
+    transition: background var(--pr-dur);
+}
+.pr-sec-row:last-of-type { border-bottom: none; }
+.pr-sec-row:hover { background: rgba(159,239,0,0.012); }
+.pr-sec-row--action { border-bottom: none; }
+
+.pr-sec-row__icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; flex-shrink: 0;
+    background: var(--pr-surface-2); border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius-sm); color: var(--pr-text-3);
+}
+
+.pr-sec-row__body { flex: 1; min-width: 0; }
+.pr-sec-row__title {
+    font-size: 13px; font-weight: 500; color: var(--pr-text); margin-bottom: 2px;
+}
+.pr-sec-row__desc { font-size: 12px; color: var(--pr-text-3); }
+
+.pr-status-badge {
+    font-family: var(--pr-mono); font-size: 9.5px; font-weight: 600;
+    padding: 3px 9px; border-radius: 3px; letter-spacing: 1px; flex-shrink: 0; border: 1px solid;
+}
+.pr-status-badge--active {
+    background: var(--pr-accent-dim); color: var(--pr-accent); border-color: var(--pr-accent-border);
+}
+
+.pr-sec-action-link {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--pr-mono); font-size: 10.5px; color: var(--pr-text-3);
+    border: 1px solid var(--pr-border); border-radius: var(--pr-radius-sm);
+    padding: 4px 10px; transition: color var(--pr-dur), border-color var(--pr-dur);
     flex-shrink: 0;
 }
+.pr-sec-action-link:hover { color: var(--pr-text); border-color: var(--pr-border-hover); }
+.pr-sec-action-link:focus-visible { outline: 2px solid var(--pr-accent); outline-offset: 2px; }
 
-.pw-strength-label.pw-weak   { color: #ff3e3e; }
-.pw-strength-label.pw-fair   { color: #ffa500; }
-.pw-strength-label.pw-good   { color: #00c8ff; }
-.pw-strength-label.pw-strong { color: #9fef00; }
-
-.input-mismatch { border-color: rgba(255,62,62,0.5) !important; }
-
-.field-error-hint {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    color: #ff3e3e;
-    margin-top: 4px;
-    letter-spacing: 0.5px;
+/* ══════════════════════════════════════════════
+   PASSWORD CHANGE FORM (inside security card)
+══════════════════════════════════════════════ */
+.pr-pw-form {
+    margin: 0 16px 16px;
+    padding: 18px;
+    background: var(--pr-bg);
+    border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius);
+    display: flex; flex-direction: column; gap: 16px;
+    animation: pr-fade-up 0.2s var(--pr-ease) both;
 }
 
-    /* ── Identity card ── */
-    .avatar-section {
-        padding: 28px 20px 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 14px;
-        border-bottom: 1px solid #21262d;
-    }
+.pr-pw-form__actions {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap;
+}
 
-    .avatar-ring {
-        position: relative;
-        width: 88px; height: 88px;
-    }
+.pr-forgot-link {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--pr-mono); font-size: 10.5px;
+    color: var(--pr-text-3);
+    transition: color var(--pr-dur);
+}
+.pr-forgot-link:hover { color: var(--pr-accent); }
+.pr-forgot-link:focus-visible { outline: 2px solid var(--pr-accent); outline-offset: 2px; border-radius: 2px; }
 
-    .profile-avatar-circle {
-        width: 88px; height: 88px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid rgba(159,239,0,0.4);
-        position: relative;
-        z-index: 1;
-    }
+/* ══════════════════════════════════════════════
+   DANGER ZONE
+══════════════════════════════════════════════ */
+.pr-danger-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; gap: 16px;
+}
+.pr-danger-row__body { flex: 1; }
+.pr-danger-row__title { font-size: 13px; font-weight: 500; color: var(--pr-text); margin-bottom: 2px; }
+.pr-danger-row__desc  { font-size: 12px; color: var(--pr-text-3); }
 
-    .avatar-glow {
-        position: absolute;
-        inset: -4px;
-        border-radius: 50%;
-        opacity: 0.15;
-        filter: blur(12px);
-        animation: glow-pulse 3s ease-in-out infinite;
-    }
+/* ══════════════════════════════════════════════
+   GLOBAL FOCUS RING
+══════════════════════════════════════════════ */
+:focus-visible { outline: 2px solid var(--pr-accent); outline-offset: 2px; }
 
-    @@keyframes glow-pulse {
-        0%, 100% { opacity: 0.12; }
-        50%       { opacity: 0.25; }
-    }
-
-    .avatar-initials {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 28px;
-        font-weight: 600;
-        color: white;
-        text-shadow: 0 0 20px rgba(255,255,255,0.3);
-    }
-
-    .avatar-info { text-align: center; }
-
-    .avatar-username {
-        font-size: 18px;
-        font-weight: 700;
-        color: #e6edf3;
-        letter-spacing: -0.3px;
-        margin-bottom: 3px;
-    }
-
-    .avatar-email {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px;
-        color: #6e7681;
-    }
-
-    /* ── Role row ── */
-    .role-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 20px;
-        border-bottom: 1px solid #21262d;
-    }
-
-    .role-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #6e7681;
-        letter-spacing: 1px;
-    }
-
-    .role-badge {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        font-weight: 600;
-        padding: 4px 10px;
-        border-radius: 4px;
-        letter-spacing: 1px;
-    }
-
-    .role-badge.role-public     { background: rgba(110,118,129,0.15); color: #8b949e; border: 1px solid #21262d; }
-    .role-badge.role-registered { background: rgba(0,200,255,0.1);   color: #00c8ff; border: 1px solid rgba(0,200,255,0.25); }
-    .role-badge.role-reporter   { background: rgba(159,239,0,0.1);   color: #9fef00; border: 1px solid rgba(159,239,0,0.3); }
-    .role-badge.role-admin      { background: rgba(255,165,0,0.12);  color: #ffa500; border: 1px solid rgba(255,165,0,0.3); }
-
-    /* ── Reputation ── */
-    .rep-section {
-        padding: 16px 20px;
-        border-bottom: 1px solid #21262d;
-    }
-
-    .rep-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
-    }
-
-    .rep-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #6e7681;
-        letter-spacing: 1px;
-    }
-
-    .rep-value {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 22px;
-        font-weight: 600;
-        color: #9fef00;
-        text-shadow: 0 0 12px rgba(159,239,0,0.4);
-    }
-
-    .rep-track {
-        height: 4px;
-        background: #21262d;
-        border-radius: 2px;
-        overflow: hidden;
-        margin-bottom: 6px;
-    }
-
-    .rep-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #00c8ff, #9fef00);
-        border-radius: 2px;
-        transition: width 1s ease;
-    }
-
-    .rep-tiers {
-        display: flex;
-        justify-content: space-between;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 9px;
-        color: #4a5160;
-    }
-
-    .tier-mid { color: #ffa500; }
-
-    /* ── Meta list ── */
-    .meta-list { padding: 8px 20px 16px; }
-
-    .meta-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 0;
-        border-bottom: 1px solid #161b22;
-    }
-    .meta-row:last-child { border-bottom: none; }
-
-    .meta-key {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #6e7681;
-        letter-spacing: 1px;
-    }
-
-    .meta-val {
-        font-size: 12px;
-        color: #c9d1d9;
-    }
-
-    .meta-val.mono { font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
-    .meta-val.truncate { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    .meta-link {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #9fef00;
-        text-decoration: none;
-        transition: opacity 0.15s;
-    }
-    .meta-link:hover { opacity: 0.7; }
-
-    /* ── Reporter request ── */
-    .reporter-section {
-        padding: 16px 20px;
-        border-top: 1px solid #21262d;
-    }
-
-    .reporter-btn {
-        width: 100%;
-        padding: 11px 16px;
-        background: transparent;
-        border: 1px solid rgba(159,239,0,0.4);
-        border-radius: 4px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        font-weight: 600;
-        color: #9fef00;
-        cursor: pointer;
-        letter-spacing: 1px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: background 0.15s, border-color 0.15s;
-        margin-bottom: 8px;
-    }
-    .reporter-btn:hover:not(:disabled) {
-        background: rgba(159,239,0,0.08);
-        border-color: #9fef00;
-    }
-    .reporter-btn.loading { opacity: 0.6; cursor: not-allowed; }
-
-    .reporter-hint {
-        font-size: 11px;
-        color: #4a5160;
-        text-align: center;
-    }
-
-    .reporter-pending {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #ffa500;
-        padding: 10px;
-        background: rgba(255,165,0,0.06);
-        border: 1px solid rgba(255,165,0,0.2);
-        border-radius: 4px;
-    }
-
-    .pending-dot {
-        width: 7px; height: 7px;
-        border-radius: 50%;
-        background: #ffa500;
-        animation: blink 1.2s ease-in-out infinite;
-        flex-shrink: 0;
-    }
-
-    @@keyframes blink {
-        0%, 100% { opacity: 1; }
-        50%       { opacity: 0.2; }
-    }
-
-    /* ── Stats card ── */
-    .stats-card .card-header { }
-
-    .stats-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0;
-    }
-
-    .stat-box {
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-        border-right: 1px solid #21262d;
-    }
-    .stat-box:last-child { border-right: none; }
-
-    .stat-num {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 28px;
-        font-weight: 600;
-    }
-    .stat-num.green { color: #9fef00; text-shadow: 0 0 12px rgba(159,239,0,0.3); }
-    .stat-num.blue  { color: #00c8ff; text-shadow: 0 0 12px rgba(0,200,255,0.3); }
-
-    .stat-desc {
-        font-size: 11px;
-        color: #6e7681;
-        letter-spacing: 0.5px;
-    }
-
-    /* ── Right column ── */
-    .right-col {
-        display: flex;
-        flex-direction: column;
+/* ══════════════════════════════════════════════
+   RESPONSIVE — TABLET (≤920px)
+══════════════════════════════════════════════ */
+@@media (max-width: 920px) {
+    .pr-layout {
+        grid-template-columns: 260px 1fr;
         gap: 16px;
     }
+    .pr-root { padding: 76px 24px 48px; }
+}
 
-    /* ── Toast ── */
-    .toast {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 13px 18px;
-        border-radius: 6px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px;
-        font-weight: 500;
-        border: 1px solid;
-        transition: opacity 0.4s, transform 0.4s;
+/* ══════════════════════════════════════════════
+   RESPONSIVE — STACKED (≤720px)
+   Left col moves above right col
+══════════════════════════════════════════════ */
+@@media (max-width: 720px) {
+    .pr-layout {
+        grid-template-columns: 1fr;
+        grid-template-areas: "left" "right";
     }
+    .pr-root  { padding: 72px 16px 40px; }
+    .pr-toast { right: 16px; left: 16px; top: 76px; }
+    .pr-corner { display: none; }
+    .pr-avatar { width: 70px; height: 70px; }
+    .pr-avatar__initials { font-size: 22px; }
+}
 
-    .toast-success {
-        background: rgba(159,239,0,0.08);
-        border-color: rgba(159,239,0,0.3);
-        color: #9fef00;
-    }
-
-    .toast-error {
-        background: rgba(255,62,62,0.08);
-        border-color: rgba(255,62,62,0.3);
-        color: #ff3e3e;
-    }
-
-    .toast-show { opacity: 1; transform: translateY(0); }
-    .toast-hide { opacity: 0; transform: translateY(-8px); pointer-events: none; }
-
-    .toast-icon { font-size: 14px; flex-shrink: 0; }
-
-    /* ── Edit card ── */
-    .edit-toggle-btn {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #9fef00;
-        background: rgba(159,239,0,0.08);
-        border: 1px solid rgba(159,239,0,0.3);
-        border-radius: 4px;
-        padding: 4px 12px;
-        cursor: pointer;
-        letter-spacing: 1px;
-        transition: background 0.15s;
-    }
-    .edit-toggle-btn:hover { background: rgba(159,239,0,0.15); }
-
-    .cancel-btn {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        color: #6e7681;
-        background: transparent;
-        border: 1px solid #21262d;
-        border-radius: 4px;
-        padding: 4px 12px;
-        cursor: pointer;
-        letter-spacing: 1px;
-        transition: border-color 0.15s, color 0.15s;
-    }
-    .cancel-btn:hover { border-color: #6e7681; color: #c9d1d9; }
-
-    .edit-body { padding: 24px; }
-
-    /* ── View fields ── */
-    .view-fields { display: flex; flex-direction: column; gap: 0; }
-
-    .view-field {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 0;
-        border-bottom: 1px solid #21262d;
-    }
-    .view-field:last-child { border-bottom: none; }
-
-    .vf-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #6e7681;
-        letter-spacing: 1px;
-    }
-
-    .vf-value {
-        font-size: 13px;
-        color: #c9d1d9;
-    }
-    .vf-value.mono { font-family: 'IBM Plex Mono', monospace; }
-
-    .role-badge-sm {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        font-weight: 600;
-        padding: 3px 8px;
-        border-radius: 3px;
-    }
-    .role-badge-sm.role-public     { background: rgba(110,118,129,0.15); color: #8b949e; border: 1px solid #21262d; }
-    .role-badge-sm.role-registered { background: rgba(0,200,255,0.1);   color: #00c8ff; border: 1px solid rgba(0,200,255,0.25); }
-    .role-badge-sm.role-reporter   { background: rgba(159,239,0,0.1);   color: #9fef00; border: 1px solid rgba(159,239,0,0.3); }
-    .role-badge-sm.role-admin      { background: rgba(255,165,0,0.12);  color: #ffa500; border: 1px solid rgba(255,165,0,0.3); }
-
-    /* ── Edit fields ── */
-    .edit-fields { display: flex; flex-direction: column; gap: 20px; }
-
-    .field-group { display: flex; flex-direction: column; gap: 8px; }
-
-    .field-label {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        color: #6e7681;
-        letter-spacing: 2px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .label-idx { color: #9fef00; opacity: 0.6; }
-
-    .input-wrapper {
-        display: flex;
-        align-items: center;
-        background: #0d1117;
-        border: 1px solid #21262d;
-        border-radius: 4px;
-        transition: border-color 0.15s, box-shadow 0.15s;
-        overflow: hidden;
-    }
-    .input-wrapper.focused {
-        border-color: #9fef00;
-        box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
-    }
-
-    .input-pre {
-        padding: 0 12px;
-        font-size: 13px;
-        color: #4a5160;
-        border-right: 1px solid #21262d;
-        flex-shrink: 0;
-        user-select: none;
-        line-height: 44px;
-    }
-
-    .field-input {
-        flex: 1;
-        background: transparent;
-        border: none;
-        outline: none;
-        padding: 12px 14px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 13px;
-        color: #c9d1d9;
-        caret-color: #9fef00;
-    }
-    .field-input::placeholder { color: #4a5160; }
-    .field-input:disabled { opacity: 0.5; }
-
-    .save-error {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px;
-        color: #ff3e3e;
-        background: rgba(255,62,62,0.07);
-        border: 1px solid rgba(255,62,62,0.2);
-        border-radius: 4px;
-        padding: 10px 14px;
-    }
-
-    .save-btn {
-        width: 100%;
-        padding: 13px 20px;
-        background: #9fef00;
-        border: none;
-        border-radius: 4px;
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px;
-        font-weight: 600;
-        color: #0d1117;
-        letter-spacing: 2px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
-    }
-    .save-btn:hover:not(:disabled) {
-        opacity: 0.92;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 18px rgba(159,239,0,0.25);
-    }
-    .save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .save-btn.loading { background: #21262d; color: #6e7681; }
-
-    .btn-spinner-sm {
-        width: 12px; height: 12px;
-        border: 2px solid #4a5160;
-        border-top-color: #9fef00;
-        border-radius: 50%;
-        animation: spin 0.7s linear infinite;
-    }
-
-    /* ── Security card ── */
-    .security-body { padding: 8px 0; }
-
-    .sec-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 20px;
-        border-bottom: 1px solid #21262d;
-        transition: background 0.15s;
-    }
-    .sec-row:last-child { border-bottom: none; }
-    .sec-row:hover { background: rgba(159,239,0,0.02); }
-
-    .sec-info { flex: 1; }
-
-    .sec-title {
-        font-size: 13px;
-        font-weight: 500;
-        color: #c9d1d9;
-        margin-bottom: 2px;
-    }
-
-    .sec-desc {
-        font-size: 12px;
-        color: #6e7681;
-    }
-
-    .sec-badge {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 10px;
-        font-weight: 600;
-        padding: 3px 9px;
-        border-radius: 3px;
-        letter-spacing: 1px;
-        flex-shrink: 0;
-    }
-
-    .sec-badge.active {
-        background: rgba(159,239,0,0.1);
-        color: #9fef00;
-        border: 1px solid rgba(159,239,0,0.25);
-    }
-
-    .sec-badge.soon {
-        background: rgba(110,118,129,0.1);
-        color: #6e7681;
-        border: 1px solid #21262d;
-    }
-
-    /* ── Danger card ── */
-    .danger-label { color: #ff3e3e !important; }
-
-    .danger-body { padding: 4px 0; }
-
-    .danger-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px 20px;
-    }
-
-    .danger-info { flex: 1; }
-
-    .danger-title {
-        font-size: 13px;
-        font-weight: 500;
-        color: #c9d1d9;
-        margin-bottom: 2px;
-    }
-
-    .danger-desc { font-size: 12px; color: #6e7681; }
-
-    .danger-btn {
-        font-family: 'IBM Plex Mono', monospace;
-        font-size: 11px;
-        font-weight: 600;
-        color: #ff3e3e;
-        background: rgba(255,62,62,0.07);
-        border: 1px solid rgba(255,62,62,0.25);
-        border-radius: 4px;
-        padding: 7px 16px;
-        cursor: pointer;
-        letter-spacing: 1px;
-        transition: background 0.15s, border-color 0.15s;
-        flex-shrink: 0;
-    }
-    .danger-btn:hover {
-        background: rgba(255,62,62,0.15);
-        border-color: #ff3e3e;
-    }
-
-    /* ── Responsive ── */
-    @@media (max-width: 860px) {
-        .profile-layout {
-            grid-template-columns: 1fr;
-        }
-        .profile-root { padding: 72px 16px 40px; }
-    }
+/* ══════════════════════════════════════════════
+   RESPONSIVE — MOBILE (≤480px)
+   Touch-friendly spacing
+══════════════════════════════════════════════ */
+@@media (max-width: 480px) {
+    .pr-root { padding: 68px 12px 36px; }
+    .pr-card__body { padding: 14px; }
+    .pr-vf  { padding: 12px 14px; }
+    .pr-sec-row { padding: 12px 14px; gap: 10px; }
+    .pr-sec-row__icon { display: none; }
+    .pr-danger-row { padding: 14px; flex-direction: column; align-items: flex-start; gap: 12px; }
+    .pr-btn--danger { align-self: flex-start; }
+    .pr-pw-form { margin: 0 10px 12px; padding: 14px; }
+    .pr-pw-form__actions { flex-direction: column-reverse; align-items: stretch; }
+    .pr-btn--accent { width: 100%; }
+    .pr-error-card { padding: 32px 24px; }
+}
 </style>
 
 @code {
@@ -1217,6 +1261,7 @@
     private bool _loading = true;
     private string _loadError = string.Empty;
 
+    // Edit mode
     private bool _editMode = false;
     private string _editUsername = string.Empty;
     private string _editEmail = string.Empty;
@@ -1225,134 +1270,116 @@
     private bool _saveLoading = false;
     private string _saveError = string.Empty;
 
+    // Password change
+    private bool _pwExpanded = false;
+    private string _pwCurrent = string.Empty;
+    private string _pwNew = string.Empty;
+    private string _pwConfirm = string.Empty;
+    private bool _pwFocusCurrent = false;
+    private bool _pwFocusNew = false;
+    private bool _pwFocusConfirm = false;
+    private bool _pwLoading = false;
+    private string _pwError = string.Empty;
+
+    // Reporter
     private bool _requestLoading = false;
 
+    // Toast
     private string _toastMessage = string.Empty;
-    private string _toastType = "toast-success";
+    private string _toastType = "success";
     private bool _toastVisible = false;
 
-    // Password change state
-private string _pwCurrent = string.Empty;
-private string _pwNew = string.Empty;
-private string _pwConfirm = string.Empty;
-private bool _pwFocusCurrent = false;
-private bool _pwFocusNew = false;
-private bool _pwFocusConfirm = false;
-private bool _pwLoading = false;
-private string _pwError = string.Empty;
     protected override async Task OnAfterRenderAsync(bool firstRender)
-{
-    if (firstRender)
     {
-        await LoadProfile();
-        StateHasChanged();
+        if (firstRender)
+        {
+            await LoadProfile();
+            StateHasChanged();
+        }
     }
-}
 
     private async Task LoadProfile()
     {
         _loading = true;
         var (data, error) = await ApiService.GetProfileAsync();
         _loading = false;
-
-        if (error != null)
-            _loadError = error;
-        else
-            _profile = data;
+        if (error != null) _loadError = error;
+        else _profile = data;
     }
 
     private void EnterEditMode()
     {
         _editUsername = _profile!.Username;
-        _editEmail = _profile.Email;
-        _saveError = string.Empty;
-        _editMode = true;
+        _editEmail    = _profile.Email;
+        _saveError    = string.Empty;
+        _editMode     = true;
     }
 
     private void CancelEdit()
-{
-    _editMode = false;
-    _saveError = string.Empty;
-    _pwCurrent = _pwNew = _pwConfirm = string.Empty;  // ← add this line
-}
+    {
+        _editMode  = false;
+        _saveError = string.Empty;
+    }
+
+    private void TogglePwExpand()
+    {
+        _pwExpanded = !_pwExpanded;
+        if (!_pwExpanded)
+        {
+            _pwCurrent = _pwNew = _pwConfirm = string.Empty;
+            _pwError   = string.Empty;
+        }
+    }
 
     private async Task SaveProfile()
-{
-    _saveError = string.Empty;
-    if (string.IsNullOrWhiteSpace(_editUsername) || string.IsNullOrWhiteSpace(_editEmail))
     {
-        _saveError = "Username and email cannot be empty.";
-        return;
-    }
-
-    // Validate password fields only if the user typed something
-    bool changingPassword = !string.IsNullOrEmpty(_pwCurrent) || !string.IsNullOrEmpty(_pwNew);
-    if (changingPassword)
-    {
-        if (string.IsNullOrEmpty(_pwCurrent))
+        _saveError = string.Empty;
+        if (string.IsNullOrWhiteSpace(_editUsername) || string.IsNullOrWhiteSpace(_editEmail))
         {
-            _saveError = "Enter your current password to set a new one.";
+            _saveError = "Username and email cannot be empty.";
             return;
         }
-        if (_pwNew.Length < 8)
-        {
-            _saveError = "New password must be at least 8 characters.";
-            return;
-        }
-        if (_pwNew != _pwConfirm)
-        {
-            _saveError = "New passwords do not match.";
-            return;
-        }
-    }
-
-    _saveLoading = true;
-
-    // Save username/email
-    var error = await ApiService.UpdateProfileAsync(_editUsername, _editEmail);
-    if (error != null)
-    {
-        _saveError = error;
+        _saveLoading = true;
+        var error = await ApiService.UpdateProfileAsync(_editUsername, _editEmail);
         _saveLoading = false;
-        return;
+        if (error != null) { _saveError = error; return; }
+        _profile!.Username = _editUsername;
+        _profile.Email     = _editEmail;
+        _editMode          = false;
+        await ShowToast("Profile updated successfully.", "success");
     }
 
-    // Save password if fields were filled
-    if (changingPassword)
+    private async Task HandleChangePassword()
     {
+        if (!CanSubmitPwChange()) return;
+        _pwLoading = true;
+        _pwError   = string.Empty;
         var (success, message) = await ApiService.ChangePasswordAsync(_pwCurrent, _pwNew, _pwConfirm);
-        if (!success)
+        _pwLoading = false;
+        if (success)
         {
-            _saveError = message;
-            _saveLoading = false;
-            return;
+            _pwCurrent = _pwNew = _pwConfirm = string.Empty;
+            _pwExpanded = false;
+            await ShowToast("Password updated successfully.", "success");
         }
+        else
+        {
+            _pwError = message;
+        }
+        StateHasChanged();
     }
-
-    _saveLoading = false;
-    _profile!.Username = _editUsername;
-    _profile.Email = _editEmail;
-    _pwCurrent = _pwNew = _pwConfirm = string.Empty;
-    _editMode = false;
-    await ShowToast(
-        changingPassword ? "Profile and password updated." : "Profile updated successfully.",
-        "toast-success");
-}
 
     private async Task RequestReporter()
     {
         _requestLoading = true;
         var error = await ApiService.RequestReporterAsync();
         _requestLoading = false;
-
         if (error != null)
-        {
-            await ShowToast(error, "toast-error");
-        }
+            await ShowToast(error, "error");
         else
         {
             _profile!.ReporterRequestPending = true;
-            await ShowToast("Reporter access requested. Pending admin review.", "toast-success");
+            await ShowToast("Reporter access requested. Pending admin review.", "success");
         }
     }
 
@@ -1365,99 +1392,53 @@ private string _pwError = string.Empty;
     private async Task ShowToast(string message, string type)
     {
         _toastMessage = message;
-        _toastType = type;
+        _toastType    = type;
         _toastVisible = true;
         StateHasChanged();
         await Task.Delay(3500);
         _toastVisible = false;
         StateHasChanged();
-        await Task.Delay(500);
+        await Task.Delay(400);
         _toastMessage = string.Empty;
         StateHasChanged();
     }
 
     // ── Helpers ──
+    private static string GetInitials(string u) =>
+        string.IsNullOrEmpty(u) ? "?" : (u.Length >= 2 ? u[..2].ToUpper() : u[..1].ToUpper());
 
-    private static string GetInitials(string username)
+    private static string GetAvatarColor(string u)
     {
-        if (string.IsNullOrEmpty(username)) return "?";
-        return username.Length >= 2 ? username[..2].ToUpper() : username[..1].ToUpper();
+        var colors = new[] { "#1a472a","#1e3a5f","#4a1942","#2d2b55","#3d2b1f","#1a3a3a","#2b3a1a","#3a1a2b" };
+        return colors[Math.Abs(u.GetHashCode()) % colors.Length];
     }
 
-    private static string GetAvatarColor(string username)
+    private static string GetRepTier(int s) => s switch
     {
-        // Deterministic color based on username so it stays consistent
-        var colors = new[]
-        {
-            "#1a472a", "#1e3a5f", "#4a1942", "#2d2b55",
-            "#3d2b1f", "#1a3a3a", "#2b3a1a", "#3a1a2b"
-        };
-        var idx = Math.Abs(username.GetHashCode()) % colors.Length;
-        return colors[idx];
-    }
-
-    private static string GetRoleIcon(string role) => role switch
-    {
-        "Admin"      => "⚡",
-        "Reporter"   => "📡",
-        "Registered" => "◈",
-        _            => "👁"
+        >= 75 => "TRUSTED",
+        >= 40 => "ACTIVE",
+        >= 10 => "NOVICE",
+        _     => "NEW"
     };
 
-    private static string GetRepTier(int score) => score switch
-    {
-        >= 75  => "TRUSTED",
-        >= 40  => "ACTIVE",
-        >= 10  => "NOVICE",
-        _      => "NEW"
-    };
     private bool CanSubmitPwChange() =>
-    !string.IsNullOrWhiteSpace(_pwCurrent) &&
-    _pwNew.Length >= 8 &&
-    _pwNew == _pwConfirm;
+        !string.IsNullOrWhiteSpace(_pwCurrent) && _pwNew.Length >= 8 && _pwNew == _pwConfirm;
 
-private int GetPwStrength(string pwd)
-{
-    int s = 0;
-    if (pwd.Length >= 8) s++;
-    if (pwd.Any(char.IsUpper)) s++;
-    if (pwd.Any(char.IsDigit)) s++;
-    if (pwd.Any(ch => !char.IsLetterOrDigit(ch))) s++;
-    return s;
-}
-
-private (string css, string label) GetPwStrengthDisplay(string pwd)
-{
-    return GetPwStrength(pwd) switch
+    private int GetPwStrength(string pwd)
     {
-        1 => ("pw-weak",   "WEAK"),
-        2 => ("pw-fair",   "FAIR"),
-        3 => ("pw-good",   "GOOD"),
-        _ => ("pw-strong", "STRONG")
+        int s = 0;
+        if (pwd.Length >= 8) s++;
+        if (pwd.Any(char.IsUpper)) s++;
+        if (pwd.Any(char.IsDigit)) s++;
+        if (pwd.Any(ch => !char.IsLetterOrDigit(ch))) s++;
+        return s;
+    }
+
+    private (string css, string label) GetPwStrengthDisplay(string pwd) => GetPwStrength(pwd) switch
+    {
+        1 => ("weak",   "WEAK"),
+        2 => ("fair",   "FAIR"),
+        3 => ("good",   "GOOD"),
+        _ => ("strong", "STRONG")
     };
-}
-
-private async Task HandleChangePassword()
-{
-    if (!CanSubmitPwChange()) return;
-
-    _pwLoading = true;
-    _pwError = string.Empty;
-
-    var (success, message) = await ApiService.ChangePasswordAsync(_pwCurrent, _pwNew, _pwConfirm);
-
-    _pwLoading = false;
-
-    if (success)
-    {
-        _pwCurrent = _pwNew = _pwConfirm = string.Empty;
-        await ShowToast("Password updated successfully.", "toast-success");
-    }
-    else
-    {
-        _pwError = message;
-    }
-
-    StateHasChanged();
-}
 }
