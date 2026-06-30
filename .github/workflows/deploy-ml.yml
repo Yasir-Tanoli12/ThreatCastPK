@@ -1,8 +1,12 @@
 name: Build and deploy ML to Azure - threatcastpk-ml
 
 on:
-  workflow_dispatch:  # Manual only — enable push trigger when ML service is ready
-
+  push:
+    branches:
+      - main
+    paths:
+      - 'ThreatCastPK.ML/**'
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
