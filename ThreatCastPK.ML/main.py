@@ -23,31 +23,24 @@ except Exception as e:
     print(f"[ML] Failed to load model: {e}")
 
 # ── DB connection ──────────────────────────────────────────────────────────────
-DB_URL = os.getenv("DATABASE_URL", "")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 
 def get_db():
-    if DB_PASSWORD:
-        # Use keyword args — no URL encoding needed
-        try:
-            return psycopg2.connect(
-                host="aws-1-ap-southeast-1.pooler.supabase.com",
-                port=5432,
-                database="postgres",
-                user="postgres.kekcojybactqxrjnamul",
-                password=DB_PASSWORD,
-                sslmode="require"
-            )
-        except Exception as e:
-            print(f"[DB] Connection failed: {e}")
-            return None
-    if DB_URL:
-        try:
-            return psycopg2.connect(DB_URL)
-        except Exception as e:
-            print(f"[DB] Connection failed: {e}")
-            return None
-    return None
+    if not DB_PASSWORD:
+        print("[DB] DB_PASSWORD environment variable not set.")
+        return None
+    try:
+        return psycopg2.connect(
+            host="aws-1-ap-southeast-1.pooler.supabase.com",
+            port=5432,
+            database="postgres",
+            user="postgres.kekcojybactqxrjnamul",
+            password=DB_PASSWORD,
+            sslmode="require"
+        )
+    except Exception as e:
+        print(f"[DB] Connection failed: {e}")
+        return None
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def safe_encode(encoder, value, default=0):
