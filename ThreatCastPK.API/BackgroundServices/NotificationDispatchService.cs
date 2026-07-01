@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Channels;
 using ThreatCastPK.API.Hubs;
+using ThreatCastPK.API.Services;
 using ThreatCastPK.Database.Context;
 using ThreatCastPK.Database.Models;
 
@@ -42,17 +43,18 @@ public class NotificationDispatchService : BackgroundService
     private readonly IHubContext<ThreatCastHub> _hubContext;
     private readonly ILogger<NotificationDispatchService> _logger;
 
+
     public NotificationDispatchService(
-        NotificationChannel channel,
-        IServiceScopeFactory scopeFactory,
-        IHubContext<ThreatCastHub> hubContext,
-        ILogger<NotificationDispatchService> logger)
+    NotificationChannel channel,
+    IServiceScopeFactory scopeFactory,
+    IHubContext<ThreatCastHub> hubContext,
+    ILogger<NotificationDispatchService> logger)
     {
         _channel = channel;
         _scopeFactory = scopeFactory;
         _hubContext = hubContext;
         _logger = logger;
-    }
+    }   
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -77,8 +79,9 @@ public class NotificationDispatchService : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ThreatCastDbContext>();
+        var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
-        // Load all active subscriptions with their owner
+        // Load active subscriptions with their owner's email
         var subscriptions = await db.AlertSubscriptions
             .Include(s => s.User)
             .Where(s => s.IsActive)
@@ -91,14 +94,12 @@ public class NotificationDispatchService : BackgroundService
         {
             if (!MatchesSubscription(sub, payload)) continue;
 
-            var message = BuildMessage(payload);
-
             notificationsToAdd.Add(new Notification
             {
                 Id = Guid.NewGuid(),
                 UserId = sub.UserId,
                 SubscriptionId = sub.Id,
-                Message = message,
+                Message = BuildMessage(payload),
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow
             });
@@ -111,13 +112,17 @@ public class NotificationDispatchService : BackgroundService
         db.Notifications.AddRange(notificationsToAdd);
         await db.SaveChangesAsync();
 
-        // Push via SignalR to each user's personal group
+        // Group by user and notify
         foreach (var userId in userIdsToNotify)
         {
             var userNotifs = notificationsToAdd
                 .Where(n => n.UserId == userId)
                 .ToList();
 
+            var user = subscriptions
+                .First(s => s.UserId == userId).User;
+
+            // Push in-app via SignalR
             foreach (var notif in userNotifs)
             {
                 await _hubContext.Clients
@@ -127,9 +132,56 @@ public class NotificationDispatchService : BackgroundService
                         id = notif.Id,
                         message = notif.Message,
                         createdAt = notif.CreatedAt,
-                        notificationType = notif.NotificationType ?? "AttackEvent"
+                        notificationType = "AttackEvent"
                     });
             }
+
+            // Send email notification
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var emailHtml = $"""
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <div style="background: #0f172a; padding: 24px; border-radius: 8px 8px 0 0;">
+                            <h1 style="color: #22d3ee; margin: 0;">ThreatCast PK</h1>
+                            <p style="color: #94a3b8; margin: 4px 0 0;">Live Cyberattack Intelligence for Pakistan</p>
+                        </div>
+                        <div style="background: #1e293b; padding: 32px; border-radius: 0 0 8px 8px;">
+                            <h2 style="color: #f1f5f9;">⚠ Threat Alert</h2>
+                            <p style="color: #94a3b8;">Hi {user.Username}, a new threat matching your subscription was detected.</p>
+                            <div style="background: #0f172a; border-left: 4px solid #22d3ee; padding: 16px; margin: 20px 0; border-radius: 4px;">
+                                <p style="color: #f1f5f9; font-family: monospace; font-size: 14px; margin: 0;">
+                                    {userNotifs.First().Message}
+                                </p>
+                            </div>
+                            <p style="color: #64748b; font-size: 13px;">Time: {DateTime.UtcNow:dd MMM yyyy, HH:mm} UTC</p>
+                            <a href="https://threatcastpk-web.azurewebsites.net/notifications"
+                               style="display: inline-block; background: #22d3ee; color: #0f172a;
+                                      padding: 12px 28px; border-radius: 6px; text-decoration: none;
+                                      font-weight: bold; margin: 16px 0;">
+                                View All Notifications
+                            </a>
+                            <p style="color: #64748b; font-size: 12px;">
+                                To manage your alert subscriptions, visit
+                                <a href="https://threatcastpk-web.azurewebsites.net/subscriptions" style="color: #22d3ee;">
+                                    your subscriptions page
+                                </a>.
+                            </p>
+                        </div>
+                    </div>
+                    """;
+
+                    await emailService.SendAsync(
+                        user.Email,
+                        $"ThreatCast PK Alert — {payload.AttackType} in {payload.City}",
+                        emailHtml);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[NotificationDispatch] Failed to send email to user {UserId}", userId);
+                }
+            });
         }
 
         _logger.LogInformation(
