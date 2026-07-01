@@ -4,3 +4,4 @@
 .vs/
 DataProtection-Keys/
 appsettings.Development.json
+appsettings.Production.json
