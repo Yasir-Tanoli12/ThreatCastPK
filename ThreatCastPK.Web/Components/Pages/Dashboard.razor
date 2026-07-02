@@ -146,10 +146,12 @@
             </div>
             <div class="map-bar__right">
                 <div class="map-bar__legend">
-                    <span class="legend-item"><span class="legend-dot legend-dot--low"></span>Low</span>
-                    <span class="legend-item"><span class="legend-dot legend-dot--high"></span>High</span>
-                    <span class="legend-item"><span class="legend-dot legend-dot--crit"></span>Critical</span>
-                </div>
+    <span class="legend-item"><span class="legend-dot" style="background:#00c8ff;box-shadow:0 0 6px rgba(0,200,255,0.5)"></span>DDoS</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#ff3e3e;box-shadow:0 0 6px rgba(255,62,62,0.5)"></span>Ransomware</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#ffa500;box-shadow:0 0 6px rgba(255,165,0,0.5)"></span>Phishing</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#bf40bf;box-shadow:0 0 6px rgba(191,64,191,0.5)"></span>Malware</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#9fef00;box-shadow:0 0 6px rgba(159,239,0,0.5)"></span>Other</span>
+</div>
                 @if (AuthService.IsReporter)
                 {
                     <a href="/submit-report" class="tc-btn tc-btn--primary map-report-btn">

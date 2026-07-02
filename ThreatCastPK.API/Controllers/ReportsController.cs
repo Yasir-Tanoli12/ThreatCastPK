@@ -156,7 +156,7 @@ namespace ThreatCastPK.API.Controllers
 
                 _context.AttackEvents.Add(attackEvent);
 
-                reporter.ReputationScore += 10;
+                reporter.ReputationScore += 2;
 
                 var notificationsToSend = await BuildNotificationsAsync(
                     attackEvent,

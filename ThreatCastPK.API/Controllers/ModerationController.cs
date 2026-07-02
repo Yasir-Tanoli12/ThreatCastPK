@@ -131,7 +131,7 @@ namespace ThreatCastPK.API.Controllers
 
             _context.AttackEvents.Add(attackEvent);
 
-            report.Reporter.ReputationScore += 10;
+            report.Reporter.ReputationScore += 2;
 
             var notificationsToSend = await BuildNotificationsAsync(
                 attackEvent,
@@ -211,7 +211,7 @@ namespace ThreatCastPK.API.Controllers
             report.IsDeleted = true;
 
             report.Reporter.ReputationScore =
-                Math.Max(0, report.Reporter.ReputationScore - 5);
+                Math.Max(0, report.Reporter.ReputationScore - 1);
 
             var auditLog = new AuditLog
             {

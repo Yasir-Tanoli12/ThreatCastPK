@@ -11,103 +11,210 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
-<div class="forum-root">
-    <div class="bg-grid"></div>
-    <div class="scan-line"></div>
-    <div class="corner corner-tl"></div>
-    <div class="corner corner-tr"></div>
-    <div class="corner corner-bl"></div>
-    <div class="corner corner-br"></div>
+<div class="fr-root">
 
-    <div class="forum-layout">
+    @* ── Ambient ── *@
+    <div class="fr-bg-grid" aria-hidden="true"></div>
+    <div class="fr-scan-line" aria-hidden="true"></div>
+    <div class="fr-corner fr-corner--tl" aria-hidden="true"></div>
+    <div class="fr-corner fr-corner--tr" aria-hidden="true"></div>
+    <div class="fr-corner fr-corner--bl" aria-hidden="true"></div>
+    <div class="fr-corner fr-corner--br" aria-hidden="true"></div>
 
-        @* ── Left sidebar ── *@
-        <aside class="forum-sidebar">
-            <div class="sidebar-brand">
-                <div class="sb-label"> COMMUNITY</div>
-                <h1 class="sb-title">Threat<br /><span class="sb-accent">Forum</span></h1>
-                <p class="sb-sub">Share intelligence, discuss incidents, and collaborate with Pakistan's security community.</p>
+    @* ── Mobile filter drawer backdrop ── *@
+    @if (_drawerOpen)
+    {
+        <div class="fr-drawer-backdrop" @onclick="() => _drawerOpen = false" aria-hidden="true"></div>
+    }
+
+    @* ── Mobile filter drawer ── *@
+    <div class="fr-drawer @(_drawerOpen ? "fr-drawer--open" : "")" role="dialog" aria-label="Filter threads">
+        <div class="fr-drawer-header">
+            <span class="fr-mono fr-drawer-title">// FILTERS</span>
+            <button class="fr-icon-btn" @onclick="() => _drawerOpen = false" aria-label="Close filters">
+                @SvgX(16)
+            </button>
+        </div>
+        <div class="fr-drawer-body">
+            <div class="fr-drawer-section-label">CATEGORY</div>
+            @foreach (var cat in _categories)
+            {
+                <button class="fr-drawer-cat @(_activeCategory == cat.Name ? "is-active" : "")"
+                        @onclick="() => { SetCategory(cat.Name); _drawerOpen = false; }">
+                    <span class="fr-drawer-cat__icon" style="color:@GetCategoryColor(cat.Name)" aria-hidden="true">
+                        @GetCategorySvg(cat.Name)
+                    </span>
+                    <span class="fr-drawer-cat__name">@cat.Name</span>
+                    <span class="fr-drawer-cat__count">@(_posts?.Count(p => cat.Name == "All" || p.Category == cat.Name) ?? 0)</span>
+                </button>
+            }
+            <div class="fr-drawer-divider"></div>
+            <div class="fr-drawer-section-label">SORT BY</div>
+            <div class="fr-drawer-sort-group">
+                @foreach (var s in new[] { ("new","New"), ("hot","Hot"), ("top","Top") })
+                {
+                    <button class="fr-drawer-sort @(_sort == s.Item1 ? "is-active" : "")"
+                            @onclick="() => { _ = SetSort(s.Item1); _drawerOpen = false; }">
+                        @s.Item2
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* ── Page shell ── *@
+    <div class="fr-shell">
+
+        @* ════════════════════════════════════
+           LEFT SIDEBAR (desktop)
+        ════════════════════════════════════ *@
+        <aside class="fr-sidebar" aria-label="Forum navigation">
+
+            <div class="fr-sidebar-brand">
+                <div class="fr-mono fr-sidebar-eyebrow">// COMMUNITY</div>
+                <h1 class="fr-sidebar-title">Threat<br /><span class="fr-sidebar-accent">Forum</span></h1>
+                <p class="fr-sidebar-sub">Share intelligence, discuss incidents, and collaborate with Pakistan's security community.</p>
             </div>
 
-            <div class="sidebar-card">
-                <div class="sc-header">CATEGORIES</div>
+            @* Categories *@
+            <nav class="fr-sidebar-card" aria-label="Categories">
+                <div class="fr-sidebar-card__header">CATEGORIES</div>
                 @foreach (var cat in _categories)
                 {
-                    <button class="cat-btn @(_activeCategory == cat.Name ? "cat-active" : "")"
-                            @onclick="() => SetCategory(cat.Name)">
-                        <span class="cat-icon">@cat.Icon</span>
-                        <span class="cat-name">@cat.Name</span>
-                        <span class="cat-count">@(_posts?.Count(p => cat.Name == "All" || p.Category == cat.Name) ?? 0)</span>
+                    <button class="fr-sidebar-cat @(_activeCategory == cat.Name ? "is-active" : "")"
+                            @onclick="() => SetCategory(cat.Name)"
+                            aria-pressed="@(_activeCategory == cat.Name ? "true" : "false")">
+                        <span class="fr-sidebar-cat__bar" style="background:@GetCategoryColor(cat.Name)" aria-hidden="true"></span>
+                        <span class="fr-sidebar-cat__icon" style="color:@GetCategoryColor(cat.Name)" aria-hidden="true">
+                            @GetCategorySvg(cat.Name)
+                        </span>
+                        <span class="fr-sidebar-cat__name">@cat.Name</span>
+                        <span class="fr-sidebar-cat__count">
+                            @(_posts?.Count(p => cat.Name == "All" || p.Category == cat.Name) ?? 0)
+                        </span>
+                    </button>
+                }
+            </nav>
+
+            @* Rules *@
+            <div class="fr-sidebar-card">
+                <div class="fr-sidebar-card__header">COMMUNITY RULES</div>
+                <ol class="fr-rules" role="list">
+                    <li class="fr-rule"><span class="fr-rule__num" aria-hidden="true">01</span><span class="fr-rule__text">Share verified intelligence only</span></li>
+                    <li class="fr-rule"><span class="fr-rule__num" aria-hidden="true">02</span><span class="fr-rule__text">No attribution without evidence</span></li>
+                    <li class="fr-rule"><span class="fr-rule__num" aria-hidden="true">03</span><span class="fr-rule__text">Respect operational security</span></li>
+                    <li class="fr-rule"><span class="fr-rule__num" aria-hidden="true">04</span><span class="fr-rule__text">No offensive tool sharing</span></li>
+                </ol>
+            </div>
+
+            @* Auth CTA *@
+            @if (!AuthService.IsLoggedIn)
+            {
+                <div class="fr-auth-cta">
+                    <p class="fr-auth-cta__text">Sign in to post and reply</p>
+                    <a href="/login" class="fr-btn fr-btn--accent fr-btn--full">Sign In</a>
+                </div>
+            }
+
+        </aside>
+
+        @* ════════════════════════════════════
+           MAIN FEED
+        ════════════════════════════════════ *@
+        <main class="fr-main">
+
+            @* ── Topbar ── *@
+            <div class="fr-topbar">
+                <div class="fr-topbar__left">
+
+                    @* Mobile: filter trigger *@
+                    <button class="fr-icon-btn fr-mobile-filter-btn"
+                            @onclick="() => _drawerOpen = true"
+                            aria-label="Open filters"
+                            aria-expanded="@(_drawerOpen ? "true" : "false")">
+                        @SvgFilter(18)
+                        @if (_activeCategory != "All")
+                        {
+                            <span class="fr-filter-dot" aria-label="Filter active"></span>
+                        }
+                    </button>
+
+                    <div class="fr-topbar__heading">
+                        <h2 class="fr-feed-title">@(_activeCategory == "All" ? "All Discussions" : _activeCategory)</h2>
+                        @if (_posts != null)
+                        {
+                            <span class="fr-feed-count fr-mono" aria-live="polite">
+                                @FilteredPosts.Count @(FilteredPosts.Count == 1 ? "thread" : "threads")
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <div class="fr-topbar__right">
+                    @* Sort *@
+                    <div class="fr-sort-group" role="group" aria-label="Sort threads">
+                        @foreach (var s in new[] { ("new","New"), ("hot","Hot"), ("top","Top") })
+                        {
+                            <button class="fr-sort-btn @(_sort == s.Item1 ? "is-active" : "")"
+                                    @onclick='() => _ = SetSort(s.Item1)'
+                                    aria-pressed="@(_sort == s.Item1 ? "true" : "false")">
+                                @s.Item2
+                            </button>
+                        }
+                    </div>
+
+                    @* Search *@
+                    <div class="fr-search @(_searchFocused ? "is-focused" : "")">
+                        <span class="fr-search__icon" aria-hidden="true">@SvgSearch(15)</span>
+                        <input type="search" class="fr-search__input"
+                               placeholder="Search threads..."
+                               value="@_searchQuery"
+                               @oninput="e => _searchQuery = e.Value?.ToString() ?? string.Empty"
+                               @onfocus="() => _searchFocused = true"
+                               @onblur="() => _searchFocused = false"
+                               aria-label="Search forum threads" />
+                        @if (!string.IsNullOrEmpty(_searchQuery))
+                        {
+                            <button class="fr-search__clear" @onclick="() => _searchQuery = string.Empty" aria-label="Clear search">
+                                @SvgX(12)
+                            </button>
+                        }
+                    </div>
+
+                    @if (AuthService.IsLoggedIn)
+                    {
+                        <button class="fr-btn fr-btn--accent" @onclick="OpenNewPost" aria-label="Create new thread">
+                            @SvgPlus(14)
+                            <span class="fr-btn-label">New Thread</span>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @* ── Tablet filter strip (between topbar and feed) ── *@
+            <div class="fr-cat-strip" role="group" aria-label="Category filter">
+                @foreach (var cat in _categories)
+                {
+                    <button class="fr-cat-chip @(_activeCategory == cat.Name ? "is-active" : "")"
+                            @onclick="() => SetCategory(cat.Name)"
+                            style="@(_activeCategory == cat.Name ? $"--chip-color:{GetCategoryColor(cat.Name)}" : "")">
+                        @cat.Name
                     </button>
                 }
             </div>
 
-            <div class="sidebar-card">
-                <div class="sc-header">COMMUNITY RULES</div>
-                <div class="rules-list">
-                    <div class="rule-item"><span class="rule-num">01</span><span class="rule-text">Share verified intelligence only</span></div>
-                    <div class="rule-item"><span class="rule-num">02</span><span class="rule-text">No attribution without evidence</span></div>
-                    <div class="rule-item"><span class="rule-num">03</span><span class="rule-text">Respect operational security</span></div>
-                    <div class="rule-item"><span class="rule-num">04</span><span class="rule-text">No offensive tool sharing</span></div>
-                </div>
-            </div>
-
-            @if (!AuthService.IsLoggedIn)
-            {
-                <div class="sidebar-auth-cta">
-                    <div class="sac-text">Sign in to post and reply</div>
-                    <a href="/login" class="sac-btn">Sign In →</a>
-                </div>
-            }
-        </aside>
-
-        @* ── Main content ── *@
-        <main class="forum-main">
-
-            @* Top bar *@
-            <div class="forum-topbar">
-                <div class="ftb-left">
-                    <div class="ftb-title">@(_activeCategory == "All" ? "All Discussions" : _activeCategory)</div>
-                    @if (_posts != null)
-                    {
-                        <div class="ftb-count">@FilteredPosts.Count @(FilteredPosts.Count == 1 ? "thread" : "threads")</div>
-                    }
-                </div>
-                <div class="ftb-right">
-                    @* Sort *@
-                    <div class="sort-tabs">
-                        <button class="sort-tab @(_sort == "new" ? "sort-active" : "")" @onclick='() => SetSort("new")'>🕐 NEW</button>
-                        <button class="sort-tab @(_sort == "hot" ? "sort-active" : "")" @onclick='() => SetSort("hot")'>🔥 HOT</button>
-                        <button class="sort-tab @(_sort == "top" ? "sort-active" : "")" @onclick='() => SetSort("top")'>⬆ TOP</button>
-                    </div>
-                    @* Search *@
-                    <div class="search-box @(_searchFocused ? "focused" : "")">
-                        <span class="search-icon">⌕</span>
-                        <input type="text" class="search-input"
-                               placeholder="Search threads..."
-                               value="@_searchQuery"
-                               @oninput="e => { _searchQuery = e.Value?.ToString() ?? string.Empty; }"
-                               @onfocus="() => _searchFocused = true"
-                               @onblur="() => _searchFocused = false" />
-                    </div>
-                    @if (AuthService.IsLoggedIn)
-                    {
-                        <button class="new-post-btn" @onclick="OpenNewPost">+ NEW THREAD</button>
-                    }
-                </div>
-            </div>
-
-            @* Post list *@
+            @* ── Post feed ── *@
             @if (_loadingPosts)
             {
-                <div class="posts-list">
-                    @for (int i = 0; i < 5; i++)
+                <div class="fr-feed" aria-busy="true" aria-label="Loading threads">
+                    @for (int i = 0; i < 6; i++)
                     {
-                        <div class="post-skeleton">
-                            <div class="sk-avatar"></div>
-                            <div class="sk-body">
-                                <div class="sk-line sk-title"></div>
-                                <div class="sk-line sk-meta"></div>
+                        <div class="fr-skeleton">
+                            <div class="fr-skeleton__bar"></div>
+                            <div class="fr-skeleton__body">
+                                <div class="fr-skeleton__line fr-skeleton__line--title"></div>
+                                <div class="fr-skeleton__line fr-skeleton__line--meta"></div>
+                                <div class="fr-skeleton__line fr-skeleton__line--preview"></div>
                             </div>
                         </div>
                     }
@@ -115,233 +222,302 @@
             }
             else if (_loadError != null)
             {
-                <div class="state-box">
-                    <div class="sb-icon">⚠</div>
-                    <div class="sb-title">FAILED TO LOAD</div>
-                    <div class="sb-sub">@_loadError</div>
-                    <button class="sb-btn" @onclick="LoadPosts">↺ Retry</button>
+                <div class="fr-state" role="alert">
+                    <div class="fr-state__icon" aria-hidden="true">@SvgAlertTriangle(36)</div>
+                    <div class="fr-state__title">Failed to load threads</div>
+                    <div class="fr-state__sub">@_loadError</div>
+                    <button class="fr-btn fr-btn--outline" @onclick="LoadPosts">
+                        @SvgRefresh(14)
+                        <span>Retry</span>
+                    </button>
                 </div>
             }
             else if (FilteredPosts.Count == 0)
             {
-                <div class="state-box">
-                    <div class="sb-icon">💬</div>
-                    <div class="sb-title">NO THREADS YET</div>
-                    <div class="sb-sub">
+                <div class="fr-state" role="status">
+                    <div class="fr-state__icon" aria-hidden="true">@SvgMessageSquare(36)</div>
+                    <div class="fr-state__title">No threads yet</div>
+                    <div class="fr-state__sub">
                         @if (!string.IsNullOrEmpty(_searchQuery))
-                        { <span>No results for "@_searchQuery"</span> }
+                        {
+                            <span>No results for "<strong>@_searchQuery</strong>"</span>
+                        }
                         else
-                        { <span>Be the first to start a discussion in this category.</span> }
+                        {
+                            <span>Be the first to start a discussion in this category.</span>
+                        }
                     </div>
                     @if (AuthService.IsLoggedIn)
                     {
-                        <button class="sb-btn" @onclick="OpenNewPost">+ Start a thread</button>
+                        <button class="fr-btn fr-btn--accent" @onclick="OpenNewPost">
+                            @SvgPlus(14)
+                            <span>Start a thread</span>
+                        </button>
                     }
                 </div>
             }
             else
             {
-                <div class="posts-list">
+                <div class="fr-feed">
                     @foreach (var post in FilteredPosts)
                     {
-                        <div class="post-card @(_expandedPostId == post.Id ? "post-expanded" : "") @(post.IsPinned ? "post-pinned" : "")"
-                             @onclick="() => TogglePost(post.Id)">
+                        bool isExpanded = _expandedPostId == post.Id;
+
+                        @* ── Thread row ── *@
+                        <article class="fr-thread @(isExpanded ? "is-expanded" : "") @(post.IsPinned ? "is-pinned" : "")"
+                                 @onclick="() => TogglePost(post.Id)">
+
+                            @* Category accent bar *@
+                            <div class="fr-thread__accent" style="background:@GetCategoryColor(post.Category)" aria-hidden="true"></div>
 
                             @* Vote column *@
-                            <div class="vote-col" @onclick:stopPropagation="true">
-                                <button class="vote-btn vote-up @(_votedUp.Contains(post.Id) ? "voted" : "")"
+                            <div class="fr-vote" @onclick:stopPropagation="true" aria-label="Vote on @post.Title">
+                                <button class="fr-vote__btn @(_votedUp.Contains(post.Id) ? "is-up" : "")"
                                         @onclick="() => HandleUpvote(post)"
-                                        disabled="@(!AuthService.IsLoggedIn)">
-                                    ▲
+                                        disabled="@(!AuthService.IsLoggedIn)"
+                                        aria-label="Upvote" aria-pressed="@(_votedUp.Contains(post.Id) ? "true" : "false")">
+                                    @SvgChevronUp(14)
                                 </button>
-                                <span class="vote-score @(post.Upvotes - post.Downvotes > 0 ? "score-pos" : post.Upvotes - post.Downvotes < 0 ? "score-neg" : "")">
+                                <span class="fr-vote__score @(post.Upvotes - post.Downvotes > 0 ? "is-pos" : post.Upvotes - post.Downvotes < 0 ? "is-neg" : "")"
+                                      aria-label="Score: @(post.Upvotes - post.Downvotes)">
                                     @(post.Upvotes - post.Downvotes)
                                 </span>
-                                <button class="vote-btn vote-down @(_votedDown.Contains(post.Id) ? "voted-down" : "")"
+                                <button class="fr-vote__btn @(_votedDown.Contains(post.Id) ? "is-down" : "")"
                                         @onclick="() => HandleDownvote(post)"
-                                        disabled="@(!AuthService.IsLoggedIn)">
-                                    ▼
+                                        disabled="@(!AuthService.IsLoggedIn)"
+                                        aria-label="Downvote" aria-pressed="@(_votedDown.Contains(post.Id) ? "true" : "false")">
+                                    @SvgChevronDown(14)
                                 </button>
                             </div>
 
-                            @* Author avatar *@
-                            <div class="pc-avatar" style="background:@GetAvatarColor(post.AuthorUsername)">
-                                @post.AuthorUsername[..1].ToUpper()
-                            </div>
-
-                            @* Post content *@
-                            <div class="pc-body">
-                                <div class="pc-top">
-                                    <div class="pc-title-row">
+                            @* Thread body *@
+                            <div class="fr-thread__body">
+                                <div class="fr-thread__header">
+                                    <div class="fr-thread__badges">
                                         @if (post.IsPinned)
                                         {
-                                            <span class="pin-badge">📌 PINNED</span>
+                                            <span class="fr-badge fr-badge--pinned" aria-label="Pinned">
+                                                @SvgPin(10)
+                                                PINNED
+                                            </span>
                                         }
-                                        <span class="pc-title">@post.Title</span>
-                                        <span class="cat-pill cat-@post.Category.ToLower().Replace(" ", "").Replace("&", "")">
+                                        <span class="fr-badge fr-badge--cat" style="color:@GetCategoryColor(post.Category);background:@GetCategoryColor(post.Category)1a;border-color:@GetCategoryColor(post.Category)33">
                                             @post.Category
                                         </span>
                                     </div>
-                                    <div class="pc-preview">
-                                        @(post.Content.Length > 120 ? post.Content[..120] + "…" : post.Content)
-                                    </div>
+                                    <h3 class="fr-thread__title">@post.Title</h3>
+                                    <p class="fr-thread__preview">
+                                        @(post.Content.Length > 140 ? post.Content[..140] + "…" : post.Content)
+                                    </p>
                                 </div>
-                                <div class="pc-meta">
-                                    <span class="pc-author">
-                                        <span class="author-name role-@post.AuthorRole.ToLower()">@post.AuthorUsername</span>
-                                        <span class="author-role-badge role-badge-@post.AuthorRole.ToLower()">
-                                            @post.AuthorRole.ToUpper()
-                                        </span>
+
+                                <div class="fr-thread__meta">
+                                    <div class="fr-thread__author">
+                                        <div class="fr-avatar fr-avatar--sm" style="background:@GetAvatarColor(post.AuthorUsername)" aria-hidden="true">
+                                            @post.AuthorUsername[..1].ToUpper()
+                                        </div>
+                                        <span class="fr-author-name fr-author-name--@post.AuthorRole.ToLower()">@post.AuthorUsername</span>
+                                        <span class="fr-role-badge fr-role-badge--@post.AuthorRole.ToLower()">@post.AuthorRole</span>
                                         @if (post.AuthorRole is "Reporter" or "Admin")
                                         {
-                                            <span class="verified-flair" title="Verified Reporter">✓ VERIFIED</span>
+                                            <span class="fr-verified" aria-label="Verified">
+                                                @SvgBadgeCheck(11)
+                                                VERIFIED
+                                            </span>
                                         }
-                                    </span>
-                                    <span class="pc-dot">·</span>
-                                    <span class="pc-time">@GetRelativeTime(post.CreatedAt)</span>
-                                    <span class="pc-dot">·</span>
-                                    <span class="pc-replies">💬 @post.ReplyCount</span>
-                                    <span class="pc-dot">·</span>
-                                    <span class="pc-views">👁 @post.ViewCount</span>
+                                    </div>
+
+                                    <div class="fr-thread__stats">
+                                        <span class="fr-stat" title="Time posted">
+                                            @SvgClock(12)
+                                            @GetRelativeTime(post.CreatedAt)
+                                        </span>
+                                        <span class="fr-stat-sep" aria-hidden="true"></span>
+                                        <span class="fr-stat" title="Replies">
+                                            @SvgMessageCircle(12)
+                                            @post.ReplyCount
+                                        </span>
+                                        <span class="fr-stat-sep" aria-hidden="true"></span>
+                                        <span class="fr-stat" title="Views">
+                                            @SvgEye(12)
+                                            @post.ViewCount
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="pc-chevron @(_expandedPostId == post.Id ? "chevron-open" : "")">▾</div>
-                        </div>
+                            @* Expand chevron *@
+                            <button class="fr-thread__chevron @(isExpanded ? "is-open" : "")"
+                                    aria-label="@(isExpanded ? "Collapse" : "Expand") thread"
+                                    aria-expanded="@(isExpanded ? "true" : "false")"
+                                    @onclick:stopPropagation="true"
+                                    @onclick="() => TogglePost(post.Id)">
+                                @SvgChevronDown(16)
+                            </button>
+                        </article>
 
-                        @* Expanded detail *@
-                        @if (_expandedPostId == post.Id)
+                        @* ── Expanded detail panel ── *@
+                        @if (isExpanded)
                         {
-                            <div class="post-detail" @onclick:stopPropagation="true">
+                            <div class="fr-detail" @onclick:stopPropagation="true" role="region" aria-label="Thread detail: @post.Title">
 
-                                <div class="pd-content">
-                                    <div class="pd-author-row">
-                                        <div class="pd-avatar" style="background:@GetAvatarColor(post.AuthorUsername)">
+                                @* Full post *@
+                                <div class="fr-detail__post">
+                                    <div class="fr-detail__author-row">
+                                        <div class="fr-avatar fr-avatar--md" style="background:@GetAvatarColor(post.AuthorUsername)" aria-hidden="true">
                                             @post.AuthorUsername[..1].ToUpper()
                                         </div>
-                                        <div class="pd-author-info">
-                                            <div class="pd-author-name-row">
-                                                <span class="pd-username role-@post.AuthorRole.ToLower()">@post.AuthorUsername</span>
-                                                <span class="author-role-badge role-badge-@post.AuthorRole.ToLower()">@post.AuthorRole.ToUpper()</span>
+                                        <div class="fr-detail__author-info">
+                                            <div class="fr-detail__author-name-row">
+                                                <span class="fr-author-name fr-author-name--@post.AuthorRole.ToLower()">@post.AuthorUsername</span>
+                                                <span class="fr-role-badge fr-role-badge--@post.AuthorRole.ToLower()">@post.AuthorRole</span>
                                                 @if (post.AuthorRole is "Reporter" or "Admin")
                                                 {
-                                                    <span class="verified-flair">✓ VERIFIED</span>
+                                                    <span class="fr-verified">@SvgBadgeCheck(11) VERIFIED</span>
                                                 }
                                             </div>
-                                            <span class="pd-time">@post.CreatedAt.ToString("MMM dd, yyyy HH:mm UTC")</span>
+                                            <span class="fr-detail__timestamp fr-mono">@post.CreatedAt.ToString("MMM dd, yyyy · HH:mm UTC")</span>
                                         </div>
 
-                                        @* Admin pin + user flag actions *@
-                                        <div class="pd-actions" @onclick:stopPropagation="true">
+                                        @* Admin / flag actions *@
+                                        <div class="fr-detail__actions" @onclick:stopPropagation="true">
                                             @if (AuthService.IsAdmin)
                                             {
-                                                <button class="action-btn pin-btn @(post.IsPinned ? "pinned" : "")"
+                                                <button class="fr-action-btn @(post.IsPinned ? "is-pinned" : "")"
                                                         @onclick="() => HandlePin(post)"
-                                                        title="@(post.IsPinned ? "Unpin" : "Pin")">
-                                                    📌 @(post.IsPinned ? "UNPIN" : "PIN")
+                                                        aria-label="@(post.IsPinned ? "Unpin" : "Pin") thread">
+                                                    @SvgPin(13)
+                                                    <span>@(post.IsPinned ? "Unpin" : "Pin")</span>
                                                 </button>
                                             }
                                             @if (AuthService.IsLoggedIn)
                                             {
-                                                <button class="action-btn flag-btn @(_flagged.Contains(post.Id) ? "flagged" : "")"
+                                                <button class="fr-action-btn fr-action-btn--flag @(_flagged.Contains(post.Id) ? "is-flagged" : "")"
                                                         @onclick="() => HandleFlag(post.Id)"
-                                                        title="Flag for review">
-                                                    🚩 @(_flagged.Contains(post.Id) ? "FLAGGED" : "FLAG")
+                                                        aria-label="Flag thread for review"
+                                                        aria-pressed="@(_flagged.Contains(post.Id) ? "true" : "false")">
+                                                    @SvgFlag(13)
+                                                    <span>@(_flagged.Contains(post.Id) ? "Flagged" : "Flag")</span>
                                                 </button>
                                             }
                                         </div>
                                     </div>
 
-                                    @* Markdown rendered content *@
-                                    <div class="pd-text markdown-body" id="md-@post.Id"></div>
+                                    @* Markdown content *@
+                                    <div class="fr-detail__content markdown-body" id="md-@post.Id"></div>
                                 </div>
 
                                 @* Replies *@
                                 @if (_loadingReplies)
                                 {
-                                    <div class="replies-loading">
-                                        <div class="rl-spinner"></div>
-                                        <span>Loading replies...</span>
+                                    <div class="fr-replies-loading" role="status" aria-label="Loading replies">
+                                        <div class="fr-spinner fr-spinner--sm" aria-hidden="true"></div>
+                                        <span class="fr-mono">Loading replies...</span>
                                     </div>
                                 }
                                 else if (_currentPostDetail?.Replies.Any() == true)
                                 {
-                                    <div class="replies-section">
-                                        <div class="replies-header">
-                                            @_currentPostDetail.Replies.Count @(_currentPostDetail.Replies.Count == 1 ? "REPLY" : "REPLIES")
+                                    <div class="fr-replies">
+                                        <div class="fr-replies__header">
+                                            <span class="fr-mono fr-replies__count">@_currentPostDetail.Replies.Count @(_currentPostDetail.Replies.Count == 1 ? "REPLY" : "REPLIES")</span>
+                                            <div class="fr-replies__rule" aria-hidden="true"></div>
                                         </div>
+
                                         @foreach (var reply in _currentPostDetail.Replies)
                                         {
-                                            <div class="reply-item">
+                                            <div class="fr-reply">
                                                 @* Reply vote *@
-                                                <div class="reply-vote" @onclick:stopPropagation="true">
-                                                    <button class="vote-btn-sm @(_votedUp.Contains(reply.Id) ? "voted" : "")"
+                                                <div class="fr-reply__vote" @onclick:stopPropagation="true">
+                                                    <button class="fr-vote__btn fr-vote__btn--sm @(_votedUp.Contains(reply.Id) ? "is-up" : "")"
                                                             @onclick="() => HandleUpvoteReply(reply)"
-                                                            disabled="@(!AuthService.IsLoggedIn)">▲</button>
-                                                    <span class="vote-score-sm">@(reply.Upvotes - reply.Downvotes)</span>
-                                                    <button class="vote-btn-sm @(_votedDown.Contains(reply.Id) ? "voted-down" : "")"
+                                                            disabled="@(!AuthService.IsLoggedIn)"
+                                                            aria-label="Upvote reply">
+                                                        @SvgChevronUp(12)
+                                                    </button>
+                                                    <span class="fr-vote__score fr-vote__score--sm">@(reply.Upvotes - reply.Downvotes)</span>
+                                                    <button class="fr-vote__btn fr-vote__btn--sm @(_votedDown.Contains(reply.Id) ? "is-down" : "")"
                                                             @onclick="() => HandleDownvoteReply(reply)"
-                                                            disabled="@(!AuthService.IsLoggedIn)">▼</button>
+                                                            disabled="@(!AuthService.IsLoggedIn)"
+                                                            aria-label="Downvote reply">
+                                                        @SvgChevronDown(12)
+                                                    </button>
                                                 </div>
-                                                <div class="ri-avatar" style="background:@GetAvatarColor(reply.AuthorUsername)">
+
+                                                <div class="fr-avatar fr-avatar--xs" style="background:@GetAvatarColor(reply.AuthorUsername)" aria-hidden="true">
                                                     @reply.AuthorUsername[..1].ToUpper()
                                                 </div>
-                                                <div class="ri-body">
-                                                    <div class="ri-meta">
-                                                        <span class="ri-author role-@reply.AuthorRole.ToLower()">@reply.AuthorUsername</span>
-                                                        <span class="author-role-badge role-badge-@reply.AuthorRole.ToLower()">@reply.AuthorRole.ToUpper()</span>
+
+                                                <div class="fr-reply__body">
+                                                    <div class="fr-reply__meta">
+                                                        <span class="fr-author-name fr-author-name--@reply.AuthorRole.ToLower()">@reply.AuthorUsername</span>
+                                                        <span class="fr-role-badge fr-role-badge--@reply.AuthorRole.ToLower()">@reply.AuthorRole</span>
                                                         @if (reply.AuthorRole is "Reporter" or "Admin")
                                                         {
-                                                            <span class="verified-flair">✓ VERIFIED</span>
+                                                            <span class="fr-verified">@SvgBadgeCheck(10) VERIFIED</span>
                                                         }
-                                                        <span class="ri-time">@GetRelativeTime(reply.CreatedAt)</span>
+                                                        <span class="fr-reply__time fr-mono">@GetRelativeTime(reply.CreatedAt)</span>
                                                     </div>
-                                                    <div class="ri-text">@reply.Content</div>
+                                                    <p class="fr-reply__text">@reply.Content</p>
                                                 </div>
                                             </div>
                                         }
                                     </div>
                                 }
 
-                                @* Reply input *@
+                                @* Reply composer *@
                                 @if (AuthService.IsLoggedIn)
                                 {
-                                    <div class="reply-input-section">
-                                        <div class="ris-header">WRITE A REPLY</div>
-                                        <div class="ris-box @(_replyFocused ? "focused" : "")">
-                                            <textarea class="ris-textarea"
+                                    <div class="fr-composer">
+                                        <div class="fr-composer__header">
+                                            <div class="fr-avatar fr-avatar--xs" style="background:@GetAvatarColor(AuthService.Username)" aria-hidden="true">
+                                                @(AuthService.Username?.Length > 0 ? AuthService.Username[..1].ToUpper() : "?")
+                                            </div>
+                                            <span class="fr-mono fr-composer__label">WRITE A REPLY</span>
+                                        </div>
+                                        <div class="fr-composer__box @(_replyFocused ? "is-focused" : "")">
+                                            <textarea class="fr-composer__textarea"
                                                       placeholder="Share your intelligence or analysis..."
                                                       rows="3"
                                                       @bind="_replyContent"
                                                       @bind:event="oninput"
                                                       @onfocus="() => _replyFocused = true"
                                                       @onblur="() => _replyFocused = false"
-                                                      disabled="@_replyLoading"></textarea>
+                                                      disabled="@_replyLoading"
+                                                      aria-label="Reply content"
+                                                      maxlength="2000"></textarea>
                                         </div>
                                         @if (!string.IsNullOrEmpty(_replyError))
                                         {
-                                            <div class="ris-error">⚠ @_replyError</div>
+                                            <div class="fr-inline-error" role="alert">
+                                                @SvgAlertTriangle(12)
+                                                <span>@_replyError</span>
+                                            </div>
                                         }
-                                        <div class="ris-actions">
-                                            <span class="ris-char">@_replyContent.Length / 2000</span>
-                                            <button class="ris-btn @(_replyLoading ? "ris-loading" : "")"
+                                        <div class="fr-composer__footer">
+                                            <span class="fr-composer__char fr-mono">@_replyContent.Length / 2000</span>
+                                            <button class="fr-btn fr-btn--accent @(_replyLoading ? "is-loading" : "")"
                                                     @onclick="() => SubmitReply(post.Id)"
-                                                    disabled="@(_replyLoading || string.IsNullOrWhiteSpace(_replyContent))">
+                                                    disabled="@(_replyLoading || string.IsNullOrWhiteSpace(_replyContent))"
+                                                    aria-label="Post reply">
                                                 @if (_replyLoading)
                                                 {
-                                                    <span class="btn-spinner-sm"></span>
-                                                    <span>POSTING...</span>
+                                                    <span class="fr-spinner fr-spinner--sm" aria-hidden="true"></span>
+                                                    <span>Posting...</span>
                                                 }
-                                                else { <span>POST REPLY →</span> }
+                                                else
+                                                {
+                                                    @SvgSend(14)
+                                                    <span>Post Reply</span>
+                                                }
                                             </button>
                                         </div>
                                     </div>
                                 }
                                 else
                                 {
-                                    <div class="reply-login-cta">
-                                        <span>Sign in to reply to this thread</span>
-                                        <a href="/login" class="rlc-link">Sign In →</a>
+                                    <div class="fr-reply-cta">
+                                        <span>Sign in to join this discussion</span>
+                                        <a href="/login" class="fr-btn fr-btn--ghost">Sign In</a>
                                     </div>
                                 }
                             </div>
@@ -349,450 +525,1072 @@
                     }
                 </div>
             }
+
         </main>
     </div>
 
-    @* New Post Modal *@
+    @* ════════════════════════════════════
+       NEW THREAD MODAL
+    ════════════════════════════════════ *@
     @if (_showNewPost)
     {
-        <div class="modal-backdrop" @onclick="CloseNewPost"></div>
-        <div class="modal-card" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <div class="mh-title-row">
-                    <span class="mh-prompt">$</span>
-                    <span class="mh-title">forum.new_thread</span>
-                    <span class="mh-cursor">_</span>
+        <div class="fr-modal-backdrop" @onclick="CloseNewPost" aria-hidden="true"></div>
+        <div class="fr-modal" role="dialog" aria-modal="true" aria-label="Create new thread" @onclick:stopPropagation="true">
+            <div class="fr-modal__header">
+                <div class="fr-modal__title-row">
+                    <span class="fr-mono fr-modal__prompt">$</span>
+                    <span class="fr-mono fr-modal__title">forum.new_thread</span>
+                    <span class="fr-mono fr-modal__cursor" aria-hidden="true">_</span>
                 </div>
-                <button class="mh-close" @onclick="CloseNewPost">✕</button>
+                <button class="fr-icon-btn" @onclick="CloseNewPost" aria-label="Close">@SvgX(16)</button>
             </div>
-            <div class="modal-body">
-                <div class="field-group">
-                    <label class="field-label"><span class="fl-idx">01</span> CATEGORY</label>
-                    <div class="select-wrapper @(_catFocused ? "focused" : "")">
-                        <select class="field-select" @bind="_newPostCategory"
+            <div class="fr-modal__body">
+
+                <div class="fr-field">
+                    <label class="fr-field__label" for="fr-cat-select">
+                        <span class="fr-field__idx" aria-hidden="true">01</span>
+                        CATEGORY
+                    </label>
+                    <div class="fr-select-wrap @(_catFocused ? "is-focused" : "")">
+                        <select id="fr-cat-select" class="fr-select"
+                                @bind="_newPostCategory"
                                 @onfocus="() => _catFocused = true"
                                 @onblur="() => _catFocused = false">
                             @foreach (var cat in _categories.Where(c => c.Name != "All"))
                             {
-                                <option value="@cat.Name">@cat.Icon @cat.Name</option>
+                                <option value="@cat.Name">@cat.Name</option>
                             }
                         </select>
-                        <span class="select-arrow">▾</span>
+                        <span class="fr-select-arrow" aria-hidden="true">@SvgChevronDown(12)</span>
                     </div>
                 </div>
-                <div class="field-group">
-                    <label class="field-label"><span class="fl-idx">02</span> THREAD TITLE</label>
-                    <div class="input-wrapper @(_titleFocused ? "focused" : "")">
-                        <input type="text" class="field-input"
+
+                <div class="fr-field">
+                    <label class="fr-field__label" for="fr-post-title">
+                        <span class="fr-field__idx" aria-hidden="true">02</span>
+                        THREAD TITLE
+                    </label>
+                    <div class="fr-input-wrap @(_titleFocused ? "is-focused" : "")">
+                        <input id="fr-post-title" type="text" class="fr-input"
                                placeholder="What's your thread about?"
                                @bind="_newPostTitle" @bind:event="oninput"
                                @onfocus="() => _titleFocused = true"
                                @onblur="() => _titleFocused = false"
                                maxlength="200" />
                     </div>
-                    <span class="field-hint-right">@_newPostTitle.Length / 200</span>
+                    <span class="fr-field__hint-right fr-mono">@_newPostTitle.Length / 200</span>
                 </div>
-                <div class="field-group">
-                    <label class="field-label"><span class="fl-idx">03</span> CONTENT <span class="md-hint">Markdown supported</span></label>
-                    <div class="textarea-wrapper @(_contentFocused ? "focused" : "")">
-                        <textarea class="field-textarea"
-                                  placeholder="Share your intelligence, analysis, or question... **bold**, *italic*, `code`, ## headings"
+
+                <div class="fr-field">
+                    <label class="fr-field__label" for="fr-post-content">
+                        <span class="fr-field__idx" aria-hidden="true">03</span>
+                        CONTENT
+                        <span class="fr-field__md-hint">Markdown supported</span>
+                    </label>
+                    <div class="fr-textarea-wrap @(_contentFocused ? "is-focused" : "")">
+                        <textarea id="fr-post-content" class="fr-textarea"
+                                  placeholder="Share your intelligence, analysis, or question... **bold**, *italic*, `code`"
                                   rows="6"
                                   @bind="_newPostContent" @bind:event="oninput"
                                   @onfocus="() => _contentFocused = true"
                                   @onblur="() => _contentFocused = false"></textarea>
-                        <div class="textarea-footer">
-                            <span class="char-count @(_newPostContent.Length > 4500 ? "count-warn" : "")">
+                        <div class="fr-textarea-footer">
+                            <span class="fr-mono @(_newPostContent.Length > 4500 ? "fr-count--warn" : "fr-count")">
                                 @_newPostContent.Length / 5000
                             </span>
                         </div>
                     </div>
                 </div>
+
                 @if (!string.IsNullOrEmpty(_newPostError))
                 {
-                    <div class="modal-error">⚠ @_newPostError</div>
+                    <div class="fr-inline-error" role="alert">
+                        @SvgAlertTriangle(13)
+                        <span>@_newPostError</span>
+                    </div>
                 }
-                <div class="modal-actions">
-                    <button class="modal-cancel" @onclick="CloseNewPost">CANCEL</button>
-                    <button class="modal-submit @(_newPostLoading ? "loading" : "")"
+
+                <div class="fr-modal__actions">
+                    <button class="fr-btn fr-btn--ghost" @onclick="CloseNewPost">Cancel</button>
+                    <button class="fr-btn fr-btn--accent @(_newPostLoading ? "is-loading" : "")"
                             @onclick="SubmitNewPost"
-                            disabled="@(_newPostLoading || string.IsNullOrWhiteSpace(_newPostTitle) || string.IsNullOrWhiteSpace(_newPostContent))">
+                            disabled="@(_newPostLoading || string.IsNullOrWhiteSpace(_newPostTitle) || string.IsNullOrWhiteSpace(_newPostContent))"
+                            aria-label="Publish thread">
                         @if (_newPostLoading)
                         {
-                            <span class="btn-spinner-sm"></span><span>POSTING...</span>
+                            <span class="fr-spinner fr-spinner--sm" aria-hidden="true"></span>
+                            <span>Publishing...</span>
                         }
-                        else { <span>PUBLISH THREAD →</span> }
+                        else
+                        {
+                            @SvgSend(14)
+                            <span>Publish Thread</span>
+                        }
                     </button>
                 </div>
             </div>
         </div>
     }
 
-    @* Flag modal *@
+    @* ════════════════════════════════════
+       FLAG MODAL
+    ════════════════════════════════════ *@
     @if (_showFlagModal)
     {
-        <div class="modal-backdrop" @onclick="() => _showFlagModal = false"></div>
-        <div class="modal-card flag-modal" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <div class="mh-title-row">
-                    <span class="mh-prompt">🚩</span>
-                    <span class="mh-title">flag.report</span>
+        <div class="fr-modal-backdrop" @onclick="() => _showFlagModal = false" aria-hidden="true"></div>
+        <div class="fr-modal fr-modal--sm" role="dialog" aria-modal="true" aria-label="Flag thread" @onclick:stopPropagation="true">
+            <div class="fr-modal__header">
+                <div class="fr-modal__title-row">
+                    @SvgFlag(15)
+                    <span class="fr-mono fr-modal__title">Flag thread</span>
                 </div>
-                <button class="mh-close" @onclick="() => _showFlagModal = false">✕</button>
+                <button class="fr-icon-btn" @onclick="() => _showFlagModal = false" aria-label="Close">@SvgX(16)</button>
             </div>
-            <div class="modal-body">
-                <div class="field-group">
-                    <label class="field-label"><span class="fl-idx">01</span> REASON</label>
-                    <div class="select-wrapper">
-                        <select class="field-select" @bind="_flagReason">
+            <div class="fr-modal__body">
+                <div class="fr-field">
+                    <label class="fr-field__label" for="fr-flag-reason">REASON</label>
+                    <div class="fr-select-wrap">
+                        <select id="fr-flag-reason" class="fr-select" @bind="_flagReason">
                             <option value="Misinformation">Misinformation</option>
                             <option value="Harmful content">Harmful content</option>
                             <option value="Spam">Spam</option>
                             <option value="Offensive tool sharing">Offensive tool sharing</option>
                             <option value="Other">Other</option>
                         </select>
-                        <span class="select-arrow">▾</span>
+                        <span class="fr-select-arrow" aria-hidden="true">@SvgChevronDown(12)</span>
                     </div>
                 </div>
-                <div class="modal-actions">
-                    <button class="modal-cancel" @onclick="() => _showFlagModal = false">CANCEL</button>
-                    <button class="modal-submit" @onclick="SubmitFlag">SUBMIT FLAG →</button>
+                <div class="fr-modal__actions">
+                    <button class="fr-btn fr-btn--ghost" @onclick="() => _showFlagModal = false">Cancel</button>
+                    <button class="fr-btn fr-btn--danger" @onclick="SubmitFlag">Submit Flag</button>
                 </div>
             </div>
         </div>
     }
+
 </div>
 
+@* ═══════════════════════════════════════
+   INLINE SVG ICON HELPERS
+═══════════════════════════════════════ *@
+@code {
+    RenderFragment SvgSearch(int s)     => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.35-4.35'/></svg>");
+    RenderFragment SvgX(int s)          => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M18 6 6 18'/><path d='m6 6 12 12'/></svg>");
+    RenderFragment SvgPlus(int s)       => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><line x1='12' y1='5' x2='12' y2='19'/><line x1='5' y1='12' x2='19' y2='12'/></svg>");
+    RenderFragment SvgFilter(int s)     => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polygon points='22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3'/></svg>");
+    RenderFragment SvgChevronUp(int s)  => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m18 15-6-6-6 6'/></svg>");
+    RenderFragment SvgChevronDown(int s)=> b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='m6 9 6 6 6-6'/></svg>");
+    RenderFragment SvgAlertTriangle(int s) => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/><line x1='12' y1='9' x2='12' y2='13'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>");
+    RenderFragment SvgRefresh(int s)    => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polyline points='23 4 23 10 17 10'/><path d='M20.49 15a9 9 0 1 1-2.12-9.36L23 10'/></svg>");
+    RenderFragment SvgMessageSquare(int s) => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg>");
+    RenderFragment SvgMessageCircle(int s) => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z'/></svg>");
+    RenderFragment SvgEye(int s)        => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'/><circle cx='12' cy='12' r='3'/></svg>");
+    RenderFragment SvgClock(int s)      => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='10'/><polyline points='12 6 12 12 16 14'/></svg>");
+    RenderFragment SvgPin(int s)        => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><line x1='12' y1='17' x2='12' y2='22'/><path d='M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24z'/></svg>");
+    RenderFragment SvgFlag(int s)       => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'/><line x1='4' y1='22' x2='4' y2='15'/></svg>");
+    RenderFragment SvgBadgeCheck(int s) => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z'/><path d='m9 12 2 2 4-4'/></svg>");
+    RenderFragment SvgSend(int s)       => b => b.AddMarkupContent(0, $"<svg width='{s}' height='{s}' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><line x1='22' y1='2' x2='11' y2='13'/><polygon points='22 2 15 22 11 13 2 9 22 2'/></svg>");
+
+    RenderFragment GetCategorySvg(string name) => name switch
+    {
+        "Threat Intel"      => b => b.AddMarkupContent(0, "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.35-4.35'/></svg>"),
+        "Malware Analysis"  => b => b.AddMarkupContent(0, "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>"),
+        "Incident Reports"  => b => b.AddMarkupContent(0, "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/><line x1='12' y1='9' x2='12' y2='13'/><line x1='12' y1='17' x2='12.01' y2='17'/></svg>"),
+        "Tools & Resources" => b => b.AddMarkupContent(0, "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'/></svg>"),
+        "All"               => b => b.AddMarkupContent(0, "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><rect x='3' y='3' width='7' height='7'/><rect x='14' y='3' width='7' height='7'/><rect x='14' y='14' width='7' height='7'/><rect x='3' y='14' width='7' height='7'/></svg>"),
+        _                   => b => b.AddMarkupContent(0, "<svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'/></svg>"),
+    };
+}
+
 <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ══════════════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════════════ */
+:root {
+    --fr-bg:            #0d1117;
+    --fr-surface:       #161b22;
+    --fr-surface-2:     #1c2230;
+    --fr-border:        #21262d;
+    --fr-border-hover:  #30363d;
 
-    .forum-root {
-        min-height: 100vh;
-        background: #0d1117;
-        font-family: 'Inter', sans-serif;
-        padding: 72px 0 0;
-        position: relative;
-        overflow-x: hidden;
-    }
+    --fr-text:          #e6edf3;
+    --fr-text-2:        #8b949e;
+    --fr-text-3:        #4a5160;
 
-    .bg-grid {
-        position: fixed; inset: 0;
-        background-image: linear-gradient(rgba(159,239,0,0.025) 1px, transparent 1px),
-                          linear-gradient(90deg, rgba(159,239,0,0.025) 1px, transparent 1px);
-        background-size: 40px 40px;
-        pointer-events: none; z-index: 0;
-    }
+    --fr-accent:        #9fef00;
+    --fr-accent-dim:    rgba(159,239,0,0.10);
+    --fr-accent-border: rgba(159,239,0,0.22);
 
-    .scan-line {
-        position: fixed; top: -2px; left: 0; right: 0; height: 2px;
-        background: linear-gradient(90deg, transparent, #9fef00, transparent);
-        animation: scan 8s linear infinite; opacity: 0.3; z-index: 1; pointer-events: none;
-    }
+    --fr-blue:          #00c8ff;
+    --fr-orange:        #ffa500;
+    --fr-red:           #ff3e3e;
+    --fr-purple:        #bf40bf;
 
-    .corner { position: fixed; width: 18px; height: 18px; z-index: 2; pointer-events: none; }
-    .corner-tl { top: 14px; left: 14px; border-top: 2px solid #9fef00; border-left: 2px solid #9fef00; }
-    .corner-tr { top: 14px; right: 14px; border-top: 2px solid #9fef00; border-right: 2px solid #9fef00; }
-    .corner-bl { bottom: 14px; left: 14px; border-bottom: 2px solid #9fef00; border-left: 2px solid #9fef00; }
-    .corner-br { bottom: 14px; right: 14px; border-bottom: 2px solid #9fef00; border-right: 2px solid #9fef00; }
+    --fr-cat-general:   #8b949e;
+    --fr-cat-intel:     #ff3e3e;
+    --fr-cat-malware:   #bf40bf;
+    --fr-cat-incident:  #ffa500;
+    --fr-cat-tools:     #00c8ff;
 
-    .forum-layout {
-        max-width: 1200px; margin: 0 auto;
-        display: grid; grid-template-columns: 260px 1fr;
-        min-height: calc(100vh - 72px); position: relative; z-index: 3;
-    }
+    --fr-radius-sm:     4px;
+    --fr-radius-md:     6px;
+    --fr-radius-lg:     8px;
 
-    /* ── Sidebar ── */
-    .forum-sidebar {
-        border-right: 1px solid #21262d; padding: 32px 24px;
-        display: flex; flex-direction: column; gap: 20px;
-        position: sticky; top: 72px;
-        height: calc(100vh - 72px); overflow-y: auto;
-    }
+    --fr-font:          'Inter', system-ui, sans-serif;
+    --fr-mono:          'IBM Plex Mono', 'Fira Code', monospace;
 
-    .sb-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #9fef00; letter-spacing: 2px; opacity: 0.7; margin-bottom: 10px; }
-    .sb-title { font-size: 32px; font-weight: 700; color: #e6edf3; line-height: 1.1; letter-spacing: -0.5px; margin-bottom: 10px; }
-    .sb-accent { color: #9fef00; }
-    .sb-sub { font-size: 12px; color: #6e7681; line-height: 1.6; }
+    --fr-dur:           150ms;
+    --fr-ease:          cubic-bezier(0.16, 1, 0.3, 1);
 
-    .sidebar-card { background: #161b22; border: 1px solid #21262d; border-radius: 8px; overflow: hidden; }
-    .sc-header { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #4a5160; letter-spacing: 2px; padding: 10px 14px; background: #0d1117; border-bottom: 1px solid #21262d; }
+    --fr-sidebar-w:     252px;
+    --fr-topbar-h:      56px;
+    --fr-page-top:      56px; /* navbar height */
+}
 
-    .cat-btn { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: none; border: none; border-bottom: 1px solid #21262d; cursor: pointer; transition: background 0.1s; text-align: left; }
-    .cat-btn:last-child { border-bottom: none; }
-    .cat-btn:hover { background: #0d1117; }
-    .cat-active { background: rgba(159,239,0,0.04) !important; }
-    .cat-active .cat-name { color: #9fef00 !important; }
-    .cat-icon { font-size: 14px; flex-shrink: 0; }
-    .cat-name { font-size: 13px; color: #c9d1d9; flex: 1; transition: color 0.1s; }
-    .cat-count { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #4a5160; background: #21262d; padding: 1px 6px; border-radius: 8px; }
+/* ══════════════════════════════════════════════
+   RESET
+══════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+button { font-family: inherit; cursor: pointer; }
+a { text-decoration: none; }
+svg { display: block; flex-shrink: 0; }
 
-    .rules-list { padding: 4px 0; }
-    .rule-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 14px; border-bottom: 1px solid #21262d; }
-    .rule-item:last-child { border-bottom: none; }
-    .rule-num { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #9fef00; opacity: 0.5; flex-shrink: 0; }
-    .rule-text { font-size: 12px; color: #6e7681; line-height: 1.4; }
+/* ══════════════════════════════════════════════
+   ROOT
+══════════════════════════════════════════════ */
+.fr-root {
+    min-height: 100vh;
+    background: var(--fr-bg);
+    font-family: var(--fr-font);
+    padding-top: var(--fr-page-top);
+    position: relative;
+    overflow-x: hidden;
+    color: var(--fr-text);
+}
+.fr-mono { font-family: var(--fr-mono); }
 
-    .sidebar-auth-cta { background: rgba(159,239,0,0.05); border: 1px solid rgba(159,239,0,0.2); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
-    .sac-text { font-size: 12px; color: #6e7681; }
-    .sac-btn { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; color: #0d1117; background: #9fef00; padding: 7px 16px; border-radius: 4px; text-decoration: none; letter-spacing: 1px; transition: opacity 0.15s; }
-    .sac-btn:hover { opacity: 0.88; }
+/* ══════════════════════════════════════════════
+   AMBIENT
+══════════════════════════════════════════════ */
+.fr-bg-grid {
+    position: fixed; inset: 0;
+    background-image:
+        linear-gradient(rgba(159,239,0,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(159,239,0,0.018) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none; z-index: 0;
+}
+.fr-scan-line {
+    position: fixed; top: -2px; left: 0; right: 0; height: 1.5px;
+    background: linear-gradient(90deg, transparent, var(--fr-accent), transparent);
+    animation: fr-scan 10s linear infinite; opacity: 0.2;
+    z-index: 1; pointer-events: none;
+}
+.fr-corner { position: fixed; width: 14px; height: 14px; z-index: 2; pointer-events: none; opacity: 0.4; }
+.fr-corner--tl { top: 10px; left: 10px; border-top: 1.5px solid var(--fr-accent); border-left: 1.5px solid var(--fr-accent); }
+.fr-corner--tr { top: 10px; right: 10px; border-top: 1.5px solid var(--fr-accent); border-right: 1.5px solid var(--fr-accent); }
+.fr-corner--bl { bottom: 10px; left: 10px; border-bottom: 1.5px solid var(--fr-accent); border-left: 1.5px solid var(--fr-accent); }
+.fr-corner--br { bottom: 10px; right: 10px; border-bottom: 1.5px solid var(--fr-accent); border-right: 1.5px solid var(--fr-accent); }
 
-    /* ── Main ── */
-    .forum-main { padding: 24px 32px; }
+@@keyframes fr-scan { 0% { top: -2px; } 100% { top: 100vh; } }
 
-    .forum-topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-    .ftb-left { display: flex; align-items: baseline; gap: 12px; }
-    .ftb-title { font-size: 20px; font-weight: 700; color: #e6edf3; letter-spacing: -0.3px; }
-    .ftb-count { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4a5160; }
-    .ftb-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+@@media (prefers-reduced-motion: reduce) {
+    .fr-scan-line { display: none; }
+    .fr-thread, .fr-detail, .fr-skeleton { animation: none !important; }
+    .fr-spinner { animation: none !important; }
+}
 
-    /* ── Sort tabs ── */
-    .sort-tabs { display: flex; gap: 2px; background: #161b22; border: 1px solid #21262d; border-radius: 4px; padding: 3px; }
-    .sort-tab { padding: 5px 12px; background: transparent; border: none; border-radius: 3px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #6e7681; letter-spacing: 1px; transition: all 0.15s; }
-    .sort-tab:hover { color: #c9d1d9; }
-    .sort-active { background: rgba(159,239,0,0.1) !important; color: #9fef00 !important; }
+/* ══════════════════════════════════════════════
+   PAGE SHELL — 3 column grid (desktop)
+══════════════════════════════════════════════ */
+.fr-shell {
+    max-width: 1200px; margin: 0 auto;
+    display: grid;
+    grid-template-columns: var(--fr-sidebar-w) 1fr;
+    min-height: calc(100vh - var(--fr-page-top));
+    position: relative; z-index: 3;
+}
 
-    .search-box { display: flex; align-items: center; background: #161b22; border: 1px solid #21262d; border-radius: 4px; overflow: hidden; min-width: 200px; transition: border-color 0.15s, box-shadow 0.15s; }
-    .search-box.focused { border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
-    .search-icon { padding: 0 10px; color: #4a5160; font-size: 16px; border-right: 1px solid #21262d; line-height: 36px; }
-    .search-input { flex: 1; background: transparent; border: none; outline: none; padding: 8px 10px; font-family: 'Inter', sans-serif; font-size: 13px; color: #c9d1d9; caret-color: #9fef00; }
-    .search-input::placeholder { color: #4a5160; }
+/* ══════════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════════ */
+.fr-sidebar {
+    border-right: 1px solid var(--fr-border);
+    padding: 28px 18px 40px;
+    display: flex; flex-direction: column; gap: 18px;
+    position: sticky; top: var(--fr-page-top);
+    height: calc(100vh - var(--fr-page-top));
+    overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: var(--fr-border) transparent;
+}
+.fr-sidebar::-webkit-scrollbar { width: 3px; }
+.fr-sidebar::-webkit-scrollbar-thumb { background: var(--fr-border); }
 
-    .new-post-btn { padding: 8px 16px; background: #9fef00; border: none; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; color: #0d1117; cursor: pointer; letter-spacing: 1.5px; white-space: nowrap; transition: opacity 0.15s, box-shadow 0.15s; }
-    .new-post-btn:hover { opacity: 0.9; box-shadow: 0 4px 16px rgba(159,239,0,0.2); }
+.fr-sidebar-eyebrow {
+    font-size: 9px; letter-spacing: 2.5px;
+    color: var(--fr-accent); opacity: 0.7; margin-bottom: 8px;
+}
+.fr-sidebar-title {
+    font-size: 26px; font-weight: 700; color: var(--fr-text);
+    line-height: 1.15; letter-spacing: -0.5px; margin-bottom: 8px;
+}
+.fr-sidebar-accent { color: var(--fr-accent); }
+.fr-sidebar-sub { font-size: 12px; color: var(--fr-text-3); line-height: 1.65; }
 
-    /* ── Post cards ── */
-    .posts-list { display: flex; flex-direction: column; gap: 0; }
+.fr-sidebar-card {
+    background: var(--fr-surface); border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-lg); overflow: hidden;
+}
+.fr-sidebar-card__header {
+    font-family: var(--fr-mono); font-size: 9px; letter-spacing: 2.5px;
+    color: var(--fr-text-3); padding: 9px 14px;
+    background: rgba(0,0,0,0.18); border-bottom: 1px solid var(--fr-border);
+}
 
-    .post-card {
-        display: flex; align-items: flex-start; gap: 12px;
-        padding: 16px 14px; background: #161b22;
-        border: 1px solid #21262d; border-bottom: none;
-        cursor: pointer; transition: background 0.1s, border-color 0.15s;
-        animation: fadeInUp 0.4s ease both;
-    }
-    .post-card:first-child { border-radius: 8px 8px 0 0; }
-    .posts-list > *:last-child { border-bottom: 1px solid #21262d; border-radius: 0 0 8px 8px; }
-    .post-card:hover { background: rgba(159,239,0,0.02); border-color: #30363d; }
-    .post-expanded { border-color: rgba(159,239,0,0.3) !important; background: rgba(159,239,0,0.02) !important; }
-    .post-pinned { border-left: 3px solid #ffa500 !important; }
+/* Category buttons in sidebar */
+.fr-sidebar-cat {
+    display: flex; align-items: center; gap: 9px;
+    width: 100%; padding: 9px 14px;
+    background: none; border: none;
+    border-bottom: 1px solid var(--fr-border);
+    transition: background var(--fr-dur);
+    text-align: left; position: relative;
+    overflow: hidden;
+}
+.fr-sidebar-cat:last-child { border-bottom: none; }
+.fr-sidebar-cat:hover { background: rgba(0,0,0,0.12); }
+.fr-sidebar-cat:focus-visible { outline: 2px solid var(--fr-accent); outline-offset: -2px; }
+.fr-sidebar-cat.is-active { background: rgba(159,239,0,0.03); }
+.fr-sidebar-cat.is-active .fr-sidebar-cat__name { color: var(--fr-accent); }
 
-    /* ── Vote column ── */
-    .vote-col { display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0; min-width: 32px; }
-    .vote-btn { background: none; border: none; cursor: pointer; font-size: 11px; color: #4a5160; padding: 2px 6px; border-radius: 3px; transition: color 0.15s, background 0.15s; line-height: 1; }
-    .vote-btn:hover:not(:disabled) { color: #9fef00; background: rgba(159,239,0,0.08); }
-    .vote-btn:disabled { cursor: default; opacity: 0.3; }
-    .vote-btn.voted { color: #9fef00 !important; }
-    .vote-btn.voted-down { color: #ff3e3e !important; }
-    .vote-score { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; color: #6e7681; }
-    .score-pos { color: #9fef00; }
-    .score-neg { color: #ff3e3e; }
+/* The signature element: left accent bar per category */
+.fr-sidebar-cat__bar {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    opacity: 0; transition: opacity var(--fr-dur);
+    border-radius: 0 2px 2px 0;
+}
+.fr-sidebar-cat.is-active .fr-sidebar-cat__bar { opacity: 1; }
 
-    .reply-vote { display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0; }
-    .vote-btn-sm { background: none; border: none; cursor: pointer; font-size: 9px; color: #4a5160; padding: 1px 4px; border-radius: 2px; transition: color 0.15s; line-height: 1; }
-    .vote-btn-sm:hover:not(:disabled) { color: #9fef00; }
-    .vote-btn-sm:disabled { cursor: default; opacity: 0.3; }
-    .vote-btn-sm.voted { color: #9fef00 !important; }
-    .vote-btn-sm.voted-down { color: #ff3e3e !important; }
-    .vote-score-sm { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #6e7681; }
+.fr-sidebar-cat__icon { display: flex; align-items: center; width: 16px; flex-shrink: 0; }
+.fr-sidebar-cat__name { font-size: 12.5px; color: var(--fr-text-2); flex: 1; transition: color var(--fr-dur); }
+.fr-sidebar-cat__count {
+    font-family: var(--fr-mono); font-size: 10px; color: var(--fr-text-3);
+    background: var(--fr-border); padding: 1px 6px; border-radius: 20px;
+    transition: background var(--fr-dur), color var(--fr-dur);
+}
+.fr-sidebar-cat.is-active .fr-sidebar-cat__count { background: var(--fr-accent-dim); color: var(--fr-accent); }
 
-    /* ── Pin badge ── */
-    .pin-badge { font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 700; color: #ffa500; background: rgba(255,165,0,0.1); border: 1px solid rgba(255,165,0,0.3); padding: 1px 6px; border-radius: 2px; letter-spacing: 1px; flex-shrink: 0; }
+/* Rules */
+.fr-rules { padding: 4px 0; }
+.fr-rule {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 8px 14px; border-bottom: 1px solid var(--fr-border);
+}
+.fr-rule:last-child { border-bottom: none; }
+.fr-rule__num { font-family: var(--fr-mono); font-size: 9px; color: var(--fr-accent); opacity: 0.5; flex-shrink: 0; padding-top: 1px; }
+.fr-rule__text { font-size: 12px; color: var(--fr-text-3); line-height: 1.5; }
 
-    /* ── Verified flair ── */
-    .verified-flair { font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 700; color: #00c8ff; background: rgba(0,200,255,0.08); border: 1px solid rgba(0,200,255,0.2); padding: 1px 5px; border-radius: 2px; letter-spacing: 0.5px; flex-shrink: 0; }
+/* Auth CTA */
+.fr-auth-cta {
+    background: var(--fr-accent-dim); border: 1px solid var(--fr-accent-border);
+    border-radius: var(--fr-radius-lg); padding: 16px;
+    display: flex; flex-direction: column; gap: 10px; align-items: center; text-align: center;
+}
+.fr-auth-cta__text { font-size: 12px; color: var(--fr-text-3); }
 
-    .pc-avatar { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 700; color: white; flex-shrink: 0; }
-    .pc-body { flex: 1; min-width: 0; }
-    .pc-top { margin-bottom: 8px; }
-    .pc-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; flex-wrap: wrap; }
-    .pc-title { font-size: 15px; font-weight: 600; color: #e6edf3; line-height: 1.3; flex: 1; }
+/* ══════════════════════════════════════════════
+   MAIN COLUMN
+══════════════════════════════════════════════ */
+.fr-main { display: flex; flex-direction: column; min-width: 0; }
 
-    .cat-pill { font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 600; padding: 2px 8px; border-radius: 3px; letter-spacing: 1px; flex-shrink: 0; white-space: nowrap; }
-    .cat-general { background: rgba(110,118,129,0.12); color: #6e7681; border: 1px solid #21262d; }
-    .cat-threatintel { background: rgba(255,62,62,0.1); color: #ff3e3e; border: 1px solid rgba(255,62,62,0.2); }
-    .cat-malwareanalysis { background: rgba(191,64,191,0.1); color: #bf40bf; border: 1px solid rgba(191,64,191,0.2); }
-    .cat-incidentreports { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.2); }
-    .cat-toolsresources { background: rgba(0,200,255,0.1); color: #00c8ff; border: 1px solid rgba(0,200,255,0.2); }
+/* ══════════════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════════════ */
+.fr-topbar {
+    position: sticky; top: var(--fr-page-top); z-index: 20;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--fr-border);
+    padding: 10px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    flex-wrap: wrap;
+}
 
-    .pc-preview { font-size: 13px; color: #6e7681; line-height: 1.5; }
+.fr-topbar__left  { display: flex; align-items: center; gap: 12px; }
+.fr-topbar__right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-    .pc-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .pc-author { display: flex; align-items: center; gap: 6px; }
-    .author-name { font-size: 12px; font-weight: 600; }
-    .author-name.role-public { color: #6e7681; }
-    .author-name.role-registered { color: #c9d1d9; }
-    .author-name.role-reporter { color: #9fef00; }
-    .author-name.role-admin { color: #ffa500; }
+.fr-topbar__heading { display: flex; align-items: baseline; gap: 10px; }
+.fr-feed-title { font-size: 17px; font-weight: 700; color: var(--fr-text); letter-spacing: -0.3px; }
+.fr-feed-count  { font-size: 10px; letter-spacing: 1px; color: var(--fr-text-3); }
 
-    .author-role-badge { font-family: 'IBM Plex Mono', monospace; font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 2px; letter-spacing: 1px; }
-    .role-badge-public { background: rgba(110,118,129,0.1); color: #6e7681; border: 1px solid #21262d; }
-    .role-badge-registered { background: rgba(0,200,255,0.08); color: #00c8ff; border: 1px solid rgba(0,200,255,0.2); }
-    .role-badge-reporter { background: rgba(159,239,0,0.08); color: #9fef00; border: 1px solid rgba(159,239,0,0.2); }
-    .role-badge-admin { background: rgba(255,165,0,0.1); color: #ffa500; border: 1px solid rgba(255,165,0,0.3); }
+/* Mobile filter button */
+.fr-mobile-filter-btn {
+    display: none; position: relative;
+    width: 36px; height: 36px;
+    background: var(--fr-surface); border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-md); color: var(--fr-text-2);
+    align-items: center; justify-content: center;
+    transition: border-color var(--fr-dur), color var(--fr-dur);
+}
+.fr-mobile-filter-btn:hover { border-color: var(--fr-border-hover); color: var(--fr-text); }
+.fr-filter-dot {
+    position: absolute; top: 5px; right: 5px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--fr-accent); border: 1.5px solid var(--fr-bg);
+}
 
-    .pc-dot { color: #4a5160; font-size: 10px; }
-    .pc-time, .pc-replies, .pc-views { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4a5160; }
-    .pc-chevron { font-size: 12px; color: #4a5160; flex-shrink: 0; transition: transform 0.2s, color 0.2s; margin-top: 4px; }
-    .chevron-open { transform: rotate(180deg); color: #9fef00; }
+/* Sort group */
+.fr-sort-group {
+    display: flex; gap: 1px;
+    background: var(--fr-surface); border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-md); padding: 3px; flex-shrink: 0;
+}
+.fr-sort-btn {
+    padding: 5px 12px; background: transparent; border: none;
+    border-radius: var(--fr-radius-sm);
+    font-family: var(--fr-mono); font-size: 10px; letter-spacing: 1px;
+    color: var(--fr-text-3);
+    transition: background var(--fr-dur), color var(--fr-dur);
+}
+.fr-sort-btn:hover { color: var(--fr-text-2); }
+.fr-sort-btn:focus-visible { outline: 2px solid var(--fr-accent); outline-offset: -1px; }
+.fr-sort-btn.is-active { background: var(--fr-accent-dim); color: var(--fr-accent); }
 
-    /* ── Post detail ── */
-    .post-detail { background: #0d1117; border: 1px solid rgba(159,239,0,0.2); border-top: none; border-bottom: none; animation: expandIn 0.2s ease both; }
-    .pd-content { padding: 20px 20px 16px; border-bottom: 1px solid #21262d; }
-    .pd-author-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .pd-avatar { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700; color: white; flex-shrink: 0; }
-    .pd-author-info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-    .pd-author-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .pd-username { font-size: 13px; font-weight: 600; }
-    .pd-time { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #4a5160; }
+/* Search */
+.fr-search {
+    display: flex; align-items: center;
+    background: var(--fr-surface); border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-md); overflow: hidden;
+    min-width: 180px; max-width: 240px;
+    transition: border-color var(--fr-dur), box-shadow var(--fr-dur);
+}
+.fr-search.is-focused {
+    border-color: var(--fr-accent); box-shadow: 0 0 0 3px rgba(159,239,0,0.07);
+}
+.fr-search__icon {
+    display: flex; align-items: center;
+    padding: 0 10px; color: var(--fr-text-3);
+    border-right: 1px solid var(--fr-border); align-self: stretch; flex-shrink: 0;
+}
+.fr-search__input {
+    flex: 1; background: none; border: none; outline: none;
+    padding: 8px 10px; font-size: 13px; color: var(--fr-text);
+    caret-color: var(--fr-accent); min-width: 0;
+}
+.fr-search__input::placeholder { color: var(--fr-text-3); }
+.fr-search__input::-webkit-search-cancel-button { display: none; }
+.fr-search__clear {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; background: none; border: none;
+    color: var(--fr-text-3); transition: color var(--fr-dur); flex-shrink: 0;
+}
+.fr-search__clear:hover { color: var(--fr-red); }
 
-    /* ── Action buttons ── */
-    .pd-actions { display: flex; gap: 8px; margin-left: auto; flex-shrink: 0; }
-    .action-btn { padding: 4px 10px; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; cursor: pointer; border: 1px solid; letter-spacing: 1px; transition: all 0.15s; }
-    .pin-btn { color: #ffa500; border-color: rgba(255,165,0,0.3); background: rgba(255,165,0,0.06); }
-    .pin-btn:hover { background: rgba(255,165,0,0.15); }
-    .pin-btn.pinned { background: rgba(255,165,0,0.15); border-color: #ffa500; }
-    .flag-btn { color: #6e7681; border-color: #21262d; background: transparent; }
-    .flag-btn:hover { color: #ff3e3e; border-color: rgba(255,62,62,0.3); background: rgba(255,62,62,0.06); }
-    .flag-btn.flagged { color: #ff3e3e; border-color: rgba(255,62,62,0.3); background: rgba(255,62,62,0.08); }
+/* ══════════════════════════════════════════════
+   TABLET CATEGORY STRIP
+   Hidden on desktop (sidebar handles it)
+   Visible on tablet
+══════════════════════════════════════════════ */
+.fr-cat-strip {
+    display: none;
+    padding: 10px 24px;
+    gap: 6px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--fr-border);
+    background: var(--fr-surface);
+}
+.fr-cat-chip {
+    padding: 5px 12px;
+    background: none; border: 1px solid var(--fr-border);
+    border-radius: 20px;
+    font-size: 12px; color: var(--fr-text-3);
+    transition: all var(--fr-dur);
+    white-space: nowrap;
+}
+.fr-cat-chip:hover { border-color: var(--fr-border-hover); color: var(--fr-text-2); }
+.fr-cat-chip:focus-visible { outline: 2px solid var(--fr-accent); }
+.fr-cat-chip.is-active {
+    background: var(--chip-color, var(--fr-accent));
+    border-color: transparent;
+    color: var(--fr-bg); font-weight: 600;
+}
 
-    /* ── Markdown body ── */
-    .markdown-body { font-size: 14px; color: #c9d1d9; line-height: 1.7; word-break: break-word; }
-    .markdown-body :global(h1), .markdown-body :global(h2), .markdown-body :global(h3) { color: #e6edf3; margin: 16px 0 8px; font-weight: 700; }
-    .markdown-body :global(h1) { font-size: 20px; }
-    .markdown-body :global(h2) { font-size: 17px; }
-    .markdown-body :global(h3) { font-size: 15px; }
-    .markdown-body :global(p) { margin: 0 0 12px; }
-    .markdown-body :global(code) { font-family: 'IBM Plex Mono', monospace; font-size: 12px; background: #21262d; padding: 1px 5px; border-radius: 3px; color: #9fef00; }
-    .markdown-body :global(pre) { background: #161b22; border: 1px solid #21262d; border-radius: 6px; padding: 14px; overflow-x: auto; margin: 12px 0; }
-    .markdown-body :global(pre code) { background: none; padding: 0; color: #c9d1d9; }
-    .markdown-body :global(blockquote) { border-left: 3px solid #9fef00; padding-left: 14px; color: #6e7681; margin: 12px 0; }
-    .markdown-body :global(strong) { color: #e6edf3; font-weight: 700; }
-    .markdown-body :global(em) { color: #c9d1d9; font-style: italic; }
-    .markdown-body :global(a) { color: #9fef00; }
-    .markdown-body :global(ul), .markdown-body :global(ol) { padding-left: 20px; margin: 8px 0; }
-    .markdown-body :global(li) { margin: 4px 0; }
-    .markdown-body :global(hr) { border: none; border-top: 1px solid #21262d; margin: 16px 0; }
+/* ══════════════════════════════════════════════
+   FEED
+══════════════════════════════════════════════ */
+.fr-feed {
+    display: flex; flex-direction: column;
+    padding: 16px 24px 48px;
+    gap: 1px;
+}
 
-    /* ── Markdown hint ── */
-    .md-hint { font-size: 10px; color: #4a5160; font-style: italic; letter-spacing: 0; margin-left: 8px; }
+/* ══════════════════════════════════════════════
+   THREAD ROW
+   Signature: left accent bar encodes category
+══════════════════════════════════════════════ */
+.fr-thread {
+    display: flex; align-items: flex-start; gap: 0;
+    background: var(--fr-surface);
+    border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-md);
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: border-color var(--fr-dur), background var(--fr-dur);
+    position: relative;
+    overflow: hidden;
+    animation: fr-fade-up 0.35s var(--fr-ease) both;
+}
+.fr-thread:hover { border-color: var(--fr-border-hover); background: rgba(255,255,255,0.012); }
+.fr-thread:focus-visible { outline: 2px solid var(--fr-accent); outline-offset: 2px; }
+.fr-thread.is-expanded {
+    border-color: rgba(159,239,0,0.25); background: rgba(159,239,0,0.012);
+    border-radius: var(--fr-radius-md) var(--fr-radius-md) 0 0;
+    margin-bottom: 0;
+}
+.fr-thread.is-pinned { border-left-color: var(--fr-orange); }
 
-    /* ── Replies ── */
-    .replies-loading { display: flex; align-items: center; gap: 10px; padding: 16px 20px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #4a5160; }
-    .rl-spinner { width: 14px; height: 14px; border: 2px solid #21262d; border-top-color: #9fef00; border-radius: 50%; animation: spin 0.8s linear infinite; }
-    .replies-section { padding: 0 20px; }
-    .replies-header { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #4a5160; letter-spacing: 2px; padding: 14px 0 10px; border-bottom: 1px solid #21262d; }
+/* Category accent bar — THE signature element */
+.fr-thread__accent {
+    width: 3px; flex-shrink: 0; align-self: stretch;
+    border-radius: 3px 0 0 3px;
+    opacity: 0.7;
+}
 
-    .reply-item { display: flex; gap: 10px; padding: 14px 0; border-bottom: 1px solid #21262d; }
-    .reply-item:last-child { border-bottom: none; }
-    .ri-avatar { width: 28px; height: 28px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; color: white; flex-shrink: 0; }
-    .ri-body { flex: 1; }
-    .ri-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-    .ri-author { font-size: 12px; font-weight: 600; }
-    .ri-author.role-reporter { color: #9fef00; }
-    .ri-author.role-admin { color: #ffa500; }
-    .ri-author.role-registered { color: #c9d1d9; }
-    .ri-time { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #4a5160; margin-left: auto; }
-    .ri-text { font-size: 13px; color: #c9d1d9; line-height: 1.6; word-break: break-word; }
+/* Vote column */
+.fr-vote {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 14px 10px 14px 12px; flex-shrink: 0; min-width: 44px;
+}
+.fr-vote__btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    background: none; border: 1px solid transparent;
+    border-radius: var(--fr-radius-sm); color: var(--fr-text-3);
+    transition: color var(--fr-dur), background var(--fr-dur), border-color var(--fr-dur);
+}
+.fr-vote__btn:hover:not(:disabled) { color: var(--fr-accent); background: var(--fr-accent-dim); border-color: var(--fr-accent-border); }
+.fr-vote__btn:disabled { opacity: 0.3; cursor: default; }
+.fr-vote__btn:focus-visible { outline: 2px solid var(--fr-accent); outline-offset: 1px; }
+.fr-vote__btn.is-up { color: var(--fr-accent); }
+.fr-vote__btn.is-down { color: var(--fr-red); }
+.fr-vote__btn--sm { width: 22px; height: 22px; }
+.fr-vote__score {
+    font-family: var(--fr-mono); font-size: 12px; font-weight: 600;
+    color: var(--fr-text-3); line-height: 1;
+}
+.fr-vote__score.is-pos { color: var(--fr-accent); }
+.fr-vote__score.is-neg { color: var(--fr-red); }
+.fr-vote__score--sm { font-size: 10px; }
 
-    /* ── Reply input ── */
-    .reply-input-section { padding: 16px 20px; border-top: 1px solid #21262d; }
-    .ris-header { font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #4a5160; letter-spacing: 2px; margin-bottom: 10px; }
-    .ris-box { background: #161b22; border: 1px solid #21262d; border-radius: 4px; overflow: hidden; transition: border-color 0.15s, box-shadow 0.15s; }
-    .ris-box.focused { border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
-    .ris-textarea { width: 100%; background: transparent; border: none; outline: none; padding: 12px 14px; font-family: 'Inter', sans-serif; font-size: 13px; color: #c9d1d9; resize: none; caret-color: #9fef00; line-height: 1.6; }
-    .ris-textarea::placeholder { color: #4a5160; }
-    .ris-error { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #ff3e3e; margin: 8px 0; }
-    .ris-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 10px; }
-    .ris-char { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #4a5160; }
-    .ris-btn { padding: 9px 18px; background: #9fef00; border: none; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; color: #0d1117; cursor: pointer; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; transition: opacity 0.15s, box-shadow 0.15s; }
-    .ris-btn:hover:not(:disabled) { opacity: 0.9; box-shadow: 0 4px 14px rgba(159,239,0,0.2); }
-    .ris-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .ris-loading { background: #21262d !important; color: #6e7681 !important; }
+/* Thread body */
+.fr-thread__body { flex: 1; min-width: 0; padding: 14px 14px 14px 4px; }
+.fr-thread__header { margin-bottom: 10px; }
 
-    .reply-login-cta { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid #21262d; font-size: 13px; color: #6e7681; }
-    .rlc-link { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9fef00; text-decoration: none; letter-spacing: 1px; }
+.fr-thread__badges { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
 
-    /* ── State boxes ── */
-    .state-box { display: flex; flex-direction: column; align-items: center; padding: 80px 40px; background: #161b22; border: 1px solid #21262d; border-radius: 8px; text-align: center; gap: 12px; }
-    .sb-icon { font-size: 40px; opacity: 0.4; }
-    .sb-title { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #6e7681; letter-spacing: 2px; }
-    .sb-sub { font-size: 13px; color: #4a5160; max-width: 360px; line-height: 1.6; }
-    .sb-btn { padding: 8px 20px; background: transparent; border: 1px solid rgba(159,239,0,0.3); border-radius: 4px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #9fef00; letter-spacing: 1px; transition: background 0.15s; }
-    .sb-btn:hover { background: rgba(159,239,0,0.06); }
+.fr-thread__title {
+    font-size: 14.5px; font-weight: 600; color: var(--fr-text);
+    line-height: 1.4; margin-bottom: 5px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 
-    /* ── Skeletons ── */
-    .post-skeleton { display: flex; gap: 14px; padding: 18px 16px; background: #161b22; border: 1px solid #21262d; border-bottom: none; animation: shimmer 1.5s ease-in-out infinite; }
-    .post-skeleton:first-child { border-radius: 8px 8px 0 0; }
-    .post-skeleton:last-child { border-bottom: 1px solid #21262d; border-radius: 0 0 8px 8px; }
-    .sk-avatar { width: 40px; height: 40px; border-radius: 8px; background: #21262d; flex-shrink: 0; }
-    .sk-body { flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: center; }
-    .sk-line { background: #21262d; border-radius: 2px; }
-    .sk-title { height: 16px; width: 60%; }
-    .sk-meta { height: 10px; width: 35%; }
+.fr-thread__preview {
+    font-size: 12.5px; color: var(--fr-text-3); line-height: 1.6;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 
-    /* ── Modal ── */
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; backdrop-filter: blur(2px); }
-    .modal-card { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 580px; max-width: calc(100vw - 32px); background: #161b22; border: 1px solid #21262d; border-radius: 8px; z-index: 101; animation: modalIn 0.2s ease both; max-height: 90vh; overflow-y: auto; }
-    .flag-modal { width: 380px; }
-    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: #0d1117; border-bottom: 1px solid #21262d; }
-    .mh-title-row { display: flex; align-items: center; gap: 8px; }
-    .mh-prompt { font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #9fef00; font-weight: 600; }
-    .mh-title { font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #c9d1d9; font-weight: 600; }
-    .mh-cursor { font-family: 'IBM Plex Mono', monospace; font-size: 16px; color: #9fef00; animation: blink 1s step-end infinite; }
-    .mh-close { background: none; border: none; color: #4a5160; cursor: pointer; font-size: 14px; padding: 4px 8px; transition: color 0.15s; }
-    .mh-close:hover { color: #ff3e3e; }
-    .modal-body { padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.fr-thread__meta {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; flex-wrap: wrap;
+}
 
-    .field-group { display: flex; flex-direction: column; gap: 7px; }
-    .field-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #6e7681; letter-spacing: 2px; display: flex; align-items: center; gap: 8px; }
-    .fl-idx { color: #9fef00; opacity: 0.6; }
-    .field-hint-right { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #4a5160; text-align: right; }
+.fr-thread__author { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.fr-thread__stats  { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 
-    .select-wrapper { position: relative; background: #0d1117; border: 1px solid #21262d; border-radius: 4px; transition: border-color 0.15s, box-shadow 0.15s; overflow: hidden; }
-    .select-wrapper.focused { border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
-    .field-select { width: 100%; padding: 11px 36px 11px 14px; background: transparent; border: none; outline: none; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #c9d1d9; cursor: pointer; appearance: none; }
-    .field-select option { background: #161b22; color: #c9d1d9; }
-    .select-arrow { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #4a5160; font-size: 10px; pointer-events: none; }
+.fr-stat {
+    display: flex; align-items: center; gap: 4px;
+    font-family: var(--fr-mono); font-size: 11px; color: var(--fr-text-3);
+}
+.fr-stat-sep {
+    width: 3px; height: 3px; border-radius: 50%;
+    background: var(--fr-border);
+}
 
-    .input-wrapper { display: flex; align-items: center; background: #0d1117; border: 1px solid #21262d; border-radius: 4px; transition: border-color 0.15s, box-shadow 0.15s; overflow: hidden; }
-    .input-wrapper.focused { border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
-    .field-input { flex: 1; background: transparent; border: none; outline: none; padding: 11px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #c9d1d9; caret-color: #9fef00; }
-    .field-input::placeholder { color: #4a5160; }
+/* Chevron */
+.fr-thread__chevron {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; flex-shrink: 0; align-self: stretch;
+    background: none; border: none; color: var(--fr-text-3);
+    transition: transform var(--fr-dur) var(--fr-ease), color var(--fr-dur);
+}
+.fr-thread__chevron:hover { color: var(--fr-text-2); }
+.fr-thread__chevron:focus-visible { outline: 2px solid var(--fr-accent); outline-offset: -2px; }
+.fr-thread__chevron.is-open { transform: rotate(180deg); color: var(--fr-accent); }
 
-    .textarea-wrapper { background: #0d1117; border: 1px solid #21262d; border-radius: 4px; overflow: hidden; transition: border-color 0.15s, box-shadow 0.15s; }
-    .textarea-wrapper.focused { border-color: #9fef00; box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
-    .field-textarea { width: 100%; background: transparent; border: none; outline: none; padding: 12px 14px; font-family: 'Inter', sans-serif; font-size: 13px; color: #c9d1d9; resize: none; caret-color: #9fef00; line-height: 1.6; }
-    .field-textarea::placeholder { color: #4a5160; }
-    .textarea-footer { display: flex; justify-content: flex-end; padding: 5px 12px; border-top: 1px solid #21262d; }
-    .char-count { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: #4a5160; }
-    .count-warn { color: #ffa500; }
+/* ══════════════════════════════════════════════
+   BADGES
+══════════════════════════════════════════════ */
+.fr-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--fr-mono); font-size: 9px; font-weight: 700;
+    padding: 2px 7px; border-radius: 3px; letter-spacing: 1px; border: 1px solid;
+}
+.fr-badge--pinned { color: var(--fr-orange); background: rgba(255,165,0,0.08); border-color: rgba(255,165,0,0.22); }
+.fr-badge--cat    { /* color/bg/border set inline via category color */ border-radius: 20px; font-size: 9px; }
 
-    .modal-error { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #ff3e3e; background: rgba(255,62,62,0.07); border: 1px solid rgba(255,62,62,0.2); border-radius: 4px; padding: 10px 14px; }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-    .modal-cancel { padding: 11px 18px; background: transparent; border: 1px solid #21262d; border-radius: 4px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #6e7681; letter-spacing: 1px; transition: border-color 0.15s, color 0.15s; }
-    .modal-cancel:hover { border-color: #6e7681; color: #c9d1d9; }
-    .modal-submit { padding: 11px 20px; background: #9fef00; border: none; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; color: #0d1117; cursor: pointer; letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px; transition: opacity 0.15s, box-shadow 0.15s; }
-    .modal-submit:hover:not(:disabled) { opacity: 0.9; box-shadow: 0 4px 16px rgba(159,239,0,0.2); }
-    .modal-submit:disabled { opacity: 0.4; cursor: not-allowed; }
-    .modal-submit.loading { background: #21262d !important; color: #6e7681 !important; }
+/* ══════════════════════════════════════════════
+   AUTHOR / ROLE
+══════════════════════════════════════════════ */
+.fr-avatar {
+    border-radius: var(--fr-radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--fr-mono); font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.fr-avatar--xs { width: 24px; height: 24px; font-size: 10px; }
+.fr-avatar--sm { width: 28px; height: 28px; font-size: 11px; }
+.fr-avatar--md { width: 34px; height: 34px; font-size: 14px; }
 
-    .btn-spinner-sm { width: 12px; height: 12px; border: 2px solid #4a5160; border-top-color: #9fef00; border-radius: 50%; animation: spin 0.7s linear infinite; }
+.fr-author-name { font-size: 12px; font-weight: 600; }
+.fr-author-name--public     { color: var(--fr-text-3); }
+.fr-author-name--registered { color: var(--fr-text-2); }
+.fr-author-name--reporter   { color: var(--fr-accent); }
+.fr-author-name--admin      { color: var(--fr-orange); }
 
-    /* ── Animations ── */
-    @@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    @@keyframes expandIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-    @@keyframes modalIn { from { opacity: 0; transform: translate(-50%,-48%); } to { opacity: 1; transform: translate(-50%,-50%); } }
-    @@keyframes shimmer { 0%, 100% { opacity: 0.6; } 50% { opacity: 0.3; } }
-    @@keyframes spin { to { transform: rotate(360deg); } }
-    @@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-    @@keyframes scan { 0% { top: -2px; } 100% { top: 100vh; } }
+.fr-role-badge {
+    font-family: var(--fr-mono); font-size: 8.5px; font-weight: 700;
+    padding: 1px 5px; border-radius: 3px; letter-spacing: 1px; border: 1px solid;
+}
+.fr-role-badge--public     { color: var(--fr-text-3); background: rgba(74,81,96,0.1); border-color: var(--fr-border); }
+.fr-role-badge--registered { color: var(--fr-blue);   background: rgba(0,200,255,0.08); border-color: rgba(0,200,255,0.2); }
+.fr-role-badge--reporter   { color: var(--fr-accent); background: var(--fr-accent-dim); border-color: var(--fr-accent-border); }
+.fr-role-badge--admin      { color: var(--fr-orange); background: rgba(255,165,0,0.08); border-color: rgba(255,165,0,0.22); }
 
-    @@media (max-width: 860px) {
-        .forum-layout { grid-template-columns: 1fr; }
-        .forum-sidebar { display: none; }
-        .forum-main { padding: 20px 16px; }
-    }
+.fr-verified {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-family: var(--fr-mono); font-size: 8.5px; font-weight: 700;
+    color: var(--fr-blue); background: rgba(0,200,255,0.06);
+    border: 1px solid rgba(0,200,255,0.18); padding: 1px 5px; border-radius: 3px; letter-spacing: 0.5px;
+}
+
+/* ══════════════════════════════════════════════
+   EXPANDED DETAIL PANEL
+══════════════════════════════════════════════ */
+.fr-detail {
+    background: var(--fr-bg); border: 1px solid rgba(159,239,0,0.2);
+    border-top: none; border-radius: 0 0 var(--fr-radius-md) var(--fr-radius-md);
+    margin-bottom: 6px;
+    animation: fr-expand 0.2s var(--fr-ease) both;
+}
+
+.fr-detail__post {
+    padding: 20px;
+    border-bottom: 1px solid var(--fr-border);
+}
+
+.fr-detail__author-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.fr-detail__author-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.fr-detail__author-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.fr-detail__timestamp { font-size: 10px; letter-spacing: 0.5px; color: var(--fr-text-3); }
+
+.fr-detail__actions { display: flex; gap: 8px; margin-left: auto; flex-shrink: 0; }
+.fr-action-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: var(--fr-radius-sm);
+    font-family: var(--fr-mono); font-size: 10px; font-weight: 600; letter-spacing: 1px;
+    border: 1px solid; transition: all var(--fr-dur);
+    color: var(--fr-text-3); background: transparent; border-color: var(--fr-border);
+}
+.fr-action-btn:hover { color: var(--fr-orange); border-color: rgba(255,165,0,0.3); background: rgba(255,165,0,0.06); }
+.fr-action-btn.is-pinned { color: var(--fr-orange); border-color: rgba(255,165,0,0.35); background: rgba(255,165,0,0.1); }
+.fr-action-btn--flag:hover { color: var(--fr-red); border-color: rgba(255,62,62,0.3); background: rgba(255,62,62,0.06); }
+.fr-action-btn--flag.is-flagged { color: var(--fr-red); border-color: rgba(255,62,62,0.3); background: rgba(255,62,62,0.08); }
+
+/* Markdown */
+.fr-detail__content.markdown-body { font-size: 14px; color: var(--fr-text-2); line-height: 1.8; word-break: break-word; }
+
+/* ══════════════════════════════════════════════
+   REPLIES
+══════════════════════════════════════════════ */
+.fr-replies-loading {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 20px; font-size: 12px; letter-spacing: 1px; color: var(--fr-text-3);
+}
+.fr-replies { padding: 0 20px; }
+.fr-replies__header {
+    display: flex; align-items: center; gap: 12px; padding: 14px 0 10px;
+}
+.fr-replies__count { font-size: 9px; letter-spacing: 2px; color: var(--fr-text-3); flex-shrink: 0; }
+.fr-replies__rule { flex: 1; height: 1px; background: var(--fr-border); }
+
+.fr-reply {
+    display: flex; gap: 10px;
+    padding: 14px 0; border-bottom: 1px solid var(--fr-border);
+}
+.fr-reply:last-child { border-bottom: none; }
+.fr-reply__vote { display: flex; flex-direction: column; align-items: center; gap: 1px; flex-shrink: 0; }
+.fr-reply__body { flex: 1; min-width: 0; }
+.fr-reply__meta { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+.fr-reply__time { font-size: 10px; letter-spacing: 0.5px; color: var(--fr-text-3); margin-left: auto; }
+.fr-reply__text { font-size: 13px; color: var(--fr-text-2); line-height: 1.7; word-break: break-word; }
+
+/* ══════════════════════════════════════════════
+   REPLY COMPOSER
+══════════════════════════════════════════════ */
+.fr-composer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--fr-border);
+}
+.fr-composer__header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.fr-composer__label { font-size: 9px; letter-spacing: 2px; color: var(--fr-text-3); }
+.fr-composer__box {
+    background: var(--fr-surface); border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-md); overflow: hidden;
+    transition: border-color var(--fr-dur), box-shadow var(--fr-dur);
+}
+.fr-composer__box.is-focused { border-color: var(--fr-accent); box-shadow: 0 0 0 3px rgba(159,239,0,0.06); }
+.fr-composer__textarea {
+    width: 100%; background: none; border: none; outline: none;
+    padding: 12px 14px; font-family: var(--fr-font); font-size: 13px;
+    color: var(--fr-text); resize: none; caret-color: var(--fr-accent); line-height: 1.6;
+}
+.fr-composer__textarea::placeholder { color: var(--fr-text-3); }
+.fr-composer__footer {
+    display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 8px;
+}
+.fr-composer__char { font-size: 10px; letter-spacing: 0.5px; color: var(--fr-text-3); }
+
+.fr-reply-cta {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-top: 1px solid var(--fr-border);
+    font-size: 13px; color: var(--fr-text-3);
+}
+
+/* ══════════════════════════════════════════════
+   INLINE ERROR
+══════════════════════════════════════════════ */
+.fr-inline-error {
+    display: flex; align-items: center; gap: 7px;
+    font-family: var(--fr-mono); font-size: 11.5px; color: var(--fr-red);
+    background: rgba(255,62,62,0.06); border: 1px solid rgba(255,62,62,0.18);
+    border-radius: var(--fr-radius-sm); padding: 9px 12px; margin-top: 8px;
+}
+
+/* ══════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════ */
+.fr-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 8px 16px; border-radius: var(--fr-radius-sm);
+    font-family: var(--fr-mono); font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+    border: 1px solid transparent;
+    transition: all var(--fr-dur); white-space: nowrap; cursor: pointer;
+}
+.fr-btn:focus-visible { outline: 2px solid var(--fr-accent); outline-offset: 2px; }
+.fr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.fr-btn--full { width: 100%; }
+
+.fr-btn--accent { background: var(--fr-accent); color: var(--fr-bg); border-color: transparent; }
+.fr-btn--accent:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.fr-btn--accent.is-loading { background: var(--fr-surface); color: var(--fr-text-3); }
+
+.fr-btn--outline {
+    background: transparent; color: var(--fr-text-2); border-color: var(--fr-border);
+}
+.fr-btn--outline:hover:not(:disabled) { border-color: var(--fr-border-hover); color: var(--fr-text); }
+
+.fr-btn--ghost {
+    background: var(--fr-surface); color: var(--fr-text-3); border-color: var(--fr-border);
+}
+.fr-btn--ghost:hover:not(:disabled) { color: var(--fr-text-2); border-color: var(--fr-border-hover); }
+
+.fr-btn--danger { background: rgba(255,62,62,0.08); color: var(--fr-red); border-color: rgba(255,62,62,0.22); }
+.fr-btn--danger:hover:not(:disabled) { background: rgba(255,62,62,0.15); border-color: var(--fr-red); }
+
+.fr-icon-btn {
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: var(--fr-text-3);
+    border-radius: var(--fr-radius-sm); padding: 4px;
+    transition: color var(--fr-dur);
+}
+.fr-icon-btn:hover { color: var(--fr-text); }
+.fr-icon-btn:focus-visible { outline: 2px solid var(--fr-accent); outline-offset: 2px; }
+
+/* ══════════════════════════════════════════════
+   SPINNER
+══════════════════════════════════════════════ */
+.fr-spinner {
+    border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: currentColor;
+    animation: fr-spin 0.7s linear infinite; flex-shrink: 0;
+}
+.fr-spinner--sm { width: 13px; height: 13px; }
+@@keyframes fr-spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════════
+   STATE BOXES (empty / error)
+══════════════════════════════════════════════ */
+.fr-state {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 72px 40px; margin: 16px 24px;
+    background: var(--fr-surface); border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-lg); text-align: center; gap: 10px;
+}
+.fr-state__icon { color: var(--fr-text-3); opacity: 0.35; margin-bottom: 4px; }
+.fr-state__title { font-family: var(--fr-mono); font-size: 12px; letter-spacing: 2px; color: var(--fr-text-3); }
+.fr-state__sub { font-size: 13px; color: var(--fr-text-3); max-width: 360px; line-height: 1.6; }
+.fr-state__sub strong { color: var(--fr-text-2); }
+
+/* ══════════════════════════════════════════════
+   SKELETONS
+══════════════════════════════════════════════ */
+.fr-skeleton {
+    display: flex; gap: 14px; padding: 18px;
+    background: var(--fr-surface); border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-md); margin-bottom: 6px;
+    overflow: hidden; position: relative;
+}
+.fr-skeleton::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.025) 50%, transparent 100%);
+    animation: fr-shimmer 1.8s ease-in-out infinite;
+}
+.fr-skeleton__bar { width: 3px; border-radius: 3px; background: var(--fr-border); align-self: stretch; flex-shrink: 0; }
+.fr-skeleton__body { flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+.fr-skeleton__line { background: var(--fr-border); border-radius: 3px; }
+.fr-skeleton__line--title   { height: 16px; width: 65%; }
+.fr-skeleton__line--meta    { height: 10px; width: 30%; }
+.fr-skeleton__line--preview { height: 11px; width: 85%; }
+
+@@keyframes fr-shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+/* ══════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════ */
+.fr-modal-backdrop {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    animation: fr-fade 0.15s ease both;
+}
+.fr-modal {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 560px; max-width: calc(100vw - 32px); max-height: 90vh; overflow-y: auto;
+    background: var(--fr-surface); border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-lg); z-index: 101;
+    animation: fr-modal-in 0.2s var(--fr-ease) both;
+}
+.fr-modal--sm { width: 380px; }
+.fr-modal__header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid var(--fr-border);
+    position: sticky; top: 0; z-index: 1;
+    backdrop-filter: blur(8px);
+}
+.fr-modal__title-row { display: flex; align-items: center; gap: 8px; }
+.fr-modal__prompt { font-size: 15px; color: var(--fr-accent); font-weight: 600; }
+.fr-modal__title  { font-size: 15px; color: var(--fr-text-2); font-weight: 600; }
+.fr-modal__cursor { font-size: 15px; color: var(--fr-accent); animation: fr-blink 1s step-end infinite; }
+.fr-modal__body   { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.fr-modal__actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ══════════════════════════════════════════════
+   FORM FIELDS (inside modal)
+══════════════════════════════════════════════ */
+.fr-field { display: flex; flex-direction: column; gap: 6px; }
+.fr-field__label {
+    display: flex; align-items: center; gap: 7px;
+    font-family: var(--fr-mono); font-size: 9.5px; letter-spacing: 2px; color: var(--fr-text-3);
+}
+.fr-field__idx { color: var(--fr-accent); opacity: 0.55; }
+.fr-field__md-hint { font-size: 9px; color: var(--fr-text-3); font-style: italic; letter-spacing: 0; }
+.fr-field__hint-right { font-family: var(--fr-mono); font-size: 9.5px; color: var(--fr-text-3); text-align: right; }
+
+.fr-input-wrap {
+    display: flex; align-items: center;
+    background: var(--fr-bg); border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-sm); overflow: hidden;
+    transition: border-color var(--fr-dur), box-shadow var(--fr-dur);
+}
+.fr-input-wrap.is-focused { border-color: var(--fr-accent); box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
+.fr-input {
+    flex: 1; background: none; border: none; outline: none;
+    padding: 11px 13px; font-family: var(--fr-mono); font-size: 13px;
+    color: var(--fr-text); caret-color: var(--fr-accent);
+}
+.fr-input::placeholder { color: var(--fr-text-3); }
+
+.fr-select-wrap {
+    position: relative; background: var(--fr-bg);
+    border: 1px solid var(--fr-border); border-radius: var(--fr-radius-sm);
+    overflow: hidden; transition: border-color var(--fr-dur), box-shadow var(--fr-dur);
+}
+.fr-select-wrap.is-focused { border-color: var(--fr-accent); box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
+.fr-select {
+    width: 100%; padding: 11px 36px 11px 13px;
+    background: transparent; border: none; outline: none;
+    font-family: var(--fr-mono); font-size: 13px; color: var(--fr-text);
+    appearance: none; cursor: pointer;
+}
+.fr-select option { background: var(--fr-surface); color: var(--fr-text); }
+.fr-select-arrow {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--fr-text-3); pointer-events: none; display: flex; align-items: center;
+}
+
+.fr-textarea-wrap {
+    background: var(--fr-bg); border: 1px solid var(--fr-border);
+    border-radius: var(--fr-radius-sm); overflow: hidden;
+    transition: border-color var(--fr-dur), box-shadow var(--fr-dur);
+}
+.fr-textarea-wrap.is-focused { border-color: var(--fr-accent); box-shadow: 0 0 0 3px rgba(159,239,0,0.07); }
+.fr-textarea {
+    width: 100%; background: none; border: none; outline: none;
+    padding: 12px 13px; font-family: var(--fr-font); font-size: 13px;
+    color: var(--fr-text); resize: none; caret-color: var(--fr-accent); line-height: 1.65;
+}
+.fr-textarea::placeholder { color: var(--fr-text-3); }
+.fr-textarea-footer { display: flex; justify-content: flex-end; padding: 5px 12px; border-top: 1px solid var(--fr-border); }
+.fr-count { font-family: var(--fr-mono); font-size: 10px; color: var(--fr-text-3); }
+.fr-count--warn { font-family: var(--fr-mono); font-size: 10px; color: var(--fr-orange); }
+
+/* ══════════════════════════════════════════════
+   MOBILE DRAWER
+══════════════════════════════════════════════ */
+.fr-drawer-backdrop {
+    display: none;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 40;
+    animation: fr-fade 0.18s ease both;
+}
+.fr-drawer {
+    display: none;
+    position: fixed; top: 0; left: 0; bottom: 0;
+    width: min(300px, 85vw);
+    background: var(--fr-surface); border-right: 1px solid var(--fr-border);
+    z-index: 50; overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.22s var(--fr-ease);
+    flex-direction: column;
+}
+.fr-drawer--open { transform: translateX(0); }
+
+.fr-drawer-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-bottom: 1px solid var(--fr-border);
+    background: rgba(0,0,0,0.2); position: sticky; top: 0;
+    backdrop-filter: blur(8px);
+}
+.fr-drawer-title { font-size: 10px; letter-spacing: 2.5px; color: var(--fr-accent); }
+.fr-drawer-body  { padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.fr-drawer-section-label { font-family: var(--fr-mono); font-size: 9px; letter-spacing: 2px; color: var(--fr-text-3); padding: 10px 2px 4px; }
+.fr-drawer-divider { height: 1px; background: var(--fr-border); margin: 8px 0; }
+
+.fr-drawer-cat {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 10px 12px; background: none;
+    border: none; border-radius: var(--fr-radius-md); transition: background var(--fr-dur);
+    text-align: left;
+}
+.fr-drawer-cat:hover { background: rgba(255,255,255,0.04); }
+.fr-drawer-cat.is-active { background: var(--fr-accent-dim); }
+.fr-drawer-cat.is-active .fr-drawer-cat__name { color: var(--fr-accent); }
+.fr-drawer-cat__icon { display: flex; width: 18px; flex-shrink: 0; }
+.fr-drawer-cat__name { font-size: 13px; color: var(--fr-text-2); flex: 1; }
+.fr-drawer-cat__count { font-family: var(--fr-mono); font-size: 10px; color: var(--fr-text-3); }
+
+.fr-drawer-sort-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.fr-drawer-sort {
+    padding: 7px 16px; background: var(--fr-bg); border: 1px solid var(--fr-border);
+    border-radius: 20px; font-family: var(--fr-mono); font-size: 11px; letter-spacing: 1px;
+    color: var(--fr-text-3); transition: all var(--fr-dur);
+}
+.fr-drawer-sort:hover { border-color: var(--fr-border-hover); color: var(--fr-text-2); }
+.fr-drawer-sort.is-active { background: var(--fr-accent-dim); color: var(--fr-accent); border-color: var(--fr-accent-border); }
+
+/* ══════════════════════════════════════════════
+   FOCUS RING GLOBAL
+══════════════════════════════════════════════ */
+:focus-visible { outline: 2px solid var(--fr-accent); outline-offset: 2px; }
+
+/* ══════════════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════════════ */
+@@keyframes fr-fade-up { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+@@keyframes fr-expand   { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+@@keyframes fr-modal-in { from { opacity:0; transform:translate(-50%,-48%); } to { opacity:1; transform:translate(-50%,-50%); } }
+@@keyframes fr-fade     { from { opacity:0; } to { opacity:1; } }
+@@keyframes fr-blink    { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — TABLET (≤960px)
+   Sidebar hidden, filter strip visible
+══════════════════════════════════════════════ */
+@@media (max-width: 960px) {
+    .fr-shell { grid-template-columns: 1fr; }
+    .fr-sidebar { display: none; }
+    .fr-cat-strip { display: flex; }
+    .fr-topbar { padding: 10px 16px; }
+    .fr-feed { padding: 12px 16px 40px; }
+    .fr-state { margin: 12px 16px; }
+    .fr-search { min-width: 140px; max-width: 200px; }
+}
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — MOBILE (≤600px)
+   Drawer replaces all navigation
+   Cards redesigned for touch
+══════════════════════════════════════════════ */
+@@media (max-width: 600px) {
+    :root { --fr-page-top: 56px; }
+
+    .fr-corner { display: none; }
+    .fr-cat-strip { display: none; }
+
+    /* Show mobile filter btn */
+    .fr-mobile-filter-btn { display: flex; }
+
+    /* Show drawers */
+    .fr-drawer { display: flex; }
+    .fr-drawer-backdrop { display: block; }
+
+    /* Topbar: compact */
+    .fr-topbar { padding: 8px 12px; gap: 8px; }
+    .fr-topbar__right { gap: 8px; }
+    .fr-sort-group { display: none; }  /* sort moves to drawer on mobile */
+    .fr-search { min-width: 0; max-width: none; flex: 1; }
+    .fr-btn-label { display: none; }  /* icon-only new thread btn */
+    .fr-btn--accent { padding: 8px 10px; }
+
+    /* Feed */
+    .fr-feed { padding: 10px 10px 36px; gap: 0; }
+
+    /* Thread cards: more vertical on mobile */
+    .fr-thread { gap: 0; border-radius: var(--fr-radius-md); margin-bottom: 8px; }
+    .fr-vote { padding: 12px 8px; min-width: 38px; }
+    .fr-thread__body { padding: 12px 8px 12px 4px; }
+    .fr-thread__title { font-size: 13.5px; }
+    .fr-thread__preview { display: none; }  /* hide preview on mobile — keeps cards compact */
+    .fr-thread__stats { display: none; }    /* stats shown on expanded view */
+    .fr-thread__chevron { width: 30px; }
+
+    /* Detail panel */
+    .fr-detail__post { padding: 14px; }
+    .fr-detail__actions { flex-wrap: wrap; gap: 6px; }
+    .fr-replies { padding: 0 14px; }
+    .fr-composer { padding: 12px 14px; }
+
+    /* Modal */
+    .fr-modal { max-height: 95vh; }
+    .fr-modal__body { padding: 14px; gap: 14px; }
+
+    /* State */
+    .fr-state { padding: 48px 20px; margin: 10px; }
+    .fr-state__icon svg { width: 28px; height: 28px; }
+}
 </style>
 
 @code {
@@ -806,6 +1604,7 @@
     private bool _searchFocused = false;
     private Guid? _expandedPostId;
     private string _sort = "new";
+    private bool _drawerOpen = false;
 
     private bool _showNewPost = false;
     private string _newPostTitle = string.Empty;
@@ -822,26 +1621,19 @@
     private bool _replyFocused = false;
     private string _replyError = string.Empty;
 
-    // Vote tracking (client-side optimistic)
-    private HashSet<Guid> _votedUp = new();
+    private HashSet<Guid> _votedUp   = new();
     private HashSet<Guid> _votedDown = new();
-    private HashSet<Guid> _flagged = new();
+    private HashSet<Guid> _flagged   = new();
 
-    // Flag modal
     private bool _showFlagModal = false;
     private Guid _flagTargetId;
     private string _flagReason = "Misinformation";
 
-    private record CategoryItem(string Name, string Icon);
-
+    private record CategoryItem(string Name);
     private readonly CategoryItem[] _categories =
     {
-        new("All",              "◈"),
-        new("General",          "💬"),
-        new("Threat Intel",     "🔍"),
-        new("Malware Analysis", "🦠"),
-        new("Incident Reports", "🚨"),
-        new("Tools & Resources","⚙"),
+        new("All"), new("General"), new("Threat Intel"),
+        new("Malware Analysis"), new("Incident Reports"), new("Tools & Resources"),
     };
 
     private List<PostResponseDTO> FilteredPosts
@@ -850,19 +1642,17 @@
         {
             if (_posts == null) return new();
             var list = _activeCategory == "All"
-                ? _posts
-                : _posts.Where(p => p.Category == _activeCategory).ToList();
-
+                ? _posts.AsEnumerable()
+                : _posts.Where(p => p.Category == _activeCategory);
             if (!string.IsNullOrWhiteSpace(_searchQuery))
             {
                 var q = _searchQuery.ToLower();
                 list = list.Where(p =>
                     p.Title.ToLower().Contains(q) ||
                     p.Content.ToLower().Contains(q) ||
-                    p.AuthorUsername.ToLower().Contains(q)
-                ).ToList();
+                    p.AuthorUsername.ToLower().Contains(q));
             }
-            return list;
+            return list.ToList();
         }
     }
 
@@ -878,8 +1668,7 @@
 
     private async Task LoadPosts()
     {
-        _loadingPosts = true; _loadError = null;
-        StateHasChanged();
+        _loadingPosts = true; _loadError = null; StateHasChanged();
         var (data, error) = await ApiService.GetForumPostsAsync(_activeCategory, _sort);
         _loadingPosts = false;
         if (error != null) _loadError = error;
@@ -897,66 +1686,49 @@
     {
         if (_expandedPostId == id)
         {
-            _expandedPostId = null;
-            _currentPostDetail = null;
+            _expandedPostId = null; _currentPostDetail = null;
             _replyContent = _replyError = string.Empty;
             return;
         }
-
         _expandedPostId = id;
         _replyContent = _replyError = string.Empty;
-        _loadingReplies = true;
-        StateHasChanged();
-
+        _loadingReplies = true; StateHasChanged();
         var (detail, _) = await ApiService.GetForumPostAsync(id);
-        _currentPostDetail = detail;
-        _loadingReplies = false;
-        StateHasChanged();
-
-        // Render markdown after DOM update
+        _currentPostDetail = detail; _loadingReplies = false; StateHasChanged();
         if (detail != null)
         {
-            await Task.Delay(50); // let Blazor render the container
+            await Task.Delay(50);
             try
             {
                 await JS.InvokeVoidAsync("eval",
-                    $"(function(){{ var el = document.getElementById('md-{id}'); if(el && window.marked) el.innerHTML = marked.parse({System.Text.Json.JsonSerializer.Serialize(detail.Content)}); }})()");
+                    $"(function(){{var el=document.getElementById('md-{id}');if(el&&window.marked)el.innerHTML=marked.parse({System.Text.Json.JsonSerializer.Serialize(detail.Content)});}})()" );
             }
-            catch { /* marked not loaded yet — graceful fallback */ }
+            catch { /* marked not loaded — graceful fallback */ }
         }
     }
 
     private void SetCategory(string cat)
     {
-        _activeCategory = cat;
-        _expandedPostId = null;
-        _ = LoadPosts();
+        _activeCategory = cat; _expandedPostId = null; _ = LoadPosts();
     }
 
     private void OpenNewPost()
     {
         _newPostTitle = _newPostContent = _newPostError = string.Empty;
-        _newPostCategory = "General";
-        _showNewPost = true;
+        _newPostCategory = "General"; _showNewPost = true;
     }
 
-    private void CloseNewPost()
-    {
-        _showNewPost = false;
-        _newPostError = string.Empty;
-    }
+    private void CloseNewPost() { _showNewPost = false; _newPostError = string.Empty; }
 
     private async Task SubmitNewPost()
     {
         _newPostError = string.Empty;
-        if (string.IsNullOrWhiteSpace(_newPostTitle)) { _newPostError = "Title is required."; return; }
+        if (string.IsNullOrWhiteSpace(_newPostTitle))   { _newPostError = "Title is required."; return; }
         if (string.IsNullOrWhiteSpace(_newPostContent)) { _newPostError = "Content is required."; return; }
-
         _newPostLoading = true;
         var error = await ApiService.CreateForumPostAsync(_newPostTitle, _newPostContent, _newPostCategory);
         _newPostLoading = false;
-
-        if (error != null) { _newPostError = error; }
+        if (error != null) _newPostError = error;
         else { CloseNewPost(); await LoadPosts(); }
     }
 
@@ -964,11 +1736,9 @@
     {
         _replyError = string.Empty;
         if (string.IsNullOrWhiteSpace(_replyContent)) return;
-
         _replyLoading = true;
         var error = await ApiService.CreateReplyAsync(postId, _replyContent);
         _replyLoading = false;
-
         if (error != null) { _replyError = error; }
         else
         {
@@ -984,78 +1754,63 @@
     private async Task HandleUpvote(PostResponseDTO post)
     {
         if (_votedUp.Contains(post.Id)) return;
-        _votedDown.Remove(post.Id);
-        _votedUp.Add(post.Id);
-        post.Upvotes++;
-        StateHasChanged();
-        await ApiService.UpvotePostAsync(post.Id);
+        _votedDown.Remove(post.Id); _votedUp.Add(post.Id); post.Upvotes++;
+        StateHasChanged(); await ApiService.UpvotePostAsync(post.Id);
     }
-
     private async Task HandleDownvote(PostResponseDTO post)
     {
         if (_votedDown.Contains(post.Id)) return;
-        _votedUp.Remove(post.Id);
-        _votedDown.Add(post.Id);
-        post.Downvotes++;
-        StateHasChanged();
-        await ApiService.DownvotePostAsync(post.Id);
+        _votedUp.Remove(post.Id); _votedDown.Add(post.Id); post.Downvotes++;
+        StateHasChanged(); await ApiService.DownvotePostAsync(post.Id);
     }
-
     private async Task HandleUpvoteReply(ReplyResponseDTO reply)
     {
         if (_votedUp.Contains(reply.Id)) return;
-        _votedDown.Remove(reply.Id);
-        _votedUp.Add(reply.Id);
-        reply.Upvotes++;
-        StateHasChanged();
-        await ApiService.UpvotePostAsync(reply.Id);
+        _votedDown.Remove(reply.Id); _votedUp.Add(reply.Id); reply.Upvotes++;
+        StateHasChanged(); await ApiService.UpvotePostAsync(reply.Id);
     }
-
     private async Task HandleDownvoteReply(ReplyResponseDTO reply)
     {
         if (_votedDown.Contains(reply.Id)) return;
-        _votedUp.Remove(reply.Id);
-        _votedDown.Add(reply.Id);
-        reply.Downvotes++;
-        StateHasChanged();
-        await ApiService.DownvotePostAsync(reply.Id);
+        _votedUp.Remove(reply.Id); _votedDown.Add(reply.Id); reply.Downvotes++;
+        StateHasChanged(); await ApiService.DownvotePostAsync(reply.Id);
     }
-
     private async Task HandlePin(PostResponseDTO post)
     {
-        await ApiService.TogglePinPostAsync(post.Id);
-        post.IsPinned = !post.IsPinned;
-        StateHasChanged();
+        await ApiService.TogglePinPostAsync(post.Id); post.IsPinned = !post.IsPinned; StateHasChanged();
     }
-
     private void HandleFlag(Guid postId)
     {
-        _flagTargetId = postId;
-        _flagReason = "Misinformation";
-        _showFlagModal = true;
+        _flagTargetId = postId; _flagReason = "Misinformation"; _showFlagModal = true;
     }
-
     private async Task SubmitFlag()
     {
-        _showFlagModal = false;
-        _flagged.Add(_flagTargetId);
-        await ApiService.FlagPostAsync(_flagTargetId, _flagReason);
-        StateHasChanged();
+        _showFlagModal = false; _flagged.Add(_flagTargetId);
+        await ApiService.FlagPostAsync(_flagTargetId, _flagReason); StateHasChanged();
     }
 
-    private static string GetAvatarColor(string username)
+    private static string GetAvatarColor(string u)
     {
-        var colors = new[] { "#1a472a", "#1e3a5f", "#4a1942", "#2d2b55", "#3d2b1f", "#1a3a3a", "#2b3a1a", "#3a1a2b" };
-        return colors[Math.Abs(username.GetHashCode()) % colors.Length];
+        var colors = new[] { "#1a472a","#1e3a5f","#4a1942","#2d2b55","#3d2b1f","#1a3a3a","#2b3a1a","#3a1a2b" };
+        return colors[Math.Abs(u.GetHashCode()) % colors.Length];
     }
+
+    private static string GetCategoryColor(string cat) => cat switch
+    {
+        "Threat Intel"      => "#ff3e3e",
+        "Malware Analysis"  => "#bf40bf",
+        "Incident Reports"  => "#ffa500",
+        "Tools & Resources" => "#00c8ff",
+        _                   => "#8b949e",
+    };
 
     private static string GetRelativeTime(DateTime dt)
     {
-        var diff = DateTime.UtcNow - dt;
-        if (diff.TotalMinutes < 1) return "just now";
-        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
-        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
-        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        var d = DateTime.UtcNow - dt;
+        if (d.TotalMinutes < 1)  return "just now";
+        if (d.TotalMinutes < 60) return $"{(int)d.TotalMinutes}m ago";
+        if (d.TotalHours < 24)   return $"{(int)d.TotalHours}h ago";
+        if (d.TotalDays < 7)     return $"{(int)d.TotalDays}d ago";
         return dt.ToString("MMM dd, yyyy");
     }
 }
