@@ -1193,22 +1193,21 @@
 
     private readonly string[] _attackTypes =
         { "Ransomware", "Phishing", "DDoS", "IdentityTheft", "Malware", "Other" };
-    private readonly string[] _cities =
-        { "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad",
-          "Multan", "Peshawar", "Quetta", "Hyderabad", "Gujranwala",
-          "Sialkot", "Abbottabad" };
+    private List<string> _cities = new();
     private readonly string[] _sectors =
         { "Banking", "Telecom", "Healthcare", "Education",
           "Government", "Energy", "Other" };
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
+{
+    if (firstRender)
     {
-        if (firstRender)
-        {
-            await LoadSubscriptions();
-            StateHasChanged();
-        }
+        var (cities, _) = await ApiService.GetCitiesAsync();
+        if (cities != null) _cities = cities;
+        await LoadSubscriptions();
+        StateHasChanged();
     }
+}
 
     private async Task LoadSubscriptions()
     {

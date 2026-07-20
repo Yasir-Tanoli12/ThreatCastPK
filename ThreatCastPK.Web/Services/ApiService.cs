@@ -343,6 +343,8 @@ public class ApiService
 
     public Task<string?> DeleteForumPostAsync(Guid id)
         => DeleteAsync($"/api/forum/posts/{id}");
+    public Task<(List<string>? Data, string? Error)> GetCitiesAsync()
+    => GetAsync<List<string>>("/api/locations/cities");
 }
 
 public class ProfileResponse

@@ -872,7 +872,7 @@
 
     private readonly string[] _attackTypes = { "Ransomware", "Phishing", "DDoS", "IdentityTheft", "Malware", "Other" };
     private readonly string[] _sectors = { "Banking", "Telecom", "Healthcare", "Education", "Government", "Energy", "Other" };
-    private readonly string[] _cities = { "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Hyderabad", "Gujranwala", "Sialkot", "Abbottabad" };
+    private List<string> _cities = new();
 
     private readonly (string Name, string Icon, string Desc)[] _attackTypeInfo = {
         ("Ransomware",    "🔐", "Encrypts files and demands payment"),
@@ -979,7 +979,16 @@
 
         StateHasChanged();
     }
-
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+{
+    if (firstRender)
+    {
+        await AuthService.InitializeAsync();
+        var (cities, _) = await ApiService.GetCitiesAsync();
+        if (cities != null) _cities = cities;
+        StateHasChanged();
+    }
+}
     private async Task ShowToast(string message, string type)
     {
         _toastMessage = message; _toastType = type; _toastVisible = true;

@@ -19,7 +19,7 @@ window.tcpkMap = {
         'hyderabad': [25.3960, 68.3578],
         'gujranwala': [32.1877, 74.1945],
         'sialkot': [32.4945, 74.5229],
-        'abbottabad': [34.1463, 73.2117]
+        'abbottabad': [34.1463, 73.2117],
         'bahawalpur': [29.3956, 71.6836],
         'sargodha': [32.0836, 72.6711],
         'sheikhupura': [31.7167, 73.9850],
